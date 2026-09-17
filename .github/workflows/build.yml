@@ -45,7 +45,7 @@ jobs:
         # working-directory: rbx-cursor-studio
 
       - name: setup.exe / portable.exe oluştur
-        run: npm run dist
+        run: npm run dist -- --publish=never
         # working-directory: rbx-cursor-studio
 
       - name: Çıktıları Artifact olarak yükle
