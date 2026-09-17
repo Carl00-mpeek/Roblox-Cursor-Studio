@@ -49,6 +49,12 @@ Roblox imleçlerini özelleştirmek için hafif bir Windows aracı.
 - Orijinal Roblox imleçlerini yedekle ve tek tıkla geri yükle
 - Roblox'un o an çalışıp çalışmadığını gösteren küçük, sürüklenebilir canlı durum rozeti
 
+### 🌈 Toplu Renk Değiştirici
+- **Renk Değiştir** — şu an Roblox'ta aktif olan tüm imleçleri (Normal, Tıklama, Yazı Modu, Shift Lock) tek bir renk tonuyla aynı anda boya
+- Boyut ve konuma dokunmadan, yalnızca rengi değiştirir — tekrar ortalama/boyutlandırma gerekmez
+- Canlı önizlemeli ton kaydırıcısı ve hızlı seçim için hazır renk şeridi
+- Uygula dediğinde tüm imleçler anında Roblox'a kaydedilir ve uygulanır
+
 ### 🎬 Kişiselleştirme
 - Uygulamanın arkaplanını kendi görselinle değiştir, istediğinde varsayılana dön
 - Uygulama genelinde sade ve modern, koyu temalı bir arayüz

@@ -472,6 +472,20 @@ html, body {
 }
 .color-swatch:hover { transform: translateY(-2px) scale(1.05); border-color: var(--accent); }
 
+/* ---- imleç rengi değiştirici (tüm aktif imleçleri tek seferde boyar) ---- */
+.color-changer-modal { width: 440px; max-width: calc(100vw - 40px); }
+.color-changer-grid {
+  width: 100%; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+}
+.color-changer-tile { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.color-changer-tile canvas {
+  width: 56px; height: 56px; border-radius: 10px; border: 1px solid var(--card-border);
+  background: repeating-conic-gradient(#2a2f3d 0% 25%, #1c1f29 0% 50%) 0 0 / 10px 10px;
+  image-rendering: pixelated;
+}
+.color-changer-tile span { font-size: 10px; color: var(--muted); text-align: center; }
+.color-changer-modal .color-swatch { border: 1px solid var(--card-border); padding: 0; }
+
 /* ---- paketler: içe aktarma sürükle-bırak ipucu ---- */
 .pack-dropzone-hint { margin: 0; padding: 0 30px 10px; }
 .pack-grid.drag-over {

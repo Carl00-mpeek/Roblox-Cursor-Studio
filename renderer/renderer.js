@@ -267,8 +267,8 @@ function getAlphaBounds(source) {
 // ölçüsünü ve konumunu örnek alır. Böylece Arrow/ArrowFar/IBeam birbirine
 // göre tutarlı görünür.
 const DEFAULT_CURSOR_REFERENCE = {
-  arrow: { minX: 27, minY: 32, maxX: 47, maxY: 59, width: 21, height: 28 },
-  click: { minX: 22, minY: 32, maxX: 46, maxY: 61, width: 25, height: 30 },
+  arrow: { minX: 29, minY: 32, maxX: 45, maxY: 57, width: 17, height: 26 },
+  click: { minX: 24, minY: 32, maxX: 44, maxY: 59, width: 21, height: 28 },
   text:  { minX: 29, minY: 21, maxX: 35, maxY: 42, width: 7,  height: 22 },
   // Roblox'un gerçek MouseLockedCursor.png dosyası ölçüldü: 32x32 ve ikon
   // tuvalin tamamını (kenara kadar) kaplıyor — bu yüzden 64'lük referans
@@ -340,8 +340,16 @@ function normalizeImageToDefault(kind, img) {
   const contentCenterY = ((bounds.minY + bounds.maxY + 1) / 2) * ratio;
   const defaultCenterX = (ref.minX + ref.maxX + 1) / 2 * outScale;
   const defaultCenterY = (ref.minY + ref.maxY + 1) / 2 * outScale;
-  const x = defaultCenterX - contentCenterX - (outSize - w) / 2;
-  const y = defaultCenterY - contentCenterY - (outSize - h) / 2;
+  // NOT: Burada "- (outSize - w) / 2" gibi ekstra bir kayma terimi OLMAMALI.
+  // defaultCenterX/contentCenterX zaten tuvalin (0,0) orijinine göre mutlak
+  // konumlardır; ekstra terim eskiden içeriği gereğinden fazla kaydırıp
+  // (özellikle küçük/eşit boyutlu görsellerde, ör. orijinal cursor'ların
+  // kendisinde bile) görünür bir kaymaya/"bozulmaya" yol açıyordu. Bu satır,
+  // autoFitAndCenterEditor()'daki (editördeki canlı önizlemeyle birebir
+  // aynı sonucu veren) offsetX/offsetY hesabıyla matematiksel olarak
+  // eşdeğer hale getirildi.
+  const x = defaultCenterX - contentCenterX;
+  const y = defaultCenterY - contentCenterY;
   ctx.drawImage(img, x, y, w, h);
   return canvas;
 }
@@ -1096,6 +1104,148 @@ async function openContextPreview() {
 document.getElementById('btn-context-preview').onclick = openContextPreview;
 document.getElementById('context-preview-close').onclick = () => {
   document.getElementById('context-preview').classList.add('hidden');
+};
+
+// ================= İMLEÇ RENGİ DEĞİŞTİRİCİ =================
+// Düzenleyicideki "Renklendir" özelliği tek bir cursoru işlerken, burası
+// şu an Roblox'ta GERÇEKTEN aktif olan tüm cursorları (Normal/Tıklama/
+// Yazı/Shift Lock) tek bir renk tonuyla aynı anda boyar ve anında uygular.
+// Bilerek yeniden boyutlandırma/ortalama YAPMAZ — sadece piksellerin rengini
+// değiştirir; böylece cursorun mevcut boyutu/konumu asla bozulmaz.
+let colorChangerState = null; // { images: { kind: HTMLImageElement }, hue }
+
+function colorizedCanvasFor(img, hue) {
+  const canvas = document.createElement('canvas');
+  canvas.width = img.naturalWidth || img.width;
+  canvas.height = img.naturalHeight || img.height;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  colorizeImageData(data, hue);
+  ctx.putImageData(data, 0, 0);
+  return canvas;
+}
+
+function buildColorChangerGrid() {
+  const grid = document.getElementById('color-changer-grid');
+  grid.innerHTML = '';
+  for (const kind of Object.keys(TARGETS)) {
+    if (!colorChangerState.images[kind]) continue;
+    const tile = document.createElement('div');
+    tile.className = 'color-changer-tile';
+    tile.innerHTML = `<canvas width="64" height="64" data-kind="${kind}"></canvas><span>${cursorName(kind)}</span>`;
+    grid.appendChild(tile);
+  }
+}
+
+function drawColorChangerPreviews() {
+  if (!colorChangerState) return;
+  const grid = document.getElementById('color-changer-grid');
+  for (const canvas of grid.querySelectorAll('canvas')) {
+    const kind = canvas.dataset.kind;
+    const img = colorChangerState.images[kind];
+    if (!img) continue;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, 64, 64);
+    const colored = colorizedCanvasFor(img, colorChangerState.hue);
+    // görsel orantısını koruyarak 64x64 önizleme kutusuna sığdır (yalnızca
+    // önizleme amaçlı; kaydedilen dosyanın gerçek boyutu değişmez)
+    const ratio = Math.min(64 / colored.width, 64 / colored.height);
+    const w = colored.width * ratio, h = colored.height * ratio;
+    ctx.drawImage(colored, (64 - w) / 2, (64 - h) / 2, w, h);
+  }
+}
+
+async function openColorChanger() {
+  let state = {};
+  try {
+    state = await window.rbx.currentCursorState();
+  } catch (e) {
+    toast(t('error') + ' ' + errMsg(e), 'error');
+    return;
+  }
+
+  const images = {};
+  for (const kind of Object.keys(TARGETS)) {
+    if (!state[kind]) continue;
+    try {
+      images[kind] = await imageFromPath(state[kind]);
+    } catch (_) { /* bu cursor okunamazsa listeden çıkar */ }
+  }
+
+  if (!Object.keys(images).length) {
+    toast(t('color_changer_none'));
+    return;
+  }
+
+  colorChangerState = { images, hue: 0 };
+  document.getElementById('color-changer-hue').value = '0';
+  buildColorChangerGrid();
+  drawColorChangerPreviews();
+  document.getElementById('color-changer').classList.remove('hidden');
+}
+
+function hideColorChanger() {
+  document.getElementById('color-changer').classList.add('hidden');
+  colorChangerState = null;
+}
+
+document.getElementById('btn-color-changer').onclick = openColorChanger;
+document.getElementById('color-changer-close').onclick = hideColorChanger;
+document.getElementById('color-changer-cancel').onclick = hideColorChanger;
+
+document.getElementById('color-changer-hue').oninput = (e) => {
+  if (!colorChangerState) return;
+  colorChangerState.hue = parseInt(e.target.value, 10) || 0;
+  drawColorChangerPreviews();
+};
+
+// Editördeki "Renk Varyasyonları" ile aynı fikir: hızlı seçim için
+// birkaç hazır renk tonu sunan bir şerit.
+(function buildColorChangerStrip() {
+  const strip = document.getElementById('color-changer-strip');
+  if (!strip) return;
+  const steps = 12;
+  for (let i = 0; i < steps; i++) {
+    const hue = Math.round((i * 360) / steps);
+    const swatch = document.createElement('button');
+    swatch.type = 'button';
+    swatch.className = 'color-swatch';
+    swatch.style.background = `hsl(${hue}, 70%, 55%)`;
+    swatch.title = hue + '°';
+    swatch.onclick = () => {
+      if (!colorChangerState) return;
+      colorChangerState.hue = hue;
+      document.getElementById('color-changer-hue').value = String(hue);
+      drawColorChangerPreviews();
+    };
+    strip.appendChild(swatch);
+  }
+})();
+
+document.getElementById('color-changer-apply').onclick = async () => {
+  if (!colorChangerState) return;
+  const btn = document.getElementById('color-changer-apply');
+  btn.disabled = true;
+  try {
+    for (const [kind, img] of Object.entries(colorChangerState.images)) {
+      const colored = colorizedCanvasFor(img, colorChangerState.hue);
+      const buf = await canvasPngBuffer(colored);
+      await window.rbx.saveProcessedCursor(kind, buf);
+    }
+    await window.rbx.applyCursors();
+    toast(t('color_changer_applied'), 'success');
+    hideColorChanger();
+    await renderCursorGrid();
+    await refreshRobloxStatus();
+    await renderActiveCursor();
+  } catch (e) {
+    toast(t('save_error') + ' ' + errMsg(e), 'error');
+  } finally {
+    btn.disabled = false;
+  }
 };
 
 // ---- başlangıç ----

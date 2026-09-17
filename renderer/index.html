@@ -59,6 +59,7 @@
         </div>
         <div class="header-right">
           <button id="btn-context-preview" class="btn-ghost" data-i18n="context_preview" title="İmleçlerini sahte bir Roblox ekranı üzerinde dene">🖼️ Bağlamda Önizle</button>
+          <button id="btn-color-changer" class="btn-ghost" data-i18n="color_changer" title="Şu an kullandığın tüm imleçlerin rengini tek seferde değiştir">🎨 Renk Değiştir</button>
           <button id="btn-restore" class="btn-ghost" data-i18n="restore" title="Roblox'un kendi orijinal imleçlerine geri dön">Orijinale Dön</button>
         </div>
       </header>
@@ -286,6 +287,32 @@
           </div>
           <button type="button" id="context-shiftlock-btn" class="context-shiftlock-btn" data-i18n-title="context_shiftlock" title="Shift Lock modunu dene">🔒</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- İMLEÇ RENGİ DEĞİŞTİRİCİ: o an kullanılan tüm imleçleri (boyut/konumlarına
+       dokunmadan) tek bir renk tonuyla aynı anda boyayıp anında uygular -->
+  <div id="color-changer" class="modal-overlay hidden">
+    <div class="modal color-changer-modal">
+      <div class="modal-head">
+        <h3 data-i18n="color_changer_title">İmleç Rengini Değiştir</h3>
+        <button id="color-changer-close" class="modal-close" data-i18n-title="close" title="Kapat">✕</button>
+      </div>
+      <div class="modal-body color-changer-body">
+        <p class="muted small" data-i18n="color_changer_help">Şu an kullanılan tüm imleçleri, boyut ve konumlarına dokunmadan seçtiğin renk tonuna boyar.</p>
+        <div class="color-changer-grid" id="color-changer-grid">
+          <!-- JS ile dolduruluyor -->
+        </div>
+        <label class="editor-label">
+          <span data-i18n="hue">Renk Tonu</span>
+          <input type="range" id="color-changer-hue" min="0" max="359" step="1" value="0" />
+        </label>
+        <div class="color-variation-strip" id="color-changer-strip"></div>
+      </div>
+      <div class="modal-actions">
+        <button id="color-changer-cancel" class="btn-ghost" data-i18n="cancel">İptal</button>
+        <button id="color-changer-apply" class="btn-primary" data-i18n="color_changer_apply">🎨 Uygula</button>
       </div>
     </div>
   </div>

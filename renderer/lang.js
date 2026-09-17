@@ -36,7 +36,11 @@ const LANG = {
     'quickswitch_title':'Hızlı Paket Geçişi','quickswitch_desc':'Roblox içindeyken bile Ctrl+Alt+1 / 2 / 3 ile kayıtlı paketler arasında anında geçiş yap.',
     'quickswitch_none':'— Yok —','quickswitch_saved':'Kısayol kaydedildi ✓','quickswitch_applied_toast':'Kısayol (Ctrl+Alt+{slot}) ile "{name}" uygulandı ✓','quickswitch_error_toast':'Kısayol uygulanamadı:',
     'context_preview':'🖼️ Bağlamda Önizle','context_preview_title':'Bağlamda Önizleme','context_preview_help':'Fareni aşağıdaki sahte Roblox ekranı üzerinde gezdirerek imleçlerini gerçek boyutlarında dene.',
-    'context_play':'OYNA','context_chat_placeholder':'Sohbete yaz...','context_shiftlock':'Shift Lock modunu dene','context_no_cursor':'Bu imleç türü için henüz bir görsel kaydedilmemiş.'
+    'context_play':'OYNA','context_chat_placeholder':'Sohbete yaz...','context_shiftlock':'Shift Lock modunu dene','context_no_cursor':'Bu imleç türü için henüz bir görsel kaydedilmemiş.',
+    'color_changer':'🎨 Renk Değiştir','color_changer_title':'İmleç Rengini Değiştir',
+    'color_changer_help':'Şu an kullanılan tüm imleçleri, boyut ve konumlarına dokunmadan seçtiğin renk tonuna boyar.',
+    'color_changer_apply':'🎨 Uygula','color_changer_none':'Renklendirilecek aktif bir imleç bulunamadı. Önce Roblox’ta en az bir imleç uygulanmış olmalı.',
+    'color_changer_applied':'İmleç rengi güncellendi ✓'
   },
   en: {
     'home':'Home','backgrounds':'Backgrounds','packs':'Packs','history':'History','settings':'Settings',
@@ -73,7 +77,11 @@ const LANG = {
     'quickswitch_title':'Quick Pack Switching','quickswitch_desc':'Switch between saved packs instantly with Ctrl+Alt+1 / 2 / 3, even while Roblox is focused.',
     'quickswitch_none':'— None —','quickswitch_saved':'Shortcut saved ✓','quickswitch_applied_toast':'Shortcut (Ctrl+Alt+{slot}) applied "{name}" ✓','quickswitch_error_toast':'Unable to apply shortcut:',
     'context_preview':'🖼️ Preview In Context','context_preview_title':'Context Preview','context_preview_help':'Move your mouse over the mock Roblox screen below to try your cursors at real size.',
-    'context_play':'PLAY','context_chat_placeholder':'Type in chat...','context_shiftlock':'Try Shift Lock mode','context_no_cursor':'No image saved yet for this cursor type.'
+    'context_play':'PLAY','context_chat_placeholder':'Type in chat...','context_shiftlock':'Try Shift Lock mode','context_no_cursor':'No image saved yet for this cursor type.',
+    'color_changer':'🎨 Change Color','color_changer_title':'Change Cursor Color',
+    'color_changer_help':'Recolors all of your currently used cursors at once, without changing their size or position.',
+    'color_changer_apply':'🎨 Apply','color_changer_none':'No active cursor found to recolor. Apply at least one cursor in Roblox first.',
+    'color_changer_applied':'Cursor color updated ✓'
   }
 };
 
