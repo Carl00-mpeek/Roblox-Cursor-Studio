@@ -1,0 +1,64 @@
+name: Windows Setup.exe Oluştur
+
+# Bu iş akışı GitHub'ın kendi Windows sunucusunda (senin bilgisayarında değil)
+# çalışır, electron-builder ile setup.exe + portable.exe üretir.
+#
+# Çalıştırma şekilleri:
+#  1) "v" ile başlayan bir tag push'ladığında (örn. v1.0.0) otomatik çalışır
+#     ve çıktıları doğrudan bir GitHub Release'e ekler.
+#     Örnek:  git tag v1.0.0 && git push origin v1.0.0
+#  2) Actions sekmesinden elle "Run workflow" ile de tetiklenebilir
+#     (workflow_dispatch) — bu durumda çıktı sadece "Artifacts" olarak,
+#     Release oluşturmadan indirilebilir.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Kodu indir
+        uses: actions/checkout@v4
+
+      - name: Node.js kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # NOT: Bu iş akışı, package.json'ın repo kökünde olduğunu varsayar.
+      # Eğer repo kökünde "rbx-cursor-studio" adlı bir alt klasör varsa,
+      # aşağıdaki "working-directory: rbx-cursor-studio" satırlarındaki
+      # yorumu kaldır (# işaretini sil).
+      - name: package.json gecerliligini kontrol et
+        run: node -e "JSON.parse(require('fs').readFileSync('package.json', 'utf8')); console.log('package.json gecerli.')"
+        # working-directory: rbx-cursor-studio
+
+      - name: Bağımlılıkları kur
+        run: npm install
+        # working-directory: rbx-cursor-studio
+
+      - name: setup.exe / portable.exe oluştur
+        run: npm run dist
+        # working-directory: rbx-cursor-studio
+
+      - name: Çıktıları Artifact olarak yükle
+        uses: actions/upload-artifact@v4
+        with:
+          name: RBX-Cursor-Studio-Windows
+          path: |
+            dist/*.exe
+            !dist/**/*.blockmap
+
+      - name: Tag push edildiyse GitHub Release oluştur
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.exe
+          generate_release_notes: true
