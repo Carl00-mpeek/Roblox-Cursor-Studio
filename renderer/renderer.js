@@ -794,6 +794,11 @@ function openNewPackDialog() {
   if (!modal || !input) return;
   modal.classList.remove('hidden');
   input.value = '';
+  // Önceki başarılı kayıttan sonra "Oluştur" butonu disabled kalmış olabilir
+  // (submit() başarı durumunda disabled'ı geri açmıyordu). Modal her açıldığında
+  // burada sıfırlanmazsa, ikinci kullanımda buton tıklamalara tepki vermiyordu.
+  const createBtn = document.getElementById('new-pack-create');
+  if (createBtn) createBtn.disabled = false;
   document.querySelectorAll('.new-pack-cursor').forEach(el => { el.checked = true; });
   const first = document.querySelector('.new-pack-cursor');
   if (first) first.focus();

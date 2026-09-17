@@ -695,6 +695,13 @@ async function applyPackInstant(name) {
         } catch (err) { lastError = err; }
       }
       if (lastError) throw lastError;
+      // ÖNEMLİ: CURRENT (staging) klasörünü de güncelle. Önceden burası
+      // atlanıyordu; bu yüzden kullanıcı editörden özel bir cursor kaydedip
+      // (CURRENT dolup) sonra Paketler ekranından başka bir paket uyguladığında,
+      // 5 saniyede bir çalışan otomatik onarım (maybeAutoReinstall) Roblox'taki
+      // dosyaların CURRENT ile uyuşmadığını görüp az önce uygulanan paketi
+      // sessizce eski CURRENT içeriğiyle (önceki özel cursor) eziyordu.
+      try { fs.copyFileSync(item.src, path.join(CURRENT, item.file)); } catch (_) { /* CURRENT güncellenemezse paket uygulaması yine de geçerli sayılır */ }
     }
     cfg.lastPack = name;
     cfg.lastKnownVersion = active.version;
