@@ -49,6 +49,12 @@ A lightweight Windows tool for customizing Roblox cursors.
 - Back up your original Roblox cursors and restore them with one click
 - A small, draggable live status badge shows whether Roblox is currently running
 
+### 🌈 Bulk Color Changer
+- **Change Color** — recolor every currently active cursor (Normal, Click, Text, Shift Lock) at once with a single hue
+- Only changes color, never size or position — no re-centering needed
+- Live preview slider plus a quick-pick color strip
+- Applying instantly saves and installs all cursors to Roblox
+
 ### 🎬 Personalization
 - Swap the app's own background for your own image, or reset to default
 - Clean, modern dark-themed interface throughout
@@ -101,7 +107,8 @@ The latest release has been scanned with VirusTotal.
 
 - [🔍 View VirusTotal scan results](https://www.virustotal.com/gui/file/84e62bef7871c4ab44ca101b21ac84b84cea73d73513b36072f14e1c4accfb19?nocache=1)
 - [🔍 View VirusTotal scan results for Setup](https://www.virustotal.com/gui/file/ec33797c40e25e2f620e631eb58119b4f1f0d69c2e52c1c891b7fc7f2cab5fbf?nocache=1)
-
+- [🔍 View VirusTotal scan results for Portable]()
+- 
 > **⚠️ VirusTotal Notice**
 > This file is flagged by **2/68** security vendors (DeepInstinct and Zillya) as a **false positive**.
 > This is a common occurrence with newly built, unsigned Electron applications and installers. The "Downloader.Offloader" label is typically triggered by the normal file extraction behavior of the setup.
