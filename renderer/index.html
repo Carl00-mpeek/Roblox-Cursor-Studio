@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>RBX Cursor Studio</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="bg-layer"></div>
+  <div id="bg-overlay"></div>
+
+  <div class="titlebar">
+    <div class="titlebar-drag">
+      <img class="tb-logo" src="../assets/backgrounds/logo.png" title="RBX Cursor Studio — Yapımcı: Carl" />
+      <span>RBX Cursor Studio</span>
+    </div>
+    <div class="tb-controls">
+      <button id="tb-min" data-i18n-title="minimize" title="Küçült">—</button>
+      <button id="tb-max" data-i18n-title="maximize" title="Büyüt">▢</button>
+      <button id="tb-close" data-i18n-title="close" data-i18n-title="close" title="Kapat">✕</button>
+    </div>
+  </div>
+
+  <div class="app">
+    <!-- SOL RAY MENÜ: ortalanmış ikon butonları -->
+    <nav class="sidebar">
+      <img class="sidebar-logo" src="../assets/backgrounds/logo.png" title="RBX Cursor Studio — Yapımcı: Carl" />
+
+      <div class="side-nav">
+        <button class="side-btn active" data-view="home" data-i18n-title="home" title="Ana Sayfa">
+          <span class="side-icon">🏠</span>
+          <span class="side-label" data-i18n="home">Ana Sayfa</span>
+        </button>
+        <button class="side-btn" data-view="backgrounds" data-i18n-title="backgrounds" title="Arkaplanlar">
+          <span class="side-icon">🎬</span>
+          <span class="side-label" data-i18n="backgrounds">Arkaplan</span>
+        </button>
+        <button class="side-btn" data-view="packs" data-i18n-title="packs" title="Kayıtlı Paketler">
+          <span class="side-icon">📦</span>
+          <span class="side-label" data-i18n="packs">Paketler</span>
+        </button>
+        <button class="side-btn" data-view="history" data-i18n-title="history" title="Geçmiş">
+          <span class="side-icon">🕓</span>
+          <span class="side-label" data-i18n="history">Geçmiş</span>
+        </button>
+        <button class="side-btn" data-view="settings" data-i18n-title="settings" title="Ayarlar">
+          <span class="side-icon">⚙️</span>
+          <span class="side-label" data-i18n="settings">Ayarlar</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- ANA PANEL -->
+    <main class="main">
+      <header class="main-header">
+        <div>
+          <h1 data-i18n="welcome">Hoş geldin, Carl</h1>
+          <p class="muted" data-i18n="welcome_sub">İmleçlerini kişiselleştirmeye devam et</p>
+        </div>
+        <div class="header-right">
+          <button id="btn-context-preview" class="btn-ghost" data-i18n="context_preview" title="İmleçlerini sahte bir Roblox ekranı üzerinde dene">🖼️ Bağlamda Önizle</button>
+          <button id="btn-restore" class="btn-ghost" data-i18n="restore" title="Roblox'un kendi orijinal imleçlerine geri dön">Orijinale Dön</button>
+        </div>
+      </header>
+
+      <section class="section">
+        <div class="section-head active-head">
+          <div class="section-title-block">
+            <h2 data-i18n="active_title">Şu An Aktif Olan Cursor</h2>
+            <span class="muted small" id="active-cursor-sub">Kontrol ediliyor…</span>
+          </div>
+          <button id="btn-refresh-active" class="icon-refresh" data-i18n-title="refresh" data-i18n-aria="refresh" title="Aktif cursorları yenile" aria-label="Aktif cursorları yenile">↻</button>
+        </div>
+        <div class="active-cursor-row" id="active-cursor-row">
+          <!-- JS ile dolduruluyor -->
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div class="section-title-block">
+            <h2 data-i18n="my_cursors">İmleçlerim</h2>
+            <span class="muted small" data-i18n="my_cursors_sub">Yeni bir görsel seçmek için tıkla — önceki seçimlerini <b>Geçmiş</b> sekmesinde bulabilirsin</span>
+          </div>
+        </div>
+        <div class="cursor-grid" id="cursor-grid">
+          <!-- JS ile dolduruluyor -->
+        </div>
+        <div class="home-save-row">
+          <button id="btn-save-pack-home" class="btn-primary small" data-i18n="save">Kaydet</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- SAĞ ALT: küçük Roblox durum rozeti -->
+  <div id="roblox-float-badge" class="float-badge">
+    <span class="float-dot" id="float-dot"></span>
+    <span id="float-text">Kontrol ediliyor…</span>
+  </div>
+
+  <!-- ARKAPLANLAR: tam ekran panel -->
+  <div id="overlay-backgrounds" class="view-overlay hidden">
+    <div class="view-overlay-head">
+      <h2 data-i18n="backgrounds">Arkaplanlar</h2>
+      <div class="view-overlay-actions">
+        <button id="btn-bg-default" class="btn-ghost small" data-i18n="background_default">Varsayılana Dön</button>
+        <button id="btn-import-bg" class="btn-ghost small" data-i18n="import">İçe Aktar</button>
+        <button class="view-overlay-close" data-close-view data-i18n-title="close" title="Kapat">✕</button>
+      </div>
+    </div>
+    <div class="nolabel-grid" id="bg-list">
+      <!-- JS ile dolduruluyor -->
+    </div>
+  </div>
+
+  <!-- KAYITLI PAKETLER: tam ekran panel -->
+  <div id="overlay-packs" class="view-overlay hidden">
+    <div class="view-overlay-head">
+      <h2 data-i18n="saved_packs">Kayıtlı Paketler</h2>
+      <div class="view-overlay-actions">
+        <button id="btn-import-pack" class="btn-ghost small" data-i18n="import_pack">📥 İçe Aktar</button>
+        <button id="btn-save-pack" class="btn-primary small" data-i18n="new_pack">+ Yeni Paket</button>
+        <button class="view-overlay-close" data-close-view data-i18n-title="close" title="Kapat">✕</button>
+      </div>
+    </div>
+    <p class="muted small pack-dropzone-hint" data-i18n="pack_dropzone_hint">Bir arkadaşının paylaştığı .rbxcursor / .zip dosyasını buraya sürükleyip bırakabilirsin.</p>
+    <div class="pack-grid" id="pack-grid">
+      <!-- JS ile dolduruluyor -->
+    </div>
+  </div>
+
+  <!-- GEÇMİŞ: tam ekran panel -->
+  <div id="overlay-history" class="view-overlay hidden">
+    <div class="view-overlay-head">
+      <h2 data-i18n="history_title">Geçmiş</h2>
+      <div class="view-overlay-actions">
+        <button class="view-overlay-close" data-close-view data-i18n-title="close" title="Kapat">✕</button>
+      </div>
+    </div>
+    <div class="pack-grid" id="history-grid">
+      <!-- JS ile dolduruluyor -->
+    </div>
+  </div>
+
+  <!-- AYARLAR: tam ekran panel -->
+  <div id="overlay-settings" class="view-overlay hidden">
+    <div class="view-overlay-head">
+      <h2 data-i18n="settings_title">Ayarlar</h2>
+      <div class="view-overlay-actions">
+        <button class="view-overlay-close" data-close-view data-i18n-title="close" title="Kapat">✕</button>
+      </div>
+    </div>
+    <div class="settings-panel">
+      <div class="settings-row">
+        <div>
+          <strong data-i18n="language">Dil / Language</strong>
+          <p class="muted small">Türkçe / English</p>
+        </div>
+        <select id="language-select" class="settings-select">
+          <option value="tr" data-i18n="turkish">Türkçe</option>
+          <option value="en" data-i18n="english">English</option>
+        </select>
+      </div>
+      <div class="settings-row">
+        <div>
+          <strong data-i18n="roblox_version">Roblox Sürümü</strong>
+          <p class="muted small" id="settings-roblox-version">Kontrol ediliyor…</p>
+        </div>
+      </div>
+      <div class="settings-row">
+        <div>
+          <strong data-i18n="auto_reinstall">Otomatik Düzeltme</strong>
+          <p class="muted small" data-i18n="auto_reinstall_desc">Roblox güncellendiğinde kayıtlı imleçlerini yeni sürüme otomatik olarak yeniden kurar.</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="toggle-auto-reinstall" />
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+        </label>
+      </div>
+      <div class="settings-row">
+        <div>
+          <strong data-i18n="start_boot">Windows Başlangıcında Aç</strong>
+          <p class="muted small" data-i18n="start_boot_desc">Bilgisayar açıldığında uygulama otomatik olarak başlasın.</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="toggle-start-on-boot" />
+          <span class="switch-track"><span class="switch-thumb"></span></span>
+        </label>
+      </div>
+      <div class="settings-row settings-quickswitch">
+        <div>
+          <strong data-i18n="quickswitch_title">Hızlı Paket Geçişi</strong>
+          <p class="muted small" data-i18n="quickswitch_desc">Roblox içindeyken bile Ctrl+Alt+1 / 2 / 3 ile kayıtlı paketler arasında anında geçiş yap.</p>
+        </div>
+        <div class="quickswitch-grid">
+          <label class="quickswitch-slot">
+            <span>Ctrl+Alt+1</span>
+            <select id="quickswitch-1" class="settings-select"></select>
+          </label>
+          <label class="quickswitch-slot">
+            <span>Ctrl+Alt+2</span>
+            <select id="quickswitch-2" class="settings-select"></select>
+          </label>
+          <label class="quickswitch-slot">
+            <span>Ctrl+Alt+3</span>
+            <select id="quickswitch-3" class="settings-select"></select>
+          </label>
+        </div>
+      </div>
+      <div class="settings-row settings-about">
+        <div>
+          <strong data-i18n="about">Hakkında</strong>
+          <p class="muted small" data-i18n="about_text">
+            RBX Cursor Studio — Yapımcı: <b>Carl</b><br />
+            © 2026 Carl. Tüm hakları saklıdır. Bu yazılımın yapımcının
+            yazılı izni olmadan kopyalanması, değiştirilip dağıtılması
+            veya paylaşılması yasaktır.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- İMLEÇ DÜZENLEYİCİ (otomatik ortalama + manuel konum/boyut) -->
+  <div id="cursor-editor" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-head">
+        <h3 id="editor-title" data-i18n="editor_title">İmleci Düzenle</h3>
+        <button id="editor-close" class="modal-close" data-i18n-title="close" title="Kapat">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="editor-canvas-wrap">
+          <canvas id="editor-canvas" width="64" height="64"></canvas>
+        </div>
+        <div class="editor-controls">
+          <label class="editor-label">
+            <span data-i18n="size">Boyut (büyüt / küçült)</span>
+            <input type="range" id="editor-scale" min="0.4" max="3" step="0.05" value="1" />
+          </label>
+          <div class="editor-btn-row">
+            <button id="editor-auto-fit" class="btn-ghost small" data-i18n="auto_fit">✨ Otomatik Boyutlandır + Ortala</button>
+            <button id="editor-center" class="btn-ghost small" data-i18n="center">🎯 Sadece Ortala</button>
+            <button id="editor-reset-size" class="btn-ghost small" data-i18n="reset_size">↺ Boyutu Sıfırla</button>
+          </div>
+          <p class="muted small" data-i18n="editor_help">Yeni görseller açıldığında otomatik olarak 64×64 alana dengeli biçimde sığdırılır ve ortalanır. İstersen sürükleyerek konumu değiştirebilir, boyut çubuğuyla büyütüp küçültebilirsin. Piksel netliğini korumak için yumuşatma kapalıdır.</p>
+
+          <div class="editor-color-row">
+            <label class="editor-color-toggle">
+              <input type="checkbox" id="editor-colorize-toggle" />
+              <span data-i18n="colorize">Renklendir (siyah-beyazdan renk üret)</span>
+            </label>
+            <label class="editor-label" id="editor-hue-wrap">
+              <span data-i18n="hue">Renk Tonu</span>
+              <input type="range" id="editor-hue" min="0" max="359" step="1" value="0" />
+            </label>
+            <button id="editor-color-variations" type="button" class="btn-ghost small" data-i18n="color_variations">🎨 Renk Varyasyonları Oluştur</button>
+            <div id="color-variation-strip" class="color-variation-strip hidden"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="editor-cancel" class="btn-ghost" data-i18n="cancel">İptal</button>
+        <button id="editor-save" class="btn-primary" data-i18n="save">Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BAĞLAMDA ÖNİZLEME: sahte bir Roblox arayüzü üzerinde gerçek imleçleri dene -->
+  <div id="context-preview" class="modal-overlay hidden">
+    <div class="modal context-modal">
+      <div class="modal-head">
+        <h3 data-i18n="context_preview_title">Bağlamda Önizleme</h3>
+        <button id="context-preview-close" class="modal-close" data-i18n-title="close" title="Kapat">✕</button>
+      </div>
+      <div class="modal-body context-body">
+        <p class="muted small" data-i18n="context_preview_help">Fareni aşağıdaki sahte Roblox ekranı üzerinde gezdirerek imleçlerini gerçek boyutlarında dene.</p>
+        <div class="context-scene" id="context-scene">
+          <div class="context-hud">
+            <div class="context-hud-badge">❤️ 100</div>
+            <div class="context-hud-badge">🪙 1.240</div>
+          </div>
+          <button type="button" class="context-play-btn" id="context-play-btn" data-i18n="context_play">OYNA</button>
+          <div class="context-chat">
+            <input type="text" id="context-chat-input" class="context-chat-input" data-i18n-placeholder="context_chat_placeholder" placeholder="Sohbete yaz..." />
+          </div>
+          <button type="button" id="context-shiftlock-btn" class="context-shiftlock-btn" data-i18n-title="context_shiftlock" title="Shift Lock modunu dene">🔒</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script src="lang.js"></script>
+  <script src="cur-parser.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>
