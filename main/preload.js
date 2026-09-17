@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('rbx', {
   // roblox durumu
   robloxStatus: () => ipcRenderer.invoke('roblox:status'),
   activeCursors: () => ipcRenderer.invoke('roblox:active-cursors'),
+  cursorReferencePaths: () => ipcRenderer.invoke('cursor:reference-paths'),
 
   // ayarlar: başlangıçta aç
   getStartOnBoot: () => ipcRenderer.invoke('app:get-start-on-boot'),
@@ -32,8 +33,10 @@ contextBridge.exposeInMainWorld('rbx', {
 
   // paketler
   listPacks: () => ipcRenderer.invoke('pack:list'),
-  savePackAs: (name) => ipcRenderer.invoke('pack:save-as', name),
+  savePackAs: (name, selectedKinds) => ipcRenderer.invoke('pack:save-as', name, selectedKinds),
+  saveActiveCursorsAsPack: (name) => ipcRenderer.invoke('pack:save-active-as', name),
   applyPackToCurrent: (name) => ipcRenderer.invoke('pack:apply-to-current', name),
+  applyPackInstant: (name) => ipcRenderer.invoke('pack:apply-instant', name),
   getPackCursors: (name) => ipcRenderer.invoke('pack:get-cursors', name),
   saveNormalizedPackCursor: (name, kind, arrayBuffer) => ipcRenderer.invoke('pack:save-normalized-cursor', name, kind, arrayBuffer),
   deletePack: (name) => ipcRenderer.invoke('pack:delete', name),
@@ -46,6 +49,7 @@ contextBridge.exposeInMainWorld('rbx', {
   // hızlı geçiş kısayolları (Ctrl+Alt+1/2/3)
   getQuickSwitch: () => ipcRenderer.invoke('quickswitch:get'),
   setQuickSwitch: (partial) => ipcRenderer.invoke('quickswitch:set', partial),
+  setQuickSwitchKey: (slot, accelerator) => ipcRenderer.invoke('quickswitch:set-key', slot, accelerator),
   onQuickSwitchApplied: (cb) => ipcRenderer.on('quickswitch:applied', (_e, data) => cb(data)),
   onQuickSwitchError: (cb) => ipcRenderer.on('quickswitch:error', (_e, data) => cb(data)),
 

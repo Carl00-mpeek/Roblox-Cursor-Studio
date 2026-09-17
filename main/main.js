@@ -1,4 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog, shell, globalShortcut } = require('electron');
+const crypto = require('crypto');
+const { execFileSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const { buildZip, parseZip } = require('./zip-lite');
@@ -57,6 +59,26 @@ const TARGETS = {
   shiftlock: 'MouseLockedCursor.png'
 };
 
+const CURSOR_CANVAS_SIZES = { arrow: 64, click: 64, text: 64, shiftlock: 32 };
+
+// Roblox'ta Shift Lock cursoru diğer cursorlardan farklı bir konumdadır.
+// MouseLockedCursor.png, KeyboardMouse altında değil, doğrudan
+// <version>\content\textures\MouseLockedCursor.png yolundadır.
+// Arrow/Click/Text ise KeyboardMouse klasöründedir.
+const ROBLOX_CURSOR_SUBDIRS = {
+  arrow: path.join('content', 'textures', 'Cursors', 'KeyboardMouse'),
+  click: path.join('content', 'textures', 'Cursors', 'KeyboardMouse'),
+  text: path.join('content', 'textures', 'Cursors', 'KeyboardMouse'),
+  shiftlock: path.join('content', 'textures')
+};
+
+function robloxCursorPath(dirInfo, kind) {
+  if (!dirInfo || !TARGETS[kind]) return null;
+  const subdir = ROBLOX_CURSOR_SUBDIRS[kind];
+  if (!subdir) return null;
+  return path.join(dirInfo.versionDir, subdir, TARGETS[kind]);
+}
+
 const DEFAULT_CFG = {
   theme: 'dark',
   accent: '#7c9cff',
@@ -75,7 +97,8 @@ const DEFAULT_CFG = {
   cursorReference: 'roblox-defaults',
   // Global kısayol (Ctrl+Alt+1/2/3) ile anında geçilecek paketler.
   // Boş string = o slota atanmış paket yok.
-  quickSwitch: { '1': '', '2': '', '3': '' }
+  quickSwitch: { '1': '', '2': '', '3': '' },
+  quickSwitchKeys: { '1': 'Control+Alt+1', '2': 'Control+Alt+2', '3': 'Control+Alt+3' }
 };
 
 function readCfg() {
@@ -94,23 +117,151 @@ let cfg = readCfg();
 let mainWindow = null;
 
 // ---------- Roblox sürüm/imleç klasörlerini bul ----------
+const ROBLOX_PROCESS = 'RobloxPlayerBeta.exe';
+const COPY_RETRIES = 6;
+const COPY_RETRY_DELAYS = [100, 200, 400, 800, 1200, 1800];
+let applyLock = Promise.resolve();
+
+function validateCursorPngBuffer(kind, buf) {
+  if (!Buffer.isBuffer(buf) || buf.length < 33) return { ok: false, reason: 'PNG verisi eksik veya bozuk.' };
+  const signature = Buffer.from([137,80,78,71,13,10,26,10]);
+  if (!buf.subarray(0, 8).equals(signature)) return { ok: false, reason: 'İmleç dosyası geçerli bir PNG değil.' };
+  if (buf.toString('ascii', 12, 16) !== 'IHDR') return { ok: false, reason: 'PNG IHDR bölümü bulunamadı.' };
+  const width = buf.readUInt32BE(16);
+  const height = buf.readUInt32BE(20);
+  const expected = CURSOR_CANVAS_SIZES[kind] || 64;
+  if (width !== expected || height !== expected) {
+    return { ok: false, reason: `${TARGETS[kind]} ${expected}x${expected} olmalı; alınan ${width}x${height}.` };
+  }
+  return { ok: true, width, height };
+}
+
+function validateCursorFile(kind, filePath) {
+  try {
+    const result = validateCursorPngBuffer(kind, fs.readFileSync(filePath));
+    return result.ok;
+  } catch (_) {
+    return false;
+  }
+}
+
+function fileSha256(filePath) {
+  const hash = crypto.createHash('sha256');
+  hash.update(fs.readFileSync(filePath));
+  return hash.digest('hex');
+}
+
+function sameFileHash(a, b) {
+  try {
+    return fs.existsSync(a) && fs.existsSync(b) && fileSha256(a) === fileSha256(b);
+  } catch (_) {
+    return false;
+  }
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function copyFileVerified(src, dst) {
+  if (!fs.existsSync(src)) throw new Error(`Kaynak dosya bulunamadı: ${src}`);
+  fs.mkdirSync(path.dirname(dst), { recursive: true });
+
+  let lastError = null;
+  for (let attempt = 0; attempt < COPY_RETRIES; attempt++) {
+    try {
+      // Önce aynı klasörde geçici dosyaya yaz. Böylece yarım PNG'nin hedefte
+      // kalma ihtimalini azaltırız. Hedef kilitliyse sadece son kopyalama
+      // adımı retry edilir.
+      const tmp = `${dst}.rbxcs-tmp-${process.pid}-${Date.now()}-${attempt}`;
+      fs.copyFileSync(src, tmp);
+      try {
+        fs.copyFileSync(tmp, dst);
+      } finally {
+        try { fs.unlinkSync(tmp); } catch (_) {}
+      }
+      if (sameFileHash(src, dst)) return true;
+      throw new Error('Kopyalama sonrası SHA-256 doğrulaması başarısız.');
+    } catch (err) {
+      lastError = err;
+      if (attempt < COPY_RETRIES - 1) await sleep(COPY_RETRY_DELAYS[attempt] || 500);
+    }
+  }
+  throw lastError || new Error(`Dosya kopyalanamadı: ${dst}`);
+}
+
+function runningRobloxExecutables() {
+  if (process.platform !== 'win32') return [];
+  const paths = new Set();
+
+  // Önce CIM/PowerShell. Roblox güncellendiğinde mtime yerine gerçekten
+  // çalışan RobloxPlayerBeta.exe'nin bulunduğu version klasörünü seçeriz.
+  try {
+    const ps = [
+      '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command',
+      `(Get-CimInstance Win32_Process -Filter \"Name='${ROBLOX_PROCESS}'\" -ErrorAction SilentlyContinue | Select-Object -ExpandProperty ExecutablePath)`
+    ];
+    const out = execFileSync('powershell.exe', ps, { encoding: 'utf8', windowsHide: true, timeout: 1500 });
+    for (const line of String(out).split(/\r?\n/).map(x => x.trim()).filter(Boolean)) {
+      if (path.basename(line).toLowerCase() === ROBLOX_PROCESS.toLowerCase() && fs.existsSync(line)) paths.add(path.normalize(line));
+    }
+  } catch (_) { /* fallback aşağıda */ }
+
+  // Eski Windows kurulumlarında PowerShell/CIM erişilemezse tasklist ile
+  // sadece sürecin çalıştığını doğrularız; version seçimi yine dosya yapısına
+  // göre yapılır.
+  if (!paths.size) {
+    try {
+      const out = execFileSync('tasklist.exe', ['/FI', `IMAGENAME eq ${ROBLOX_PROCESS}`, '/FO', 'CSV', '/NH'], {
+        encoding: 'utf8', windowsHide: true, timeout: 1000
+      });
+      if (!/No tasks are running/i.test(String(out)) && new RegExp(ROBLOX_PROCESS, 'i').test(String(out))) {
+        return { paths: [], running: true };
+      }
+    } catch (_) {}
+  }
+
+  return { paths: Array.from(paths), running: paths.size > 0 };
+}
+
 function robloxDirs() {
   const root = path.join(process.env.LOCALAPPDATA || '', 'Roblox', 'Versions');
   if (!fs.existsSync(root)) return [];
+
+  const running = runningRobloxExecutables();
+  const runningVersionDirs = new Set(
+    running.paths.map(p => path.dirname(p)).map(p => path.normalize(p).toLowerCase())
+  );
+
   const out = [];
   for (const v of fs.readdirSync(root)) {
     const versionDir = path.join(root, v);
+    let stat;
+    try { stat = fs.statSync(versionDir); } catch (_) { continue; }
+    if (!stat.isDirectory()) continue;
+
     const cursorDir = path.join(versionDir, 'content', 'textures', 'Cursors', 'KeyboardMouse');
-    if (fs.existsSync(cursorDir) && fs.statSync(cursorDir).isDirectory()) {
-      out.push({
-        mtime: fs.statSync(versionDir).mtimeMs,
-        version: v,
-        versionDir,
-        cursorDir
-      });
-    }
+    const exePath = path.join(versionDir, ROBLOX_PROCESS);
+    if (!fs.existsSync(cursorDir) || !fs.statSync(cursorDir).isDirectory()) continue;
+
+    out.push({
+      mtime: stat.mtimeMs,
+      version: v,
+      versionDir,
+      cursorDir,
+      exePath,
+      hasExecutable: fs.existsSync(exePath),
+      isRunning: runningVersionDirs.has(path.normalize(versionDir).toLowerCase())
+    });
   }
-  out.sort((a, b) => b.mtime - a.mtime);
+
+  // Öncelik sırası: gerçekten çalışan version > RobloxPlayerBeta.exe içeren
+  // version > mtime. mtime yalnızca güvenli fallback'tir.
+  out.sort((a, b) => {
+    if (a.isRunning !== b.isRunning) return a.isRunning ? -1 : 1;
+    if (a.hasExecutable !== b.hasExecutable) return a.hasExecutable ? -1 : 1;
+    return b.mtime - a.mtime;
+  });
   return out;
 }
 
@@ -119,40 +270,59 @@ function currentCursorDir() {
   return dirs.length ? dirs[0].cursorDir : null;
 }
 
-// ---------- Otomatik Düzeltme ----------
-// Roblox güncellendiğinde Windows yeni bir "Versions/version-xxxx" klasörü
-// oluşturur ve imleçler orijinal haline döner. Bu fonksiyon sürüm
-// değişikliğini fark edip (ayar açıksa) kayıtlı imleçleri otomatik olarak
-// yeniden kurar.
-function maybeAutoReinstall(dirs) {
-  if (!dirs || !dirs.length) return { performed: false };
-  const latestVersion = dirs[0].version;
+function currentRobloxDirInfo() {
+  const dirs = robloxDirs();
+  return dirs.length ? dirs[0] : null;
+}
 
-  if (!cfg.lastKnownVersion) {
-    cfg.lastKnownVersion = latestVersion;
-    writeCfg(cfg);
+// ---------- Otomatik Düzeltme ----------
+// Sadece version klasörü değiştiğinde değil; aktif Roblox cursor dosyaları
+// beklenen CURRENT dosyalarıyla uyuşmadığında da onarım yapar. Böylece başka
+// bir mod/temizleyici dosyaları değiştirse bile sistem kendini toparlayabilir.
+async function maybeAutoReinstall(dirs) {
+  if (!dirs || !dirs.length || !cfg.autoReinstall) return { performed: false };
+
+  const active = dirs[0];
+  const latestVersion = active.version;
+  const hasCurrent = Object.values(TARGETS).some(file => fs.existsSync(path.join(CURRENT, file)));
+  if (!hasCurrent) {
+    if (cfg.lastKnownVersion !== latestVersion) {
+      cfg.lastKnownVersion = latestVersion;
+      writeCfg(cfg);
+    }
     return { performed: false };
   }
 
-  if (cfg.lastKnownVersion === latestVersion) return { performed: false };
+  let needsRepair = cfg.lastKnownVersion !== latestVersion;
+  for (const file of Object.values(TARGETS)) {
+    const src = path.join(CURRENT, file);
+    const kind = Object.keys(TARGETS).find(k => TARGETS[k] === file);
+    const dst = robloxCursorPath(active, kind);
+    if (fs.existsSync(src) && !sameFileHash(src, dst)) {
+      needsRepair = true;
+      break;
+    }
+  }
 
-  // sürüm değişti
-  if (!cfg.autoReinstall) {
-    cfg.lastKnownVersion = latestVersion;
-    writeCfg(cfg);
+  if (!needsRepair) {
+    if (cfg.lastKnownVersion !== latestVersion) {
+      cfg.lastKnownVersion = latestVersion;
+      writeCfg(cfg);
+    }
     return { performed: false };
   }
 
   try {
-    const count = applyCurrentToRoblox();
+    const count = await applyCurrentToRoblox();
     cfg.lastKnownVersion = latestVersion;
     writeCfg(cfg);
     return { performed: true, count };
   } catch (err) {
+    // Hedef dosyalar Roblox tarafından geçici olarak kilitlenmiş olabilir.
+    // Version bilgisini başarısız denemede ilerletmiyoruz; sonraki 5 sn
+    // kontrolü tekrar deneyebilsin.
     logError(err);
-    cfg.lastKnownVersion = latestVersion;
-    writeCfg(cfg);
-    return { performed: false, error: err.message };
+    return { performed: false, error: err.message, retrying: true };
   }
 }
 
@@ -219,71 +389,140 @@ function deleteHistoryItem(id) {
 }
 
 // ---------- Yedekleme / Uygulama / Geri Alma ----------
-function backupIfNeeded() {
-  const dir = currentCursorDir();
-  if (!dir) throw new Error('Roblox imleç klasörü bulunamadı. Roblox yüklü ve en az bir kez çalıştırılmış olmalı.');
-  for (const file of Object.values(TARGETS)) {
-    const src = path.join(dir, file);
+async function backupIfNeeded() {
+  const info = currentRobloxDirInfo();
+  if (!info) throw new Error('Roblox imleç klasörü bulunamadı. Roblox yüklü ve en az bir kez çalıştırılmış olmalı.');
+  for (const [kind, file] of Object.entries(TARGETS)) {
+    const src = robloxCursorPath(info, kind);
     const dst = path.join(BACKUP, file);
     if (fs.existsSync(src) && !fs.existsSync(dst)) {
-      fs.copyFileSync(src, dst);
+      await copyFileVerified(src, dst);
     }
   }
-  return dir;
+  return info;
 }
 
-function applyCurrentToRoblox() {
-  const dir = backupIfNeeded();
-  let appliedCount = 0;
-  for (const [kind, file] of Object.entries(TARGETS)) {
-    const src = path.join(CURRENT, file);
-    if (fs.existsSync(src)) {
-      fs.copyFileSync(src, path.join(dir, file));
-      appliedCount++;
+async function applyCurrentToRoblox() {
+  // Kullanıcı aynı anda Kaydet/Uygula, paket geçişi ve otomatik onarım
+  // tetikleyebilir. Tek bir yazma kuyruğu kullanarak iki işlemin birbirinin
+  // dosyasını ezmesini önlüyoruz.
+  let release;
+  const previous = applyLock;
+  applyLock = new Promise(resolve => { release = resolve; });
+  await previous;
+  try {
+    const dirInfo = await backupIfNeeded();
+    const pending = [];
+    for (const [kind, file] of Object.entries(TARGETS)) {
+      const src = path.join(CURRENT, file);
+      if (!fs.existsSync(src)) continue;
+      if (!validateCursorFile(kind, src)) {
+        throw new Error(`${file} geçersiz veya beklenen ${CURSOR_CANVAS_SIZES[kind]}x${CURSOR_CANVAS_SIZES[kind]} PNG değil.`);
+      }
+      pending.push({ kind, file, src, dst: robloxCursorPath(dirInfo, kind) });
     }
+    if (!pending.length) {
+      throw new Error('Uygulanacak imleç bulunamadı. Önce en az bir imleç seçin.');
+    }
+
+    const rollback = [];
+    try {
+      for (const item of pending) {
+        const backupFile = path.join(BACKUP, item.file);
+        if (fs.existsSync(item.dst) && fs.existsSync(backupFile)) {
+          rollback.push({ dst: item.dst, backupFile });
+        }
+        await copyFileVerified(item.src, item.dst);
+      }
+    } catch (err) {
+      // Bir dosya kilitliyse diğer dosyaları yarım uygulanmış halde bırakma.
+      for (const item of rollback.reverse()) {
+        try { await copyFileVerified(item.backupFile, item.dst); } catch (rollbackErr) { logError(rollbackErr); }
+      }
+      throw err;
+    }
+
+    // Son doğrulama: uygulama ancak tüm hedef hash'leri eşleşiyorsa başarılıdır.
+    for (const item of pending) {
+      if (!sameFileHash(item.src, item.dst)) {
+        throw new Error(`${item.file} uygulandıktan sonra doğrulanamadı.`);
+      }
+    }
+    return pending.length;
+  } finally {
+    release();
   }
-  if (appliedCount === 0) {
-    throw new Error('Uygulanacak imleç bulunamadı. Önce en az bir imleç seçin.');
-  }
-  return appliedCount;
 }
 
-function restoreBackup() {
-  const dir = currentCursorDir();
-  if (!dir) throw new Error('Roblox imleç klasörü bulunamadı.');
-  let restored = 0;
-  for (const file of Object.values(TARGETS)) {
-    // Öncelik: bu bilgisayarda daha önce alınmış gerçek yedek (varsa).
-    // Yedek yoksa (ör. hiç özelleştirme yapılmadan "Orijinale Dön" basıldıysa)
-    // uygulamayla birlikte gelen orijinal Roblox imleçlerine düş.
-    const backupFile = path.join(BACKUP, file);
-    const bundledFile = path.join(BUNDLED_ORIGINALS, file);
-    const src = fs.existsSync(backupFile) ? backupFile : (fs.existsSync(bundledFile) ? bundledFile : null);
-    if (src) {
-      fs.copyFileSync(src, path.join(dir, file));
+async function restoreDefaults() {
+  // "Orijinale Dön" gerçek Roblox varsayılanlarını geri yüklemelidir.
+  // Kullanıcı yedeğini burada kullanmıyoruz: eski bir Roblox sürümünden kalan
+  // backup, yeni sürümün varsayılanları olmayabilir. Uygulamanın içine
+  // gömülmüş doğrulanmış orijinal PNG'ler tek kaynak olarak kullanılır.
+  let release;
+  const previous = applyLock;
+  applyLock = new Promise(resolve => { release = resolve; });
+  await previous;
+
+  try {
+    const dirs = robloxDirs();
+    if (!dirs.length) throw new Error('Roblox imleç klasörü bulunamadı. Roblox yüklü ve en az bir kez çalıştırılmış olmalı.');
+
+    let restored = 0;
+    const missing = [];
+    for (const file of Object.values(TARGETS)) {
+      const bundledFile = path.join(BUNDLED_ORIGINALS, file);
+      if (!fs.existsSync(bundledFile)) {
+        missing.push(file);
+        continue;
+      }
+      const validationKind = Object.keys(TARGETS).find(k => TARGETS[k] === file);
+      if (!validateCursorFile(validationKind, bundledFile)) {
+        throw new Error(`Uygulama içindeki orijinal ${file} geçersiz.`);
+      }
+
+      // Aktif/çalışan Roblox sürümüne geri yükle.
+      const activeDirInfo = dirs[0];
+      await copyFileVerified(bundledFile, robloxCursorPath(activeDirInfo, validationKind));
       restored++;
     }
+
+    if (missing.length) {
+      throw new Error(`Orijinal imleç dosyaları eksik: ${missing.join(', ')}`);
+    }
+
+    // Varsayılanlara dönüldüğünde CURRENT'taki özel imleçleri temizle.
+    // Böylece otomatik sistem 5 saniye sonra eski paketi tekrar kurmaz.
+    for (const file of Object.values(TARGETS)) {
+      try { fs.unlinkSync(path.join(CURRENT, file)); } catch (_) {}
+    }
+    cfg.lastPack = '';
+    cfg.lastKnownVersion = dirs[0].version;
+    writeCfg(cfg);
+
+    return restored;
+  } finally {
+    release();
   }
-  return restored;
 }
 
 // Roblox'ta şu anda gerçekten aktif olan imleçleri okur ve bu dosyaların
 // kayıtlı paketlerden biriyle birebir aynı olup olmadığını kontrol eder.
 function activeCursorInfo() {
-  const dir = currentCursorDir();
-  if (!dir) return { found: false, files: {}, activePackName: null };
+  const dirInfo = currentRobloxDirInfo();
+  if (!dirInfo) return { found: false, files: {}, activePackName: null };
 
   const files = {};
   for (const [kind, file] of Object.entries(TARGETS)) {
-    const p = path.join(dir, file);
+    const p = robloxCursorPath(dirInfo, kind);
     files[kind] = fs.existsSync(p) ? p : null;
   }
 
   // Aktif dosyaların değiştiğini renderer'ın kesin olarak anlayabilmesi için
   // dosya zaman damgalarından bir cache anahtarı üret.
-  const cacheKey = Object.values(files).map(p => {
-    if (!p || !fs.existsSync(p)) return '0';
-    try { return String(fs.statSync(p).mtimeMs); } catch (_) { return '0'; }
+  const cacheKey = Object.entries(files).map(([kind, p]) => {
+    if (!p || !fs.existsSync(p)) return `${kind}:0`;
+    try { return `${kind}:${fileSha256(p)}`; } catch (_) { return `${kind}:0`; }
   }).join('-');
 
   let activePackName = null;
@@ -328,21 +567,142 @@ function listPacks() {
     });
 }
 
-function savePackAs(name) {
-  const safe = String(name).replace(/[\\/:*?"<>|]/g, '_').trim();
+function safePackName(name) {
+  const safe = String(name).replace(/[\\\\/:*?"<>|]/g, '_').trim();
   if (!safe) throw new Error('Geçersiz paket adı.');
+  return safe;
+}
+
+function removePackIfExists(dir) {
+  try {
+    if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
+  } catch (err) {
+    throw new Error('Eski paket silinemedi: ' + err.message);
+  }
+}
+
+function findRobloxCursorSources() {
+  // Çalışan sürüm robloxDirs() tarafından ilk sıraya alınır; Roblox kapalıysa
+  // en yeni uygun sürüm seçilir. Böylece aktif cursoru paketlemek için Roblox'un
+  // o anda açık olması zorunlu değildir.
+  for (const info of robloxDirs()) {
+    const files = {};
+    for (const [kind, file] of Object.entries(TARGETS)) {
+      const p = robloxCursorPath(info, kind);
+      if (p && fs.existsSync(p)) files[kind] = p;
+    }
+    if (Object.keys(files).length) return { info, files };
+  }
+  return { info: null, files: {} };
+}
+
+function copySourcesToPack(name, sourceResolver) {
+  const safe = safePackName(name);
   const dst = path.join(PACKS, safe);
-  fs.mkdirSync(dst, { recursive: true });
+  const temp = path.join(PACKS, `.${safe}.tmp-${process.pid}-${Date.now()}`);
   let copied = 0;
-  for (const file of Object.values(TARGETS)) {
-    const src = path.join(CURRENT, file);
-    if (fs.existsSync(src)) {
-      fs.copyFileSync(src, path.join(dst, file));
+
+  try {
+    fs.mkdirSync(temp, { recursive: true });
+    for (const [kind, file] of Object.entries(TARGETS)) {
+      const src = sourceResolver(kind, file);
+      if (!src || !fs.existsSync(src)) continue;
+      fs.copyFileSync(src, path.join(temp, file));
       copied++;
     }
+
+    if (!copied) {
+      throw new Error('Kaydedilecek cursor bulunamadı. Önce cursor seçin veya Roblox cursorlarının bulunduğundan emin olun.');
+    }
+
+    // Aynı isimde eski paket varsa tamamen yenisiyle değiştir.
+    removePackIfExists(dst);
+    fs.renameSync(temp, dst);
+    cfg.lastPack = safe;
+    writeCfg(cfg);
+    return safe;
+  } catch (err) {
+    try { if (fs.existsSync(temp)) fs.rmSync(temp, { recursive: true, force: true }); } catch (_) {}
+    throw err;
   }
-  if (copied === 0) throw new Error('Kaydedilecek imleç yok.');
-  return safe;
+}
+
+function savePackAs(name, selectedKinds = null) {
+  const active = findRobloxCursorSources();
+  const selected = Array.isArray(selectedKinds) && selectedKinds.length
+    ? new Set(selectedKinds)
+    : new Set(Object.keys(TARGETS));
+  return copySourcesToPack(name, (kind, file) => {
+    if (!selected.has(kind)) return null;
+    const currentFile = path.join(CURRENT, file);
+    // Öncelik: uygulamada seçilmiş/current cursor -> Roblox'taki aktif cursor
+    // -> uygulama içindeki güvenli varsayılan cursor. Böylece New Pack,
+    // Roblox kapalıyken veya CURRENT boşken de mutlaka çalışabilir.
+    if (fs.existsSync(currentFile)) return currentFile;
+    if (active.files[kind] && fs.existsSync(active.files[kind])) return active.files[kind];
+    const bundled = path.join(BUNDLED_ORIGINALS, file);
+    return fs.existsSync(bundled) ? bundled : null;
+  });
+}
+
+function saveActiveCursorsAsPack(name) {
+  const active = findRobloxCursorSources();
+  if (!Object.keys(active.files).length) {
+    throw new Error('Roblox cursor dosyaları bulunamadı. Önce Roblox\'u açıp cursorların oluştuğundan emin olun.');
+  }
+  return copySourcesToPack(name, (kind) => active.files[kind]);
+}
+
+// Hızlı paket uygulama: CURRENT staging + çoklu SHA doğrulamasını atlar.
+// Kullanıcı paket değiştirirken asıl gecikme bu iki aşamalı kopyalama/doğrulamadan
+// geliyordu. Paket dosyaları zaten doğrulanmış PNG olduğundan doğrudan aktif
+// Roblox sürümüne yazıyoruz; kilit varsa kısa aralıklarla yeniden deniyoruz.
+const FAST_APPLY_DELAYS = [0, 20, 45, 80];
+async function applyPackInstant(name) {
+  const dir = path.join(PACKS, name);
+  if (!fs.existsSync(dir)) throw new Error('Paket bulunamadı.');
+  const active = currentRobloxDirInfo();
+  if (!active) throw new Error('Roblox imleç klasörü bulunamadı.');
+
+  // İlk uygulamada orijinal yedeği oluştur; sonraki geçişlerde tekrar SHA
+  // hesaplayıp bekleme yapma.
+  await backupIfNeeded();
+
+  const pending = [];
+  for (const [kind, file] of Object.entries(TARGETS)) {
+    const src = path.join(dir, file);
+    if (!fs.existsSync(src)) continue;
+    if (!validateCursorFile(kind, src)) {
+      throw new Error(`${file} geçersiz veya ${CURSOR_CANVAS_SIZES[kind]}x${CURSOR_CANVAS_SIZES[kind]} PNG değil.`);
+    }
+    pending.push({ kind, file, src, dst: robloxCursorPath(active, kind) });
+  }
+  if (!pending.length) throw new Error('Paketin içinde uygulanabilir cursor bulunamadı.');
+
+  let release;
+  const previous = applyLock;
+  applyLock = new Promise(resolve => { release = resolve; });
+  await previous;
+  try {
+    for (const item of pending) {
+      let lastError = null;
+      for (let i=0; i<FAST_APPLY_DELAYS.length; i++) {
+        if (FAST_APPLY_DELAYS[i]) await sleep(FAST_APPLY_DELAYS[i]);
+        try {
+          fs.copyFileSync(item.src, item.dst);
+          lastError = null;
+          break;
+        } catch (err) { lastError = err; }
+      }
+      if (lastError) throw lastError;
+    }
+    cfg.lastPack = name;
+    cfg.lastKnownVersion = active.version;
+    writeCfg(cfg);
+    return { name, count: pending.length, version: active.version };
+  } finally {
+    release();
+  }
 }
 
 function applyPackToCurrent(name) {
@@ -375,16 +735,15 @@ function registerQuickSwitchShortcuts() {
   for (const slot of ['1', '2', '3']) {
     const packName = map[slot];
     if (!packName) continue;
-    const accelerator = `CommandOrControl+Alt+${slot}`;
+    const accelerator = (cfg.quickSwitchKeys && cfg.quickSwitchKeys[slot]) || `Control+Alt+${slot}`;
     try {
-      globalShortcut.register(accelerator, () => {
+      globalShortcut.register(accelerator, async () => {
         try {
           const dir = path.join(PACKS, packName);
           if (!fs.existsSync(dir)) throw new Error('Paket bulunamadı: ' + packName);
-          applyPackToCurrent(packName);
-          const applied = applyCurrentToRoblox();
+          const result = await applyPackInstant(packName);
           if (mainWindow && !mainWindow.isDestroyed()) {
-            mainWindow.webContents.send('quickswitch:applied', { slot, pack: packName, count: applied });
+            mainWindow.webContents.send('quickswitch:applied', { slot, pack: packName, count: result.count, accelerator });
           }
         } catch (err) {
           logError(err);
@@ -536,10 +895,10 @@ ipcMain.handle('cfg:set', (_e, partial) => {
   return cfg;
 });
 
-ipcMain.handle('roblox:status', () => {
+ipcMain.handle('roblox:status', async () => {
   try {
     const dirs = robloxDirs();
-    const auto = maybeAutoReinstall(dirs);
+    const auto = await maybeAutoReinstall(dirs);
     return {
       found: dirs.length > 0,
       version: dirs.length ? dirs[0].version : null,
@@ -585,6 +944,15 @@ ipcMain.handle('app:set-start-on-boot', (_e, enabled) => {
   return on;
 });
 
+ipcMain.handle('cursor:reference-paths', () => {
+  const out = {};
+  for (const [kind, file] of Object.entries(TARGETS)) {
+    const p = path.join(BUNDLED_ORIGINALS, file);
+    if (fs.existsSync(p)) out[kind] = p;
+  }
+  return out;
+});
+
 ipcMain.handle('cursor:pick-image', async () => {
   const res = await dialog.showOpenDialog({
     title: 'İmleç görseli seç',
@@ -601,6 +969,8 @@ ipcMain.handle('cursor:pick-image', async () => {
 ipcMain.handle('cursor:save-processed', (_e, kind, arrayBuffer) => {
   if (!TARGETS[kind]) throw new Error('Geçersiz imleç türü: ' + kind);
   const buf = Buffer.from(arrayBuffer);
+  const validation = validateCursorPngBuffer(kind, buf);
+  if (!validation.ok) throw new Error(validation.reason);
   const dst = path.join(CURRENT, TARGETS[kind]);
   fs.writeFileSync(dst, buf);
   try { addHistoryEntry(kind, buf); } catch (err) { logError(err); }
@@ -633,38 +1003,42 @@ ipcMain.handle('history:delete', (_e, id) => {
 // eski, boş ya da gerçekte artık aktif olmayan bir cursor göstermesine
 // (ya da hiç göstermemesine) yol açıyordu.
 ipcMain.handle('cursor:current-state', () => {
-  const dir = currentCursorDir();
+  const dirInfo = currentRobloxDirInfo();
   const state = {};
   for (const [kind, file] of Object.entries(TARGETS)) {
-    const p = dir ? path.join(dir, file) : null;
+    const p = dirInfo ? robloxCursorPath(dirInfo, kind) : null;
     state[kind] = (p && fs.existsSync(p)) ? p : null;
   }
   return state;
 });
 
-ipcMain.handle('cursor:apply', () => {
-  const count = applyCurrentToRoblox();
+ipcMain.handle('cursor:apply', async () => {
+  const count = await applyCurrentToRoblox();
   return { count };
 });
 
-ipcMain.handle('cursor:restore', () => {
-  const count = restoreBackup();
+ipcMain.handle('cursor:restore', async () => {
+  const count = await restoreDefaults();
   return { count };
 });
 
 ipcMain.handle('pack:list', () => listPacks());
 
-ipcMain.handle('pack:save-as', (_e, name) => {
-  const saved = savePackAs(name);
+ipcMain.handle('pack:save-as', (_e, name, selectedKinds) => {
+  const saved = savePackAs(name, selectedKinds);
   cfg.lastPack = saved;
   writeCfg(cfg);
   return saved;
+});
+ipcMain.handle('pack:save-active-as', (_e, name) => {
+  return saveActiveCursorsAsPack(name);
 });
 
 ipcMain.handle('pack:apply-to-current', (_e, name) => {
   const count = applyPackToCurrent(name);
   return { count };
 });
+ipcMain.handle('pack:apply-instant', async (_e, name) => applyPackInstant(name));
 
 // Renderer'da Roblox'un varsayılan 64x64 cursor ölçülerine göre normalize edilen
 // eski paket görsellerini hem pakete hem CURRENT'a yazar. Böylece eski paketler
@@ -685,6 +1059,8 @@ ipcMain.handle('pack:save-normalized-cursor', (_e, name, kind, arrayBuffer) => {
   const dir = path.join(PACKS, name);
   if (!fs.existsSync(dir)) throw new Error('Paket bulunamadı.');
   const buf = Buffer.from(arrayBuffer);
+  const validation = validateCursorPngBuffer(kind, buf);
+  if (!validation.ok) throw new Error(validation.reason);
   const packFile = path.join(dir, TARGETS[kind]);
   const currentFile = path.join(CURRENT, TARGETS[kind]);
   fs.writeFileSync(packFile, buf);
@@ -763,6 +1139,16 @@ ipcMain.handle('quickswitch:set', (_e, partial) => {
   writeCfg(cfg);
   registerQuickSwitchShortcuts();
   return cfg.quickSwitch;
+});
+
+ipcMain.handle('quickswitch:set-key', (_e, slot, accelerator) => {
+  if (!['1', '2', '3'].includes(String(slot))) throw new Error('Geçersiz kısayol slotu.');
+  const key = String(accelerator || '').trim();
+  if (!key) throw new Error('Kısayol boş olamaz.');
+  cfg.quickSwitchKeys = { ...(cfg.quickSwitchKeys || {}), [String(slot)]: key };
+  writeCfg(cfg);
+  registerQuickSwitchShortcuts();
+  return cfg.quickSwitchKeys;
 });
 
 // ---------- Paket dışa/içe aktarma ----------

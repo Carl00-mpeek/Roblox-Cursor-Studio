@@ -1,6 +1,6 @@
 {
   "name": "rbx-cursor-studio",
-  "version": "3.1.11",
+  "version": "3.2.5",
   "description": "RBX Cursor Studio - Roblox imleç düzenleyici (Electron sürümü)",
   "main": "main/main.js",
   "author": "Carl",
@@ -34,7 +34,10 @@
       "!**/*.map"
     ],
     "win": {
-      "target": ["nsis", "portable"],
+      "target": [
+        "nsis",
+        "portable"
+      ],
       "icon": "assets/backgrounds/logo.ico"
     },
     "nsis": {

@@ -70,7 +70,10 @@
             <h2 data-i18n="active_title">Şu An Aktif Olan Cursor</h2>
             <span class="muted small" id="active-cursor-sub">Kontrol ediliyor…</span>
           </div>
-          <button id="btn-refresh-active" class="icon-refresh" data-i18n-title="refresh" data-i18n-aria="refresh" title="Aktif cursorları yenile" aria-label="Aktif cursorları yenile">↻</button>
+          <div class="active-head-actions">
+            <button id="btn-save-active-pack-home" class="btn-primary small active-save-btn" data-i18n="pack_from_active_short" title="Şu an kullanılan cursorları yeni bir pakete kaydet">📦 Aktif Cursoru Pakete Çevir</button>
+            <button id="btn-refresh-active" class="icon-refresh" data-i18n-title="refresh" data-i18n-aria="refresh" title="Aktif cursorları yenile" aria-label="Aktif cursorları yenile">↻</button>
+          </div>
         </div>
         <div class="active-cursor-row" id="active-cursor-row">
           <!-- JS ile dolduruluyor -->
@@ -128,6 +131,33 @@
     <p class="muted small pack-dropzone-hint" data-i18n="pack_dropzone_hint">Bir arkadaşının paylaştığı .rbxcursor / .zip dosyasını buraya sürükleyip bırakabilirsin.</p>
     <div class="pack-grid" id="pack-grid">
       <!-- JS ile dolduruluyor -->
+    </div>
+  </div>
+
+  <!-- YENİ PAKET: renderer içi isim penceresi (native prompt yerine) -->
+  <div id="new-pack-modal" class="modal-overlay hidden">
+    <div class="modal new-pack-modal">
+      <div class="modal-head">
+        <h3 data-i18n="new_pack">Yeni Paket</h3>
+        <button id="new-pack-close" class="modal-close" data-i18n-title="close" title="Kapat">✕</button>
+      </div>
+      <div class="modal-body">
+        <label class="small muted" for="new-pack-name" data-i18n="pack_name">Paket adı</label>
+        <input id="new-pack-name" class="text-input" type="text" maxlength="80" autocomplete="off" />
+
+        <div class="pack-cursor-picker">
+          <div class="pack-picker-title">Cursor Seçimi</div>
+          <div class="pack-picker-hint">Pakete dahil edilecek cursorları seç. Özel/custom cursorların varsa mevcut seçimler otomatik kullanılır.</div>
+          <label class="pack-picker-item"><input type="checkbox" class="new-pack-cursor" value="arrow" checked /> <span>Normal Durum <small>ArrowFarCursor.png</small></span></label>
+          <label class="pack-picker-item"><input type="checkbox" class="new-pack-cursor" value="click" checked /> <span>Tıklama <small>ArrowCursor.png</small></span></label>
+          <label class="pack-picker-item"><input type="checkbox" class="new-pack-cursor" value="text" checked /> <span>Yazı Modu <small>IBeamCursor.png</small></span></label>
+          <label class="pack-picker-item"><input type="checkbox" class="new-pack-cursor" value="shiftlock" checked /> <span>Shift Lock <small>MouseLockedCursor.png</small></span></label>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="new-pack-cancel" class="btn-ghost" data-i18n="cancel">İptal</button>
+        <button id="new-pack-create" class="btn-primary" data-i18n="create">Oluştur</button>
+      </div>
     </div>
   </div>
 
@@ -192,19 +222,22 @@
       <div class="settings-row settings-quickswitch">
         <div>
           <strong data-i18n="quickswitch_title">Hızlı Paket Geçişi</strong>
-          <p class="muted small" data-i18n="quickswitch_desc">Roblox içindeyken bile Ctrl+Alt+1 / 2 / 3 ile kayıtlı paketler arasında anında geçiş yap.</p>
+          <p class="muted small" data-i18n="quickswitch_desc">Her paket için kendi klavye kısayolunu belirle. Roblox içindeyken de çalışır.</p>
         </div>
         <div class="quickswitch-grid">
           <label class="quickswitch-slot">
-            <span>Ctrl+Alt+1</span>
+            <span id="quickswitch-key-label-1">Ctrl+Alt+1</span>
+            <button type="button" class="btn-ghost small quickswitch-key" id="quickswitch-key-1">⌨️ Tuş Ata</button>
             <select id="quickswitch-1" class="settings-select"></select>
           </label>
           <label class="quickswitch-slot">
-            <span>Ctrl+Alt+2</span>
+            <span id="quickswitch-key-label-2">Ctrl+Alt+2</span>
+            <button type="button" class="btn-ghost small quickswitch-key" id="quickswitch-key-2">⌨️ Tuş Ata</button>
             <select id="quickswitch-2" class="settings-select"></select>
           </label>
           <label class="quickswitch-slot">
-            <span>Ctrl+Alt+3</span>
+            <span id="quickswitch-key-label-3">Ctrl+Alt+3</span>
+            <button type="button" class="btn-ghost small quickswitch-key" id="quickswitch-key-3">⌨️ Tuş Ata</button>
             <select id="quickswitch-3" class="settings-select"></select>
           </label>
         </div>
@@ -225,7 +258,7 @@
 
   <!-- İMLEÇ DÜZENLEYİCİ (otomatik ortalama + manuel konum/boyut) -->
   <div id="cursor-editor" class="modal-overlay hidden">
-    <div class="modal">
+    <div class="modal cursor-editor-modal" id="cursor-editor-modal">
       <div class="modal-head">
         <h3 id="editor-title" data-i18n="editor_title">İmleci Düzenle</h3>
         <button id="editor-close" class="modal-close" data-i18n-title="close" title="Kapat">✕</button>
@@ -244,7 +277,21 @@
             <button id="editor-center" class="btn-ghost small" data-i18n="center">🎯 Sadece Ortala</button>
             <button id="editor-reset-size" class="btn-ghost small" data-i18n="reset_size">↺ Boyutu Sıfırla</button>
           </div>
+          <div class="editor-btn-row">
+            <button id="editor-manual-center" class="btn-ghost small" data-i18n="manual_center">📍 Manuel Ortala (Tam Merkez)</button>
+          </div>
+          <div class="editor-offset-row">
+            <label class="editor-offset-field">
+              <span data-i18n="offset_x">X Konumu</span>
+              <input type="number" id="editor-offset-x" step="1" value="0" />
+            </label>
+            <label class="editor-offset-field">
+              <span data-i18n="offset_y">Y Konumu</span>
+              <input type="number" id="editor-offset-y" step="1" value="0" />
+            </label>
+          </div>
           <p class="muted small" data-i18n="editor_help">Yeni görseller açıldığında otomatik olarak 64×64 alana dengeli biçimde sığdırılır ve ortalanır. İstersen sürükleyerek konumu değiştirebilir, boyut çubuğuyla büyütüp küçültebilirsin. Piksel netliğini korumak için yumuşatma kapalıdır.</p>
+          <p class="muted small" data-i18n="manual_center_help">Otomatik ortalama, görselin şeffaf olmayan kısmını algılayıp ona göre konumlandırır — bazı görsellerde bu algılama beklediğin sonucu vermeyebilir. Böyle durumlarda "Manuel Ortala" görseli algılama yapmadan doğrudan 64×64 alanın tam merkezine yerleştirir; X/Y kutularından ya da sürükleyerek de pikseli piksele ince ayar yapabilirsin.</p>
 
           <div class="editor-color-row">
             <label class="editor-color-toggle">
@@ -275,17 +322,10 @@
         <button id="context-preview-close" class="modal-close" data-i18n-title="close" title="Kapat">✕</button>
       </div>
       <div class="modal-body context-body">
-        <p class="muted small" data-i18n="context_preview_help">Fareni aşağıdaki sahte Roblox ekranı üzerinde gezdirerek imleçlerini gerçek boyutlarında dene.</p>
-        <div class="context-scene" id="context-scene">
-          <div class="context-hud">
-            <div class="context-hud-badge">❤️ 100</div>
-            <div class="context-hud-badge">🪙 1.240</div>
-          </div>
-          <button type="button" class="context-play-btn" id="context-play-btn" data-i18n="context_play">OYNA</button>
-          <div class="context-chat">
-            <input type="text" id="context-chat-input" class="context-chat-input" data-i18n-placeholder="context_chat_placeholder" placeholder="Sohbete yaz..." />
-          </div>
-          <button type="button" id="context-shiftlock-btn" class="context-shiftlock-btn" data-i18n-title="context_shiftlock" title="Shift Lock modunu dene">🔒</button>
+        <p class="muted small" data-i18n="context_preview_help">Cursoru gerçek piksel boyutunda, oyun içi bir sahne üzerinde test et.</p>
+        <div class="cursor-game-viewer" id="context-scene">
+          <canvas id="context-game-canvas" aria-label="Cursor game viewer"></canvas>
+          <button type="button" id="context-shiftlock-btn" class="context-shiftlock-btn" data-i18n-title="context_shiftlock" title="Shift Lock modunu dene">⌁</button>
         </div>
       </div>
     </div>

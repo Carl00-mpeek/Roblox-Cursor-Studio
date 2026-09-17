@@ -149,6 +149,8 @@ html, body {
 .section-title-block { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .active-head { align-items: flex-start; }
 .section-head-right { display: flex; align-items: center; gap: 8px; }
+.active-head-actions { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; }
+.active-save-btn { white-space: nowrap; }
 .icon-refresh { width: 30px; height: 30px; border-radius: 8px; border: 1px solid rgba(124,156,255,.35); background: rgba(124,156,255,.12); color: var(--accent); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; line-height: 1; transition: all .18s ease; flex: 0 0 auto; }
 .icon-refresh:hover { color: #fff; background: rgba(124,156,255,.24); border-color: rgba(124,156,255,.6); transform: rotate(20deg); }
 .icon-refresh.spinning { animation: refresh-spin .35s linear; }
@@ -357,6 +359,16 @@ html, body {
   display: flex; flex-direction: column;
   overflow: hidden;
 }
+
+/* Cursor editor: keep the exact large-mode proportions when the app/window is small.
+   The JS calculates a uniform scale from the available viewport so the whole
+   dialog shrinks together instead of letting individual controls collapse. */
+.cursor-editor-modal {
+  --editor-modal-scale: 1;
+  transform: scale(var(--editor-modal-scale));
+  transform-origin: center center;
+  will-change: transform;
+}
 .modal-head {
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 16px; border-bottom: 1px solid var(--card-border);
@@ -386,6 +398,17 @@ html, body {
 .editor-label input[type="range"] { width: 100%; accent-color: var(--accent); }
 .editor-btn-row { display: flex; gap: 8px; }
 .editor-btn-row .btn-ghost { flex: 1; }
+.editor-offset-row { width: 100%; display: flex; gap: 10px; }
+.editor-offset-field {
+  flex: 1; display: flex; flex-direction: column; gap: 6px;
+  font-size: 12px; color: var(--muted);
+}
+.editor-offset-field input[type="number"] {
+  width: 100%; padding: 8px 10px; border-radius: 9px;
+  border: 1px solid rgba(130,160,255,.35); background: rgba(20,24,40,.75);
+  color: inherit; outline: none; font: inherit;
+}
+.editor-offset-field input[type="number"]:focus { border-color: rgba(100,150,255,.75); }
 .modal-actions {
   display: flex; justify-content: flex-end; gap: 10px;
   padding: 14px 16px; border-top: 1px solid var(--card-border);
@@ -502,47 +525,44 @@ html, body {
 .quickswitch-slot { display: flex; flex-direction: column; gap: 5px; font-size: 11px; color: var(--muted); }
 .quickswitch-slot select { min-width: 150px; }
 
-/* ---- bağlamda önizleme (context preview) ---- */
-.context-modal { width: 640px; max-width: calc(100vw - 40px); }
+/* ---- oyun sahnesi önizleme ---- */
+.context-modal { width: 1040px; max-width: calc(100vw - 40px); }
 .context-body { align-items: stretch; }
-.context-scene {
-  position: relative;
-  width: 100%; height: 360px;
-  border-radius: 14px; overflow: hidden;
-  background: linear-gradient(160deg, #2a3a5c, #101625) ;
-  background-image: linear-gradient(160deg, rgba(20,28,48,.55), rgba(6,8,14,.85)), url('../assets/backgrounds/background.png');
-  background-size: cover; background-position: center;
-  border: 1px solid var(--card-border);
-  cursor: auto;
+.cursor-game-viewer {
+  position: relative; width: min(980px, 100%); aspect-ratio: 980 / 560;
+  margin: 0 auto; border-radius: 16px; overflow: hidden;
+  border: 1px solid var(--card-border); background: #142033;
+  box-shadow: 0 18px 50px rgba(0,0,0,.35);
 }
-.context-hud { position: absolute; top: 14px; left: 14px; display: flex; gap: 8px; }
-.context-hud-badge {
-  background: rgba(8,9,14,.6); border: 1px solid rgba(255,255,255,.14);
-  padding: 5px 10px; border-radius: 999px; font-size: 12px; backdrop-filter: blur(6px);
+#context-game-canvas {
+  display:block; width:100%; height:100%; image-rendering:pixelated;
+  cursor:none !important; user-select:none; touch-action:none;
 }
-.context-play-btn {
-  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-  background: var(--accent); color: #0c1020; border: none;
-  padding: 14px 34px; border-radius: 12px; font-weight: 800; font-size: 15px;
-  letter-spacing: .04em;
-  box-shadow: 0 10px 30px rgba(124,156,255,.35);
+.cursor-game-viewer .context-shiftlock-btn { z-index:5; cursor:pointer !important; }
+
+/* ---- kullanıcı tanımlı hızlı geçiş tuşları ---- */
+.quickswitch-slot { min-width: 190px; }
+.quickswitch-key { width: 100%; margin-bottom: 2px; }
+.quickswitch-key.recording { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(124,156,255,.15); }
+.quickswitch-slot select { width: 100%; }
+
+.new-pack-modal { width: min(420px, 92vw); }
+.new-pack-modal .modal-body { align-items: stretch; }
+.new-pack-modal .text-input { width: 100%; box-sizing: border-box; }
+.new-pack-modal .pack-cursor-picker {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 12px;
+  background: rgba(255,255,255,.035);
 }
-.context-chat {
-  position: absolute; left: 14px; right: 14px; bottom: 14px;
+.new-pack-modal .pack-picker-title { font-weight: 700; margin-bottom: 4px; }
+.new-pack-modal .pack-picker-hint { font-size: 12px; opacity: .65; margin-bottom: 10px; line-height: 1.4; }
+.new-pack-modal .pack-picker-item {
+  display: flex; align-items: center; gap: 9px; padding: 8px 6px;
+  border-radius: 8px; cursor: pointer; user-select: none;
 }
-.context-chat-input {
-  width: 100%; padding: 10px 12px; border-radius: 10px;
-  border: 1px solid rgba(255,255,255,.16);
-  background: rgba(8,9,14,.55); color: var(--text); font-size: 12.5px;
-  outline: none;
-}
-.context-shiftlock-btn {
-  position: absolute; right: 14px; top: 14px;
-  width: 34px; height: 34px; border-radius: 10px;
-  border: 1px solid rgba(255,255,255,.16);
-  background: rgba(8,9,14,.55); color: var(--text);
-  cursor: pointer; font-size: 15px;
-}
-.context-shiftlock-btn.active {
-  background: rgba(124,156,255,.28); border-color: var(--accent); color: #fff;
-}
+.new-pack-modal .pack-picker-item:hover { background: rgba(255,255,255,.055); }
+.new-pack-modal .pack-picker-item input { width: 16px; height: 16px; margin: 0; }
+.new-pack-modal .pack-picker-item span { display: flex; flex-direction: column; gap: 1px; }
+.new-pack-modal .pack-picker-item small { opacity: .55; font-size: 10px; }

@@ -49,12 +49,6 @@ A lightweight Windows tool for customizing Roblox cursors.
 - Back up your original Roblox cursors and restore them with one click
 - A small, draggable live status badge shows whether Roblox is currently running
 
-### 🌈 Bulk Color Changer
-- **Change Color** — recolor every currently active cursor (Normal, Click, Text, Shift Lock) at once with a single hue
-- Only changes color, never size or position — no re-centering needed
-- Live preview slider plus a quick-pick color strip
-- Applying instantly saves and installs all cursors to Roblox
-
 ### 🎬 Personalization
 - Swap the app's own background for your own image, or reset to default
 - Clean, modern dark-themed interface throughout

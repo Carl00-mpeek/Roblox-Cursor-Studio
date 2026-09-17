@@ -233,7 +233,7 @@ function isCurOrIco(pathOrUrl) {
   return /\.(cur|ico)(\?.*)?$/i.test(pathOrUrl);
 }
 
-function getAlphaBounds(source) {
+function getAlphaBounds(source, alphaThreshold = 8) {
   const w = Math.max(1, source.width || 1);
   const h = Math.max(1, source.height || 1);
   const c = document.createElement('canvas');
@@ -246,110 +246,130 @@ function getAlphaBounds(source) {
     let minX=w, minY=h, maxX=-1, maxY=-1;
     for (let y=0; y<h; y++) {
       for (let x=0; x<w; x++) {
-        if (data[(y*w+x)*4+3] > 8) {
+        if (data[(y*w+x)*4+3] > alphaThreshold) {
           if (x < minX) minX=x; if (x > maxX) maxX=x;
           if (y < minY) minY=y; if (y > maxY) maxY=y;
         }
       }
     }
     if (maxX < 0) return null;
-    return { minX, minY, maxX, maxY, width: maxX-minX+1, height: maxY-minY+1 };
+    return { minX, minY, maxX, maxY, width:maxX-minX+1, height:maxY-minY+1 };
   } catch (_) {
     return null;
   }
 }
 
-// Yeni bir cursor her açıldığında, görünen (saydam olmayan) kısmı 64x64
-// çalışma alanına dengeli biçimde sığdırır ve görsel merkezine alır.
-// Böylece farklı çözünürlükteki cursorlar aynı görsel ölçekte başlar.
-// Roblox'un BUNDLED default cursor'larından çıkarılan referans kutuları.
-// Her yeni görsel, kendi şeffaf kenarları yerine bu gerçek varsayılan cursor
-// ölçüsünü ve konumunu örnek alır. Böylece Arrow/ArrowFar/IBeam birbirine
-// göre tutarlı görünür.
-const DEFAULT_CURSOR_REFERENCE = {
-  arrow: { minX: 29, minY: 32, maxX: 45, maxY: 57, width: 17, height: 26 },
-  click: { minX: 24, minY: 32, maxX: 44, maxY: 59, width: 21, height: 28 },
-  text:  { minX: 29, minY: 21, maxX: 35, maxY: 42, width: 7,  height: 22 },
-  // Roblox'un gerçek MouseLockedCursor.png dosyası ölçüldü: 32x32 ve ikon
-  // tuvalin tamamını (kenara kadar) kaplıyor — bu yüzden 64'lük referans
-  // alanda da tam kare (tüm tuval) kullanılıyor.
-  shiftlock: { minX: 0, minY: 0, maxX: 63, maxY: 63, width: 64, height: 64 }
+// Varsayılanlar artık sabit koordinat olarak kodlanmıyor. Uygulama ile gelen
+// gerçek Roblox cursor PNG'leri referans alınarak açılışta piksel seviyesinde
+// ölçülüyor. Referans okunamazsa güvenli fallback değerleri kullanılır.
+const FALLBACK_CURSOR_REFERENCE = {
+  arrow:     { minX: 29, minY: 32, maxX: 45, maxY: 57, width: 17, height: 26, canvas: 64 },
+  click:     { minX: 24, minY: 32, maxX: 44, maxY: 59, width: 21, height: 28, canvas: 64 },
+  text:      { minX: 29, minY: 21, maxX: 35, maxY: 42, width: 7, height: 22, canvas: 64 },
+  shiftlock: { minX: 0, minY: 0, maxX: 31, maxY: 31, width: 32, height: 32, canvas: 32 }
 };
 
+let DEFAULT_CURSOR_REFERENCE = { ...FALLBACK_CURSOR_REFERENCE };
+let referenceProfilesLoaded = false;
+
 function getDefaultReference(kind) {
-  return DEFAULT_CURSOR_REFERENCE[kind] || { minX: 0, minY: 0, maxX: 63, maxY: 63, width: 64, height: 64 };
+  return DEFAULT_CURSOR_REFERENCE[kind] || FALLBACK_CURSOR_REFERENCE.arrow;
 }
 
-// Varsayılan Roblox cursorunu örnek alarak otomatik boyutlandır + konumlandır.
-// Hedef, sadece canvas merkezi değil; default cursorun gerçek görünen piksel
-// kutusunun merkezi ve ölçüsüdür.
+function getReferenceInEditorSpace(kind) {
+  const ref = getDefaultReference(kind);
+  const sourceCanvas = ref.canvas || exportSizeFor(kind);
+  const factor = EXPORT_SIZE / sourceCanvas;
+  return {
+    minX: ref.minX * factor,
+    minY: ref.minY * factor,
+    maxX: (ref.maxX + 1) * factor - 1,
+    maxY: (ref.maxY + 1) * factor - 1,
+    width: ref.width * factor,
+    height: ref.height * factor,
+    canvas: EXPORT_SIZE
+  };
+}
+
+async function loadCursorReferenceProfiles() {
+  try {
+    const paths = await window.rbx.cursorReferencePaths();
+    const next = {};
+    for (const kind of Object.keys(TARGETS)) {
+      const refPath = paths && paths[kind];
+      if (!refPath) continue;
+      const img = await imageFromPath(refPath);
+      const bounds = getAlphaBounds(img, 8);
+      if (!bounds) continue;
+      next[kind] = {
+        ...bounds,
+        canvas: exportSizeFor(kind),
+        sourceWidth: img.width,
+        sourceHeight: img.height
+      };
+    }
+    DEFAULT_CURSOR_REFERENCE = { ...FALLBACK_CURSOR_REFERENCE, ...next };
+    referenceProfilesLoaded = Object.keys(next).length === Object.keys(TARGETS).length;
+  } catch (_) {
+    referenceProfilesLoaded = false;
+  }
+  return referenceProfilesLoaded;
+}
+
+function scaleAndAlignToReference(kind, img) {
+  const ref = getReferenceInEditorSpace(kind);
+  const bounds = getAlphaBounds(img, 8);
+  if (!bounds) return { scale: 1, offsetX: 0, offsetY: 0, confidence: 0 };
+
+  const baseRatio = Math.min(EXPORT_SIZE / img.width, EXPORT_SIZE / img.height);
+  const fitRatio = Math.min(ref.width / bounds.width, ref.height / bounds.height);
+  const scale = Math.max(0.05, Math.min(3, fitRatio / baseRatio));
+  const ratio = baseRatio * scale;
+
+  // Referansın gerçek görsel alanının SOL/ÜST köşesini hedefleriz. Bu,
+  // yalnızca canvas merkezini eşitlemekten daha kararlıdır.
+  const centeredImageLeft = (EXPORT_SIZE - img.width * ratio) / 2;
+  const centeredImageTop = (EXPORT_SIZE - img.height * ratio) / 2;
+  const offsetX = ref.minX - (centeredImageLeft + bounds.minX * ratio);
+  const offsetY = ref.minY - (centeredImageTop + bounds.minY * ratio);
+
+  const widthError = Math.abs((bounds.width * ratio) - ref.width) / Math.max(1, ref.width);
+  const heightError = Math.abs((bounds.height * ratio) - ref.height) / Math.max(1, ref.height);
+  const confidence = Math.max(0, Math.min(100, Math.round(100 - ((widthError + heightError) * 50))));
+  return { scale, offsetX, offsetY, confidence };
+}
+
 function autoFitAndCenterEditor(showToast = false) {
   if (!editorState) return;
-  const bounds = getAlphaBounds(editorState.img);
-  const ref = getDefaultReference(editorState.kind);
-  if (!bounds) {
-    editorState.scale = 1;
-    editorState.offsetX = 0;
-    editorState.offsetY = 0;
-  } else {
-    const baseRatio = Math.min(EXPORT_SIZE / editorState.img.width, EXPORT_SIZE / editorState.img.height);
-    const targetW = ref.width;
-    const targetH = ref.height;
-    const fitRatio = Math.min(targetW / bounds.width, targetH / bounds.height);
-    editorState.scale = Math.max(0.05, Math.min(3, fitRatio / baseRatio));
-    const ratio = baseRatio * editorState.scale;
+  const result = scaleAndAlignToReference(editorState.kind, editorState.img);
+  editorState.scale = result.scale;
+  editorState.offsetX = result.offsetX;
+  editorState.offsetY = result.offsetY;
+  editorState.autoConfidence = result.confidence;
 
-    // Görünen kısmın merkezi, varsayılan Roblox cursorunun görünen kısmının
-    // merkezine taşınır. Böylece normal/tıklama/yazı cursorlarının konumu da
-    // default örnekle aynı olur.
-    const contentCenterX = ((bounds.minX + bounds.maxX + 1) / 2) * ratio;
-    const contentCenterY = ((bounds.minY + bounds.maxY + 1) / 2) * ratio;
-    const defaultCenterX = (ref.minX + ref.maxX + 1) / 2;
-    const defaultCenterY = (ref.minY + ref.maxY + 1) / 2;
-    editorState.offsetX = defaultCenterX - ((EXPORT_SIZE - editorState.img.width * ratio) / 2 + contentCenterX);
-    editorState.offsetY = defaultCenterY - ((EXPORT_SIZE - editorState.img.height * ratio) / 2 + contentCenterY);
-  }
   const slider = document.getElementById('editor-scale');
   if (slider) slider.value = String(editorState.scale);
   drawEditor();
-  if (showToast) toast(t('cursor_auto_fit'), 'success');
+  if (showToast) toast(t('cursor_auto_fit') + ' ✓', 'success');
 }
 
 function normalizeImageToDefault(kind, img) {
-  const bounds = getAlphaBounds(img);
-  const ref = getDefaultReference(kind);
   const outSize = exportSizeFor(kind);
+  const result = scaleAndAlignToReference(kind, img);
   const canvas = document.createElement('canvas');
   canvas.width = outSize; canvas.height = outSize;
   const ctx = canvas.getContext('2d');
   ctx.imageSmoothingEnabled = false;
   ctx.clearRect(0, 0, outSize, outSize);
-  if (!bounds) return canvas;
+  if (!getAlphaBounds(img, 8)) return canvas;
 
-  // Referans kutusu (DEFAULT_CURSOR_REFERENCE) her zaman 64 birimlik bir
-  // uzayda tanımlıdır. Çıktı tuvali farklı boyuttaysa (Shift Lock için 32),
-  // outScale ile orantılı olarak ölçeklenir; böylece konum/oran editördeki
-  // (ve 64x64 diğer cursorlardaki) ile birebir aynı kalır.
   const outScale = outSize / EXPORT_SIZE;
   const baseRatio = Math.min(EXPORT_SIZE / img.width, EXPORT_SIZE / img.height);
-  const fitRatio = Math.min(ref.width / bounds.width, ref.height / bounds.height);
-  const scale = Math.max(0.05, Math.min(3, fitRatio / baseRatio));
-  const ratio = baseRatio * scale * outScale;
-  const w = img.width * ratio, h = img.height * ratio;
-  const contentCenterX = ((bounds.minX + bounds.maxX + 1) / 2) * ratio;
-  const contentCenterY = ((bounds.minY + bounds.maxY + 1) / 2) * ratio;
-  const defaultCenterX = (ref.minX + ref.maxX + 1) / 2 * outScale;
-  const defaultCenterY = (ref.minY + ref.maxY + 1) / 2 * outScale;
-  // NOT: Burada "- (outSize - w) / 2" gibi ekstra bir kayma terimi OLMAMALI.
-  // defaultCenterX/contentCenterX zaten tuvalin (0,0) orijinine göre mutlak
-  // konumlardır; ekstra terim eskiden içeriği gereğinden fazla kaydırıp
-  // (özellikle küçük/eşit boyutlu görsellerde, ör. orijinal cursor'ların
-  // kendisinde bile) görünür bir kaymaya/"bozulmaya" yol açıyordu. Bu satır,
-  // autoFitAndCenterEditor()'daki (editördeki canlı önizlemeyle birebir
-  // aynı sonucu veren) offsetX/offsetY hesabıyla matematiksel olarak
-  // eşdeğer hale getirildi.
-  const x = defaultCenterX - contentCenterX;
-  const y = defaultCenterY - contentCenterY;
+  const ratio = baseRatio * result.scale * outScale;
+  const w = img.width * ratio;
+  const h = img.height * ratio;
+  const x = (outSize - w) / 2 + result.offsetX * outScale;
+  const y = (outSize - h) / 2 + result.offsetY * outScale;
   ctx.drawImage(img, x, y, w, h);
   return canvas;
 }
@@ -371,7 +391,7 @@ function openEditorWith(kind, imgOrCanvas) {
     toast(t('image_invalid'));
     return;
   }
-  editorState = { kind, img: imgOrCanvas, scale: 1, offsetX: 0, offsetY: 0, colorize: false, hue: 0 };
+  editorState = { kind, img: imgOrCanvas, scale: 1, offsetX: 0, offsetY: 0, colorize: false, hue: 0, autoConfidence: 0 };
   resetColorControls();
   showEditor();
   autoFitAndCenterEditor(false);
@@ -494,6 +514,14 @@ async function loadImageIntoEditor(kind, src) {
   img.src = src;
 }
 
+function syncOffsetInputs() {
+  if (!editorState) return;
+  const xInput = document.getElementById('editor-offset-x');
+  const yInput = document.getElementById('editor-offset-y');
+  if (xInput && document.activeElement !== xInput) xInput.value = Math.round(editorState.offsetX);
+  if (yInput && document.activeElement !== yInput) yInput.value = Math.round(editorState.offsetY);
+}
+
 function drawEditor() {
   if (!editorState) return;
   const canvas = document.getElementById('editor-canvas');
@@ -517,10 +545,53 @@ function drawEditor() {
   } catch (e) {
     toast(t('preview_error') + ' ' + errMsg(e));
   }
+  syncOffsetInputs();
 }
 
-function showEditor() { document.getElementById('cursor-editor').classList.remove('hidden'); }
-function hideEditor() { document.getElementById('cursor-editor').classList.add('hidden'); editorState = null; }
+// Editör modalını pencerenin tamamına sığdırırken EN/BOY oranını bozmaz.
+// Küçük pencere modunda artık butonlar ve metinler ayrı ayrı sıkışmaz;
+// büyük moddaki modalın tamamı tek bir ölçek katsayısıyla küçülür.
+function updateEditorModalScale() {
+  const overlay = document.getElementById('cursor-editor');
+  const modal = document.getElementById('cursor-editor-modal');
+  if (!overlay || !modal || overlay.classList.contains('hidden')) return;
+
+  // Önce 1x ölçekte gerçek layout ölçülerini al. Transform ölçümü bozmaz.
+  modal.style.setProperty('--editor-modal-scale', '1');
+
+  const viewportW = Math.max(1, window.innerWidth);
+  const viewportH = Math.max(1, window.innerHeight);
+  const availableW = Math.max(1, viewportW - 32);
+  const availableH = Math.max(1, viewportH - 24);
+  const modalW = Math.max(1, modal.offsetWidth);
+  const modalH = Math.max(1, modal.scrollHeight);
+
+  // Uniform scale: genişlik ve yükseklik aynı katsayıyla küçülür.
+  const scaleX = availableW / modalW;
+  const scaleY = availableH / modalH;
+  const scale = Math.min(1, scaleX, scaleY);
+
+  modal.style.setProperty('--editor-modal-scale', String(Math.max(0.5, scale)));
+}
+
+function showEditor() {
+  const overlay = document.getElementById('cursor-editor');
+  overlay.classList.remove('hidden');
+  // Modal DOM'a yerleştikten sonra ölçüm yap; böylece tüm metin ve kontroller
+  // gerçek büyük-mod yüksekliği üzerinden hesaplanır.
+  requestAnimationFrame(() => {
+    updateEditorModalScale();
+    requestAnimationFrame(updateEditorModalScale);
+  });
+}
+function hideEditor() {
+  document.getElementById('cursor-editor').classList.add('hidden');
+  const modal = document.getElementById('cursor-editor-modal');
+  if (modal) modal.style.setProperty('--editor-modal-scale', '1');
+  editorState = null;
+}
+
+window.addEventListener('resize', updateEditorModalScale);
 
 document.getElementById('editor-close').onclick = hideEditor;
 document.getElementById('editor-cancel').onclick = hideEditor;
@@ -550,6 +621,34 @@ function smartCenterEditor() {
 
 document.getElementById('editor-auto-fit').onclick = () => autoFitAndCenterEditor(true);
 document.getElementById('editor-center').onclick = smartCenterEditor;
+
+// "Manuel Ortala": şeffaflık algılamasına HİÇ güvenmeden görseli doğrudan
+// 64x64 çalışma alanının tam geometrik merkezine yerleştirir (offset 0,0).
+// Otomatik algılamanın yanıltıcı sonuç verdiği görsellerde (ör. yoğun
+// yarı-saydam kenarlar, alışılmadık şekiller) her zaman güvenilir bir
+// yedek/başlangıç noktası sağlar.
+function manualCenterEditor() {
+  if (!editorState) return;
+  editorState.offsetX = 0;
+  editorState.offsetY = 0;
+  drawEditor();
+  toast(t('manual_center_done'), 'success');
+}
+document.getElementById('editor-manual-center').onclick = manualCenterEditor;
+
+// X/Y konum kutuları: sürüklemeye ek olarak piksel piksel elle ince ayar.
+function bindOffsetInput(id, axis) {
+  const input = document.getElementById(id);
+  input.addEventListener('input', () => {
+    if (!editorState) return;
+    const val = parseFloat(input.value);
+    if (Number.isNaN(val)) return; // kullanıcı hâlâ yazıyor olabilir (ör. sadece "-")
+    editorState[axis] = val;
+    drawEditor();
+  });
+}
+bindOffsetInput('editor-offset-x', 'offsetX');
+bindOffsetInput('editor-offset-y', 'offsetY');
 
 document.getElementById('editor-reset-size').onclick = () => {
   if (!editorState) return;
@@ -666,17 +765,101 @@ document.getElementById('btn-restore').onclick = async () => {
   }
 };
 
-document.getElementById('btn-save-pack-home').onclick = async () => {
-  const name = prompt(t('pack_name'));
-  if (!name) return;
+async function createPackWithName(name, useActiveOnly = false, selectedKinds = null) {
+  if (!name || !name.trim()) return null;
   try {
-    await window.rbx.savePackAs(name);
-    toast(t('saved_named', {name}), 'success');
+    const cleanName = name.trim();
+    const saved = useActiveOnly
+      ? await window.rbx.saveActiveCursorsAsPack(cleanName)
+      : await window.rbx.savePackAs(cleanName, selectedKinds);
+
+    closeAllOverlays();
+    setActiveNav('packs');
+    overlays.packs.classList.remove('hidden');
     await renderPackGrid();
+    const card = [...document.querySelectorAll('#pack-grid .pack-card')]
+      .find(el => el.querySelector('.pname')?.textContent === saved);
+    if (card) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    toast(t('pack_saved_named', { name: saved }), 'success');
+    return saved;
   } catch (e) {
     toast(t('error') + ' ' + errMsg(e), 'error');
+    return null;
   }
-};
+}
+
+function openNewPackDialog() {
+  const modal = document.getElementById('new-pack-modal');
+  const input = document.getElementById('new-pack-name');
+  if (!modal || !input) return;
+  modal.classList.remove('hidden');
+  input.value = '';
+  document.querySelectorAll('.new-pack-cursor').forEach(el => { el.checked = true; });
+  const first = document.querySelector('.new-pack-cursor');
+  if (first) first.focus();
+  setTimeout(() => input.focus(), 0);
+}
+
+function closeNewPackDialog() {
+  document.getElementById('new-pack-modal')?.classList.add('hidden');
+}
+
+async function createPackFromDialog(useActiveOnly = false) {
+  openNewPackDialog();
+  const modal = document.getElementById('new-pack-modal');
+  const input = document.getElementById('new-pack-name');
+  const createBtn = document.getElementById('new-pack-create');
+  if (!modal || !input || !createBtn) return null;
+
+  return new Promise((resolve) => {
+    const finish = async (result) => {
+      cleanup();
+      closeNewPackDialog();
+      resolve(result);
+    };
+    const submit = async () => {
+      const name = input.value.trim();
+      if (!name) {
+        input.focus();
+        toast(t('pack_name') + ' gerekli.', 'error');
+        return;
+      }
+      const selectedKinds = [...document.querySelectorAll('.new-pack-cursor:checked')].map(el => el.value);
+      if (!selectedKinds.length) {
+        toast('En az bir cursor seçmelisin.', 'error');
+        createBtn.disabled = false;
+        return;
+      }
+      createBtn.disabled = true;
+      try {
+        const result = await createPackWithName(name, useActiveOnly, selectedKinds);
+        await finish(result);
+      } catch (e) {
+        createBtn.disabled = false;
+        toast(t('error') + ' ' + errMsg(e), 'error');
+      }
+    };
+    const cancel = () => finish(null);
+    const onKey = (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); submit(); }
+      else if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+    };
+    function cleanup() {
+      createBtn.removeEventListener('click', submit);
+      document.getElementById('new-pack-cancel')?.removeEventListener('click', cancel);
+      document.getElementById('new-pack-close')?.removeEventListener('click', cancel);
+      input.removeEventListener('keydown', onKey);
+    }
+    createBtn.addEventListener('click', submit);
+    document.getElementById('new-pack-cancel')?.addEventListener('click', cancel);
+    document.getElementById('new-pack-close')?.addEventListener('click', cancel);
+    input.addEventListener('keydown', onKey);
+  });
+}
+
+// Ana sayfadaki eski/hidden save-active kontrolleri varsa güvenli şekilde bağla.
+document.getElementById('btn-save-active-pack-home')?.addEventListener('click', () => createPackFromDialog(true));
+document.getElementById('btn-save-pack-home')?.addEventListener('click', () => createPackFromDialog(false));
 
 // ================= KAYITLI PAKETLER (tam ekran panel) =================
 
@@ -707,21 +890,11 @@ async function renderPackGrid() {
       `;
       item.querySelector('.pack-apply').onclick = async () => {
         try {
-          // Eski/yeni paketlerdeki tüm cursorları Roblox'un varsayılan
-          // cursor ölçü ve konumlarını referans alarak normalize et.
-          // Normalize edilmiş dosya paketin kendisine de yazılır; böylece
-          // eski paketler de bir kere uygulandığında kalıcı olarak düzeltilir.
-          const paths = await window.rbx.getPackCursors(p.name);
-          for (const kind of Object.keys(TARGETS)) {
-            if (!paths[kind]) continue;
-            const img = await imageFromPath(paths[kind]);
-            const normalized = normalizeImageToDefault(kind, img);
-            const buf = await canvasPngBuffer(normalized);
-            await window.rbx.saveNormalizedPackCursor(p.name, kind, buf);
-          }
-          await window.rbx.applyCursors();
+          // Paket geçişi artık tek IPC çağrısıyla doğrudan Roblox'a yazılıyor.
+          // Önceki canvas-normalizasyon + CURRENT + SHA doğrulama zinciri geçişi
+          // gereksiz yere yavaşlatıyordu.
+          await window.rbx.applyPackInstant(p.name);
           toast(`"${p.name}" ${t('pack_applied_toast')}`, 'success');
-          await refreshRobloxStatus();
           await renderActiveCursor();
           await renderPackGrid();
         } catch (e) {
@@ -753,16 +926,9 @@ async function renderPackGrid() {
 }
 
 document.getElementById('btn-save-pack').onclick = async () => {
-  const name = prompt(t('pack_name'));
-  if (!name) return;
-  try {
-    await window.rbx.savePackAs(name);
-    toast(t('pack_saved'), 'success');
-    await renderPackGrid();
-  } catch (e) {
-    toast(t('error') + ' ' + errMsg(e));
-  }
+  await createPackFromDialog(false);
 };
+
 
 // ================= PAKET İÇE AKTARMA (dosya seçici + sürükle-bırak) =================
 
@@ -1007,20 +1173,93 @@ async function renderSettings() {
 }
 
 // ---- hızlı geçiş kısayolları (Ctrl+Alt+1/2/3) ----
+function acceleratorLabel(accelerator) {
+  return String(accelerator || '')
+    .replace(/CommandOrControl/g, 'Ctrl')
+    .replace(/Control/g, 'Ctrl')
+    .replace(/Command/g, 'Ctrl')
+    .replace(/Alt/g, 'Alt')
+    .replace(/Shift/g, 'Shift')
+    .replace(/Plus/g, '+')
+    .replace(/Numpad/g, 'Num')
+    .replace(/\\+/g, '+')
+    .replace(/\\s+/g, ' ');
+}
+
+function keyEventToAccelerator(e) {
+  const parts = [];
+  if (e.ctrlKey) parts.push('Control');
+  if (e.altKey) parts.push('Alt');
+  if (e.shiftKey) parts.push('Shift');
+  if (e.metaKey) parts.push('Super');
+
+  let key = e.key;
+  if (!key || ['Control','Alt','Shift','Meta'].includes(key)) return null;
+  const aliases = {
+    ' ':'Space', 'Escape':'Esc', 'ArrowUp':'Up', 'ArrowDown':'Down',
+    'ArrowLeft':'Left', 'ArrowRight':'Right', 'Enter':'Enter',
+    'Backspace':'Backspace', 'Delete':'Delete', 'Insert':'Insert',
+    'Home':'Home', 'End':'End', 'PageUp':'PageUp', 'PageDown':'PageDown',
+    'Tab':'Tab'
+  };
+  key = aliases[key] || (key.length === 1 ? key.toUpperCase() : key);
+  // Global shortcuts without a modifier are intentionally rejected.
+  if (!parts.length) return null;
+  return [...parts, key].join('+');
+}
+
 async function renderQuickSwitchSettings() {
   let packs = [];
   let map = {};
+  let keys = {};
   try {
     [packs, map] = await Promise.all([window.rbx.listPacks(), window.rbx.getQuickSwitch()]);
+    keys = (await window.rbx.getConfig()).quickSwitchKeys || {};
   } catch (e) {
     return;
   }
+
   for (const slot of ['1', '2', '3']) {
     const sel = document.getElementById('quickswitch-' + slot);
+    const keyBtn = document.getElementById('quickswitch-key-' + slot);
+    const keyLabel = document.getElementById('quickswitch-key-label-' + slot);
     if (!sel) continue;
+
     const current = (map && map[slot]) || '';
+    const accelerator = keys[slot] || `Control+Alt+${slot}`;
+    if (keyLabel) keyLabel.textContent = acceleratorLabel(accelerator);
+    if (keyBtn) {
+      keyBtn.textContent = t('quickswitch_assign');
+      keyBtn.classList.remove('recording');
+
+      keyBtn.onclick = () => {
+        keyBtn.classList.add('recording');
+        keyBtn.textContent = t('quickswitch_press');
+
+        const handler = async (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const acc = keyEventToAccelerator(e);
+          if (!acc) return;
+
+          document.removeEventListener('keydown', handler, true);
+          keyBtn.classList.remove('recording');
+          keyBtn.textContent = t('quickswitch_assign');
+
+          try {
+            await window.rbx.setQuickSwitchKey(slot, acc);
+            if (keyLabel) keyLabel.textContent = acceleratorLabel(acc);
+            toast(t('quickswitch_saved'), 'success');
+          } catch (err) {
+            toast(t('error') + ' ' + errMsg(err), 'error');
+          }
+        };
+        document.addEventListener('keydown', handler, true);
+      };
+    }
+
     sel.innerHTML = `<option value="">${t('quickswitch_none')}</option>` +
-      packs.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
+      packs.map(p => `<option value="${String(p.name).replace(/"/g, '&quot;')}">${p.name}</option>`).join('');
     sel.value = current;
     sel.onchange = async () => {
       try {
@@ -1055,55 +1294,138 @@ document.getElementById('toggle-start-on-boot').onchange = async (e) => {
   }
 };
 
-// ================= BAĞLAMDA ÖNİZLEME =================
-// Küçük kare önizlemelere ek olarak, gerçek imleç dosyalarını CSS
-// "cursor: url(...)" ile sahte bir Roblox arayüzü (buton, sohbet kutusu,
-// oyun sahnesi) üzerine uygulayıp fareyi gerçekten o alanların üzerinde
-// gezdirerek canlı/interaktif bir önizleme sunar.
+// ================= OYUN SAHNESİ ÖNİZLEMESİ =================
+// CSS cursor/url yerine tamamen Canvas tabanlı, sabit koordinatlı bir viewer.
+// Böylece Windows DPI, Chromium hotspot ve CSS cursor ölçekleme farkları
+// görüntüyü bozmaz. Cursor PNG'si native piksel boyutunda nearest-neighbor
+// olarak çizilir.
 async function openContextPreview() {
   let state = {};
-  try {
-    state = await window.rbx.currentCursorState();
-  } catch (e) {
-    toast(t('error') + ' ' + errMsg(e), 'error');
-    return;
-  }
+  try { state = await window.rbx.currentCursorState(); }
+  catch (e) { toast(t('error') + ' ' + errMsg(e), 'error'); return; }
 
-  const cacheBust = Date.now();
-  const cursorUrl = (p, hotspot = '0 0') => {
-    if (!p) return 'auto';
-    const clean = String(p).replace(/\\/g, '/');
-    return `url('file://${clean}?v=${cacheBust}') ${hotspot}, auto`;
-  };
-
-  const scene = document.getElementById('context-scene');
-  const playBtn = document.getElementById('context-play-btn');
-  const chatInput = document.getElementById('context-chat-input');
+  const modal = document.getElementById('context-preview');
+  const canvas = document.getElementById('context-game-canvas');
   const shiftBtn = document.getElementById('context-shiftlock-btn');
+  if (!canvas || !modal) return;
 
-  const hasAny = Object.values(state).some(Boolean);
-  if (!hasAny) toast(t('context_no_cursor'));
+  const ctx = canvas.getContext('2d', { alpha: false });
+  ctx.imageSmoothingEnabled = false;
+  const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  const W = 980, H = 560;
+  canvas.width = W * DPR; canvas.height = H * DPR;
+  canvas.style.aspectRatio = `${W}/${H}`;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
 
-  scene.style.cursor = cursorUrl(state.arrow);
-  playBtn.style.cursor = cursorUrl(state.click);
-  chatInput.style.cursor = cursorUrl(state.text, '2 10');
+  const images = {};
+  const load = async (kind, p) => {
+    if (!p) return;
+    try { images[kind] = await imageFromPath(p); } catch (_) {}
+  };
+  await Promise.all(Object.keys(TARGETS).map(k => load(k, state[k])));
 
   let shiftActive = false;
-  shiftBtn.classList.remove('active');
-  shiftBtn.onclick = () => {
-    shiftActive = !shiftActive;
-    // Shift Lock dosyası artık native 32x32 boyutunda dışa aktarılıyor
-    // (bkz. exportSizeFor); merkez hotspot bu yüzden 16 16'dır.
-    scene.style.cursor = shiftActive ? cursorUrl(state.shiftlock, '16 16') : cursorUrl(state.arrow);
-    shiftBtn.classList.toggle('active', shiftActive);
+  let mouse = { x: W/2, y: H/2, inside: false };
+  let hoverKind = 'arrow';
+
+  const rounded = (x,y,w,h,r) => {
+    ctx.beginPath(); ctx.roundRect(x,y,w,h,r); ctx.fill();
   };
 
-  document.getElementById('context-preview').classList.remove('hidden');
+  function draw() {
+    ctx.clearRect(0,0,W,H);
+    // Game-like blocky terrain background — intentionally generic, no Roblox UI
+    // assets/logos, so the viewer is deterministic and has no external assets.
+    const sky = ctx.createLinearGradient(0,0,0,H);
+    sky.addColorStop(0,'#182b46'); sky.addColorStop(.55,'#29445a'); sky.addColorStop(1,'#182a2d');
+    ctx.fillStyle=sky; ctx.fillRect(0,0,W,H);
+
+    // distant mountains
+    ctx.fillStyle='#17283a';
+    ctx.beginPath(); ctx.moveTo(0,300); ctx.lineTo(120,190); ctx.lineTo(225,290); ctx.lineTo(345,155); ctx.lineTo(500,295); ctx.lineTo(640,175); ctx.lineTo(790,300); ctx.lineTo(900,205); ctx.lineTo(W,295); ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.fill();
+    // ground tiles
+    ctx.fillStyle='#344c3c'; ctx.fillRect(0,300,W,H-300);
+    ctx.strokeStyle='rgba(255,255,255,.07)'; ctx.lineWidth=1;
+    for(let x=-40;x<W+80;x+=52){ ctx.beginPath(); ctx.moveTo(x,300); ctx.lineTo(x+70,H); ctx.stroke(); }
+    for(let y=340;y<H;y+=42){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+    // top game bar
+    ctx.fillStyle='rgba(8,12,20,.82)'; ctx.fillRect(0,0,W,58);
+    ctx.fillStyle='#fff'; ctx.font='700 15px Segoe UI'; ctx.fillText('RBX CURSOR TEST WORLD',22,26);
+    ctx.fillStyle='rgba(255,255,255,.55)'; ctx.font='12px Segoe UI'; ctx.fillText('Cursor preview • live',22,45);
+    // health / status panels
+    ctx.fillStyle='rgba(8,12,20,.7)'; rounded(720,12,110,34,9); rounded(842,12,116,34,9);
+    ctx.fillStyle='#6ee7b7'; ctx.font='700 12px Segoe UI'; ctx.fillText('HP 100',736,34);
+    ctx.fillStyle='#ffd166'; ctx.fillText('COINS 1,240',854,34);
+
+    // center world marker / target
+    ctx.strokeStyle='rgba(255,255,255,.32)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(490,205); ctx.lineTo(490,245); ctx.moveTo(470,225); ctx.lineTo(510,225); ctx.stroke();
+    ctx.fillStyle='rgba(20,25,35,.86)'; rounded(392,260,196,82,16);
+    ctx.fillStyle='#fff'; ctx.font='800 18px Segoe UI'; ctx.textAlign='center'; ctx.fillText('PLAY AREA',490,292);
+    ctx.fillStyle='rgba(255,255,255,.55)'; ctx.font='12px Segoe UI'; ctx.fillText('Move over buttons / chat to test cursor states',490,316);
+    ctx.textAlign='left';
+
+    // interactive play button
+    const playHover = mouse.x>=410 && mouse.x<=570 && mouse.y>=370 && mouse.y<=426;
+    ctx.fillStyle = playHover ? '#8da8ff' : '#6f8df5'; rounded(410,370,160,56,14);
+    ctx.fillStyle='#08101e'; ctx.font='900 16px Segoe UI'; ctx.textAlign='center'; ctx.fillText('PLAY',490,404); ctx.textAlign='left';
+
+    // chat box
+    ctx.fillStyle='rgba(8,12,20,.82)'; rounded(22,486,420,48,12);
+    ctx.strokeStyle='rgba(255,255,255,.15)'; ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.58)'; ctx.font='13px Segoe UI'; ctx.fillText('Type a message…',38,516);
+
+    // shift lock indicator
+    ctx.fillStyle=shiftActive ? 'rgba(111,141,245,.45)' : 'rgba(8,12,20,.72)'; rounded(900,470,58,58,13);
+    ctx.strokeStyle=shiftActive ? '#8da8ff' : 'rgba(255,255,255,.16)'; ctx.stroke();
+    ctx.fillStyle='#fff'; ctx.font='20px Segoe UI'; ctx.fillText(shiftActive?'⌁':'⊙',919,506);
+
+    // cursor: native 64x64 or 32x32, no interpolation and no CSS scaling.
+    if (mouse.inside) {
+      const kind = shiftActive ? 'shiftlock' : hoverKind;
+      const img = images[kind] || images.arrow;
+      if (img && img.naturalWidth) {
+        let hotX=0, hotY=0;
+        if(kind==='text'){hotX=2; hotY=10;}
+        if(kind==='shiftlock'){hotX=16; hotY=16;}
+        ctx.drawImage(img, Math.round(mouse.x-hotX), Math.round(mouse.y-hotY), img.naturalWidth, img.naturalHeight);
+      }
+    }
+  }
+
+  const pos = e => {
+    const rect=canvas.getBoundingClientRect();
+    mouse.x=Math.max(0,Math.min(W,(e.clientX-rect.left)*W/rect.width));
+    mouse.y=Math.max(0,Math.min(H,(e.clientY-rect.top)*H/rect.height));
+    mouse.inside=true;
+    if(mouse.x>=22 && mouse.x<=442 && mouse.y>=486) hoverKind='text';
+    else if(mouse.x>=410 && mouse.x<=570 && mouse.y>=370 && mouse.y<=426) hoverKind='click';
+    else hoverKind='arrow';
+    draw();
+  };
+  canvas.onpointermove=pos;
+  canvas.onpointerenter=pos;
+  canvas.onpointerleave=()=>{mouse.inside=false;draw();};
+  canvas.onpointerdown=(e)=>{
+    pos(e);
+    if(mouse.x>=900 && mouse.x<=958 && mouse.y>=470 && mouse.y<=528){
+      shiftActive=!shiftActive;
+      shiftBtn.classList.toggle('active',shiftActive);
+      draw();
+    }
+  };
+  shiftBtn.onclick=()=>{shiftActive=!shiftActive;shiftBtn.classList.toggle('active',shiftActive);draw();};
+
+  shiftBtn.classList.remove('active');
+  modal.classList.remove('hidden');
+  draw();
 }
 
 document.getElementById('btn-context-preview').onclick = openContextPreview;
 document.getElementById('context-preview-close').onclick = () => {
-  document.getElementById('context-preview').classList.add('hidden');
+  const modal=document.getElementById('context-preview');
+  if(modal) modal.classList.add('hidden');
 };
 
 // ================= İMLEÇ RENGİ DEĞİŞTİRİCİ =================
@@ -1257,6 +1579,7 @@ async function init() {
     toast(t('settings_load_error'));
   }
 
+  await loadCursorReferenceProfiles();
   await refreshRobloxStatus();
   await renderCursorGrid();
   await renderActiveCursor();
@@ -1265,7 +1588,7 @@ async function init() {
   // güncelle — pencere odakta olmasa bile bu olaylar gelir.
   if (window.rbx.onQuickSwitchApplied) {
     window.rbx.onQuickSwitchApplied(async (data) => {
-      toast(t('quickswitch_applied_toast', { slot: data.slot, name: data.pack }), 'success');
+      toast(t('quickswitch_applied_toast', { slot: data.slot, name: data.pack }).replace(`Ctrl+Alt+${data.slot}`, acceleratorLabel(data.accelerator || `Control+Alt+${data.slot}`)), 'success');
       await refreshRobloxStatus();
       await renderActiveCursor();
       if (!overlays.packs.classList.contains('hidden')) await renderPackGrid();
