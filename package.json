@@ -1,0 +1,49 @@
+{
+  "name": "rbx-cursor-studio",
+  "version": "3.1.10",
+  "description": "RBX Cursor Studio - Roblox imleç düzenleyici (Electron sürümü)",
+  "main": "main/main.js",
+  "author": "Carl",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.rbxcursorstudio.app",
+    "productName": "RBX Cursor Studio",
+    "copyright": "Copyright (c) 2026 Demhat Dayan. Licensed under PolyForm Noncommercial 1.0.0.",
+    "asar": true,
+    "asarUnpack": [
+      "assets/backgrounds/**/*",
+      "assets/originals/**/*"
+    ],
+    "compression": "normal",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main/**/*",
+      "renderer/**/*",
+      "assets/**/*",
+      "package.json",
+      "!**/*.map"
+    ],
+    "win": {
+      "target": ["nsis", "portable"],
+      "icon": "assets/backgrounds/logo.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "${productName} Kurulum ${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "${productName} Portable ${version}.${ext}"
+    }
+  }
+}
