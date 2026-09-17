@@ -49,6 +49,12 @@ Roblox imleçlerini özelleştirmek için hafif bir Windows aracı.
 - Orijinal Roblox imleçlerini yedekle ve tek tıkla geri yükle
 - Roblox'un o an çalışıp çalışmadığını gösteren küçük, sürüklenebilir canlı durum rozeti
 
+### 🌈 Toplu Renk Değiştirici
+- **Renk Değiştir** — şu an Roblox'ta aktif olan tüm imleçleri (Normal, Tıklama, Yazı Modu, Shift Lock) tek bir renk tonuyla aynı anda boya
+- Boyut ve konuma dokunmadan, yalnızca rengi değiştirir — tekrar ortalama/boyutlandırma gerekmez
+- Canlı önizlemeli ton kaydırıcısı ve hızlı seçim için hazır renk şeridi
+- Uygula dediğinde tüm imleçler anında Roblox'a kaydedilir ve uygulanır
+
 ### 🎬 Kişiselleştirme
 - Uygulamanın arkaplanını kendi görselinle değiştir, istediğinde varsayılana dön
 - Uygulama genelinde sade ve modern, koyu temalı bir arayüz
@@ -101,7 +107,8 @@ En son sürüm VirusTotal ile taranmıştır.
 
 - [🔍 VirusTotal tarama sonuçlarını görüntüle](https://www.virustotal.com/gui/file/84e62bef7871c4ab44ca101b21ac84b84cea73d73513b36072f14e1c4accfb19?nocache=1)
 - [🔍 Setup için VirusTotal tarama sonuçlarını görüntüle](https://www.virustotal.com/gui/file/ec33797c40e25e2f620e631eb58119b4f1f0d69c2e52c1c891b7fc7f2cab5fbf?nocache=1)
-
+- [🔍 Portable için VirusTotal tarama sonuçlarını görüntüle]()
+- 
 > **⚠️ VirusTotal Uyarısı**
 > Bu dosya, **2/68** güvenlik sağlayıcısı tarafından (DeepInstinct ve Zillya) **yanlış pozitif (false positive)** olarak işaretlenmiştir.
 > Bu durum, yeni derlenmiş ve imzalanmamış Electron uygulamalarında ve yükleyicilerinde sıkça karşılaşılan bir durumdur. "Downloader.Offloader" etiketi genellikle setup'ın normal dosya çıkartma davranışından kaynaklanır.
