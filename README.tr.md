@@ -108,14 +108,7 @@ En son sürüm VirusTotal ile taranmıştır.
 - [🔍 VirusTotal tarama sonuçlarını görüntüle](https://www.virustotal.com/gui/file/1754a25acff19696e9c0a3533ae03a47a7ab21587bcb4fd3dcc570ef348d94e8?nocache=1)
 - [🔍 Setup için VirusTotal tarama sonuçlarını görüntüle](https://www.virustotal.com/gui/file/be9ee436b7a9a99e062b47f55d5e17690ec3a16ed35925c5633b96c46cc78edd?nocache=1)
 - [🔍 Portable için VirusTotal tarama sonuçlarını görüntüle](https://www.virustotal.com/gui/file/cfa3b29517a9660bfdd7dc92d99e0572c65bb8facd7a94d0ba2fa011afdb0dcf?nocache=1)
-- 
-> **⚠️ VirusTotal Uyarısı**
-> Bu dosya, **2/68** güvenlik sağlayıcısı tarafından (DeepInstinct ve Zillya) **yanlış pozitif (false positive)** olarak işaretlenmiştir.
-> Bu durum, yeni derlenmiş ve imzalanmamış Electron uygulamalarında ve yükleyicilerinde sıkça karşılaşılan bir durumdur. "Downloader.Offloader" etiketi genellikle setup'ın normal dosya çıkartma davranışından kaynaklanır.
->
-> **Diğer tüm büyük antivirüs motorları dosyayı temiz olarak raporlamaktadır.**
-> Kaynak kod tamamen açık kaynaklıdır ve uygulama herhangi bir kötü amaçlı davranış içermemektedir.
-
+  
 ## ☕ Projeyi Destekle
 
 RBX Cursor Studio'yu beğendiysen, projeyi küçük bir bağışla destekleyebilirsin.
