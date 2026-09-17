@@ -8,6 +8,15 @@ function cursorName(kind) { return t(NAME_KEYS[kind] || kind); }
 const TYPE_HINTS = { arrow: 'ArrowFarCursor.png', click: 'ArrowCursor.png', text: 'IBeamCursor.png', shiftlock: 'MouseLockedCursor.png' };
 const EXPORT_SIZE = 64;
 
+// Roblox'un gerçek imleç dosyaları aynı boyutta değildir: Arrow/Click/Text
+// 64x64'tür ama Shift Lock (MouseLockedCursor.png) native olarak 32x32'dir
+// ve ikon tuvalin tamamını kaplar. Düzenleyicideki ÇALIŞMA alanı (canvas)
+// tutarlılık için her zaman 64x64 kalır — sadece diske/Roblox'a YAZILAN
+// son dosyanın boyutu bu fonksiyonla türe göre belirlenir.
+function exportSizeFor(kind) {
+  return kind === 'shiftlock' ? 32 : EXPORT_SIZE;
+}
+
 let cfg = {};
 // Düzenleyicideki aktif imleç durumu: { kind, img, scale, offsetX, offsetY }
 let editorState = null;
@@ -309,24 +318,30 @@ function autoFitAndCenterEditor(showToast = false) {
 function normalizeImageToDefault(kind, img) {
   const bounds = getAlphaBounds(img);
   const ref = getDefaultReference(kind);
+  const outSize = exportSizeFor(kind);
   const canvas = document.createElement('canvas');
-  canvas.width = EXPORT_SIZE; canvas.height = EXPORT_SIZE;
+  canvas.width = outSize; canvas.height = outSize;
   const ctx = canvas.getContext('2d');
   ctx.imageSmoothingEnabled = false;
-  ctx.clearRect(0, 0, EXPORT_SIZE, EXPORT_SIZE);
+  ctx.clearRect(0, 0, outSize, outSize);
   if (!bounds) return canvas;
 
+  // Referans kutusu (DEFAULT_CURSOR_REFERENCE) her zaman 64 birimlik bir
+  // uzayda tanımlıdır. Çıktı tuvali farklı boyuttaysa (Shift Lock için 32),
+  // outScale ile orantılı olarak ölçeklenir; böylece konum/oran editördeki
+  // (ve 64x64 diğer cursorlardaki) ile birebir aynı kalır.
+  const outScale = outSize / EXPORT_SIZE;
   const baseRatio = Math.min(EXPORT_SIZE / img.width, EXPORT_SIZE / img.height);
   const fitRatio = Math.min(ref.width / bounds.width, ref.height / bounds.height);
   const scale = Math.max(0.05, Math.min(3, fitRatio / baseRatio));
-  const ratio = baseRatio * scale;
+  const ratio = baseRatio * scale * outScale;
   const w = img.width * ratio, h = img.height * ratio;
   const contentCenterX = ((bounds.minX + bounds.maxX + 1) / 2) * ratio;
   const contentCenterY = ((bounds.minY + bounds.maxY + 1) / 2) * ratio;
-  const defaultCenterX = (ref.minX + ref.maxX + 1) / 2;
-  const defaultCenterY = (ref.minY + ref.maxY + 1) / 2;
-  const x = defaultCenterX - contentCenterX - (EXPORT_SIZE - w) / 2;
-  const y = defaultCenterY - contentCenterY - (EXPORT_SIZE - h) / 2;
+  const defaultCenterX = (ref.minX + ref.maxX + 1) / 2 * outScale;
+  const defaultCenterY = (ref.minY + ref.maxY + 1) / 2 * outScale;
+  const x = defaultCenterX - contentCenterX - (outSize - w) / 2;
+  const y = defaultCenterY - contentCenterY - (outSize - h) / 2;
   ctx.drawImage(img, x, y, w, h);
   return canvas;
 }
@@ -399,22 +414,28 @@ function colorizeImageData(imageData, hueDeg, saturation = 0.6) {
 // satranç deseni OLMADAN) ayrı bir canvas'a çizer. Hem canlı önizlemede
 // (satranç deseninin üstüne bindirilerek) hem de son PNG'yi dışa aktarırken
 // kullanılır — böylece satranç deseni yanlışlıkla kaydedilen dosyaya karışmaz.
-function renderCursorLayer(state) {
-  const size = EXPORT_SIZE;
+// outSize verilmezse her zamanki gibi editör çalışma boyutunda (64x64)
+// üretir — bu, drawEditor() önizlemesinin davranışını DEĞİŞTİRMEZ.
+// Son dosyayı diske yazarken outSize = exportSizeFor(kind) geçilir; state
+// (scale/offsetX/offsetY) her zaman 64 birimlik editör uzayında tutulduğu
+// için burada outSize/EXPORT_SIZE oranıyla orantılı olarak ölçeklenir,
+// böylece kullanıcının editörde gördüğü konum/boyut birebir korunur.
+function renderCursorLayer(state, outSize = EXPORT_SIZE) {
   const layer = document.createElement('canvas');
-  layer.width = size; layer.height = size;
+  layer.width = outSize; layer.height = outSize;
   const lctx = layer.getContext('2d');
   lctx.imageSmoothingEnabled = false;
   const { img, scale, offsetX, offsetY } = state;
-  const baseRatio = Math.min(size / img.width, size / img.height);
-  const ratio = baseRatio * scale;
+  const outScale = outSize / EXPORT_SIZE;
+  const baseRatio = Math.min(EXPORT_SIZE / img.width, EXPORT_SIZE / img.height);
+  const ratio = baseRatio * scale * outScale;
   const w = img.width * ratio;
   const h = img.height * ratio;
-  const x = (size - w) / 2 + offsetX;
-  const y = (size - h) / 2 + offsetY;
+  const x = (outSize - w) / 2 + offsetX * outScale;
+  const y = (outSize - h) / 2 + offsetY * outScale;
   lctx.drawImage(img, x, y, w, h);
   if (state.colorize) {
-    const data = lctx.getImageData(0, 0, size, size);
+    const data = lctx.getImageData(0, 0, outSize, outSize);
     colorizeImageData(data, state.hue || 0);
     lctx.putImageData(data, 0, 0);
   }
@@ -604,7 +625,7 @@ document.getElementById('editor-save').onclick = async () => {
     // durumda; dışa aktarılan PNG'nin gerçekten saydam olması için sadece
     // cursor katmanını (renklendirme dahil, satranç deseni olmadan) yeniden
     // oluşturup ondan kaydediyoruz.
-    const layer = renderCursorLayer(editorState);
+    const layer = renderCursorLayer(editorState, exportSizeFor(kind));
     const blob = await new Promise((resolve, reject) => {
       layer.toBlob((b) => b ? resolve(b) : reject(new Error('PNG oluşturulamadı')), 'image/png');
     });
@@ -1063,7 +1084,9 @@ async function openContextPreview() {
   shiftBtn.classList.remove('active');
   shiftBtn.onclick = () => {
     shiftActive = !shiftActive;
-    scene.style.cursor = shiftActive ? cursorUrl(state.shiftlock, '32 32') : cursorUrl(state.arrow);
+    // Shift Lock dosyası artık native 32x32 boyutunda dışa aktarılıyor
+    // (bkz. exportSizeFor); merkez hotspot bu yüzden 16 16'dır.
+    scene.style.cursor = shiftActive ? cursorUrl(state.shiftlock, '16 16') : cursorUrl(state.arrow);
     shiftBtn.classList.toggle('active', shiftActive);
   };
 
