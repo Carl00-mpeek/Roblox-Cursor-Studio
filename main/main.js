@@ -624,11 +624,20 @@ ipcMain.handle('history:delete', (_e, id) => {
   return deleteHistoryItem(id);
 });
 
+// "Bağlamda Önizleme" penceresi buradan okur. ÖNEMLİ: burası bilerek
+// uygulamanın kendi iç CURRENT (staging) klasörü yerine, Roblox'ta O AN
+// GERÇEKTEN aktif olan dosyaları okur — activeCursorInfo() ile birebir
+// aynı kaynak (currentCursorDir()). Önceden burası CURRENT'ı okuyordu;
+// bu da paket "Hızlı Geçiş" (Ctrl+Alt+1/2/3) veya "Orijinale Dön" gibi
+// CURRENT'ı güncellemeyen/geçersiz kılan işlemlerden sonra önizlemenin
+// eski, boş ya da gerçekte artık aktif olmayan bir cursor göstermesine
+// (ya da hiç göstermemesine) yol açıyordu.
 ipcMain.handle('cursor:current-state', () => {
+  const dir = currentCursorDir();
   const state = {};
   for (const [kind, file] of Object.entries(TARGETS)) {
-    const p = path.join(CURRENT, file);
-    state[kind] = fs.existsSync(p) ? p : null;
+    const p = dir ? path.join(dir, file) : null;
+    state[kind] = (p && fs.existsSync(p)) ? p : null;
   }
   return state;
 });
