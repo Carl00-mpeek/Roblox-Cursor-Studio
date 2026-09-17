@@ -106,8 +106,8 @@ npm run dist     # build the installer and portable exe
 The latest release has been scanned with VirusTotal.
 
 - [🔍 View VirusTotal scan results](https://www.virustotal.com/gui/file/84e62bef7871c4ab44ca101b21ac84b84cea73d73513b36072f14e1c4accfb19?nocache=1)
-- [🔍 View VirusTotal scan results for Setup](https://www.virustotal.com/gui/file/ec33797c40e25e2f620e631eb58119b4f1f0d69c2e52c1c891b7fc7f2cab5fbf?nocache=1)
-- [🔍 View VirusTotal scan results for Portable]()
+- [🔍 View VirusTotal scan results for Setup](https://www.virustotal.com/gui/file/be9ee436b7a9a99e062b47f55d5e17690ec3a16ed35925c5633b96c46cc78edd?nocache=1)
+- [🔍 View VirusTotal scan results for Portable](https://www.virustotal.com/gui/file/cfa3b29517a9660bfdd7dc92d99e0572c65bb8facd7a94d0ba2fa011afdb0dcf?nocache=1)
 - 
 > **⚠️ VirusTotal Notice**
 > This file is flagged by **2/68** security vendors (DeepInstinct and Zillya) as a **false positive**.
