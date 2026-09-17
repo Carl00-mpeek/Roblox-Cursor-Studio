@@ -102,13 +102,7 @@ The latest release has been scanned with VirusTotal.
 - [🔍 View VirusTotal scan results](https://www.virustotal.com/gui/file/74cc0a0cbff63511f8d515d466e54625f4dae41db090b397941b14ca10d95119?nocache=1)
 - [🔍 View VirusTotal scan results for Setup](https://www.virustotal.com/gui/file/ec33797c40e25e2f620e631eb58119b4f1f0d69c2e52c1c891b7fc7f2cab5fbf?nocache=1)
 - [🔍 View VirusTotal scan results for Portable]()
-- 
-> **⚠️ VirusTotal Notice**
-> This file is flagged by **2/68** security vendors (DeepInstinct and Zillya) as a **false positive**.
-> This is a common occurrence with newly built, unsigned Electron applications and installers. The "Downloader.Offloader" label is typically triggered by the normal file extraction behavior of the setup.
->
-> **All other major antivirus engines report the file as clean.**
-> The source code is fully open-source and the application does not contain any malicious behavior.
+
 
 ## ☕ Support the Project
 
