@@ -16,13 +16,54 @@ A lightweight Windows tool for customizing Roblox cursors.
 
 ## ✨ Features
 
-- 🖱️ Customize Roblox cursors
-- 🎨 Create and manage cursor packs
-- ⚡ Apply cursors instantly
-- 📐 Automatically resize and center cursors
-- 💾 Backup and restore original cursors
-- 🔄 Automatically restore cursors after Roblox updates
-- 🌍 English & Turkish interface
+### 🖱️ Cursor Customization
+- Customize every Roblox cursor type individually (arrow, far arrow, I-beam, mouse-locked, etc.)
+- Apply your selection to Roblox instantly, with one click
+- Cursors are automatically fitted and centered in a 64×64 canvas
+- Smoothing is disabled to keep pixel edges crisp
+
+### 🎯 Built-in Cursor Editor
+- **Auto-Fit + Center** — snaps any imported image to the ideal size in one click
+- **Center Only** and **Reset Size** shortcuts
+- Manual zoom slider (0.4x – 3x) for fine control
+- Drag-and-drop repositioning directly on the canvas
+- **Colorize** — turn a black-and-white cursor into a colored one with a hue slider
+- **Generate Color Variations** — create multiple color options from the same cursor in one click
+
+### 📦 Cursor Packs
+- Create, save, and manage as many cursor packs as you like
+- Export packs as `.rbxcursor` / `.zip` files to share with friends
+- Import a pack someone sent you with drag-and-drop
+- **Quick Pack Switching** — jump between saved packs instantly with `Ctrl+Alt+1` / `Ctrl+Alt+2` / `Ctrl+Alt+3`, even while Roblox is running
+
+### 🕓 History
+- Browse every cursor you've previously selected in a dedicated History tab and reapply it anytime
+
+### 🖼️ In-Context Preview
+- Test your cursors at true size on a mock Roblox screen (HUD, health/coin counters, PLAY button, chat box, and a Shift Lock toggle included)
+- Simulate Shift Lock mode to preview how the cursor behaves in that state
+
+### 🔄 Automatic Update Handling
+- Automatically detects the newest Roblox client directory
+- With Auto-Reinstall enabled, your saved cursors are **automatically reapplied every time Roblox updates**
+- Back up your original Roblox cursors and restore them with one click
+- A small, draggable live status badge shows whether Roblox is currently running
+
+### 🎬 Personalization
+- Swap the app's own background for your own image, or reset to default
+- Clean, modern dark-themed interface throughout
+
+### ⚙️ Settings
+- **English & Turkish** interface with instant language switching
+- Option to **launch automatically on Windows startup**
+- View the currently detected Roblox version from the Settings screen
+
+### 💻 Platform & Distribution
+- Available as both a **portable executable** and an **NSIS installer**
+- Built on Electron — lightweight, with zero background bloat
+- Ready-made `.bat` scripts for building from source (`install.bat` / `start.bat` / `exe_maker.bat`)
+- 100% open-source, with releases scanned on VirusTotal
+- Never touches the Roblox game client itself — only modifies local cursor files
 
 ## 📥 Download
 

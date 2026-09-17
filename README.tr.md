@@ -16,13 +16,54 @@ Roblox imleçlerini özelleştirmek için hafif bir Windows aracı.
 
 ## ✨ Özellikler
 
-- 🖱️ Roblox imleçlerini özelleştir
-- 🎨 İmleç paketleri oluştur ve yönet
-- ⚡ İmleçleri anında uygula
-- 📐 İmleçleri otomatik olarak yeniden boyutlandır ve ortala
-- 💾 Orijinal imleçleri yedekle ve geri yükle
-- 🔄 Roblox güncellemelerinden sonra imleçleri otomatik olarak geri yükle
-- 🌍 İngilizce & Türkçe arayüz
+### 🖱️ İmleç Özelleştirme
+- Roblox'un tüm imleç türlerini (ok, uzak ok, I-beam, kilitli fare vb.) tek tek özelleştir
+- Seçtiğin görseli tek tıkla anında Roblox'a uygula
+- İmleçler 64×64 alana otomatik olarak dengeli biçimde sığdırılır ve ortalanır
+- Piksel netliğini korumak için yumuşatma (anti-aliasing) kapalı tutulur
+
+### 🎯 Gelişmiş İmleç Düzenleyici
+- **Otomatik Boyutlandır + Ortala** — yüklenen görseli tek tıkla ideal boyuta getirir
+- **Sadece Ortala** ve **Boyutu Sıfırla** kısayolları
+- Kaydırma çubuğuyla manuel yakınlaştırma/uzaklaştırma (0.4x – 3x)
+- Canvas üzerinde sürükle-bırak ile serbest konumlandırma
+- **Renklendir** — siyah-beyaz bir imleci ton (hue) kaydırıcısıyla renkli hale getir
+- **Renk Varyasyonları Oluştur** — tek tıkla aynı imlecin birden fazla renk seçeneğini üret
+
+### 📦 Paket Sistemi
+- İstediğin kadar imleç paketi oluştur, kaydet ve yönet
+- Paketleri `.rbxcursor` / `.zip` olarak dışa aktar ve arkadaşlarınla paylaş
+- Bir arkadaşının gönderdiği paket dosyasını sürükle-bırak ile içe aktar
+- **Hızlı Paket Geçişi** — `Ctrl+Alt+1` / `Ctrl+Alt+2` / `Ctrl+Alt+3` kısayollarıyla, Roblox içindeyken bile kayıtlı paketler arasında anında geçiş yap
+
+### 🕓 Geçmiş
+- Daha önce seçtiğin tüm imleçleri ayrı bir Geçmiş sekmesinde görüntüle ve istediğin zaman tekrar uygula
+
+### 🖼️ Bağlamda Önizleme
+- Sahte bir Roblox ekranı (HUD, can/coin göstergesi, OYNA butonu, sohbet kutusu ve Shift Lock butonu dahil) üzerinde, gerçek boyutlarında imleç dene
+- Shift Lock modunu simüle ederek imlecin o moddaki görünümünü test et
+
+### 🔄 Otomatik Güncelleme Desteği
+- En yeni Roblox istemci klasörünü otomatik olarak algılar
+- Otomatik Düzeltme açıldığında, Roblox her güncellendiğinde kayıtlı imleçlerin **otomatik olarak yeniden kurulmasını** sağlar
+- Orijinal Roblox imleçlerini yedekle ve tek tıkla geri yükle
+- Roblox'un o an çalışıp çalışmadığını gösteren küçük, sürüklenebilir canlı durum rozeti
+
+### 🎬 Kişiselleştirme
+- Uygulamanın arkaplanını kendi görselinle değiştir, istediğinde varsayılana dön
+- Uygulama genelinde sade ve modern, koyu temalı bir arayüz
+
+### ⚙️ Ayarlar
+- **Türkçe / İngilizce** arayüz, anlık dil değişimi
+- **Windows başlangıcında otomatik açılma** seçeneği
+- O an algılanan Roblox sürümünü Ayarlar ekranından görüntüleme
+
+### 💻 Platform ve Dağıtım
+- Hem taşınabilir (portable) exe hem de NSIS kurulum dosyası olarak dağıtılır
+- Electron tabanlı, hafif ve arka planda gereksiz kaynak tüketmeyen bir yapı
+- Kaynak koddan derlemek isteyenler için hazır `.bat` script'leri (`kur.bat` / `baslat.bat` / `exe_yap.bat`)
+- %100 açık kaynak, sürümler VirusTotal ile taranmıştır
+- Roblox'un oyun istemcisine asla müdahale etmez — yalnızca yerel imleç dosyalarını değiştirir
 
 ## 📥 İndir
 
