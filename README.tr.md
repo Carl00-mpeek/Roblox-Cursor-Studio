@@ -140,9 +140,9 @@ npm run dist     # yükleyici ve taşınabilir exe oluştur
 
 En son sürüm VirusTotal ile taranmıştır.
 
-- [🔍 VirusTotal tarama sonuçlarını görüntüle](https://www.virustotal.com/gui/file/1754a25acff19696e9c0a3533ae03a47a7ab21587bcb4fd3dcc570ef348d94e8?nocache=1)
-- [🔍 Setup için VirusTotal tarama sonuçlarını görüntüle](https://www.virustotal.com/gui/file/be9ee436b7a9a99e062b47f55d5e17690ec3a16ed35925c5633b96c46cc78edd?nocache=1)
-- [🔍 Portable için VirusTotal tarama sonuçlarını görüntüle](https://www.virustotal.com/gui/file/cfa3b29517a9660bfdd7dc92d99e0572c65bb8facd7a94d0ba2fa011afdb0dcf?nocache=1)
+- [🔍 VirusTotal tarama sonuçlarını görüntüle](https://www.virustotal.com/gui/file/d6164ae95c241574d51e8ae521035cb12dbc00a99e30169d805f5ea60930262f?nocache=1)
+- [🔍 Setup için VirusTotal tarama sonuçlarını görüntüle](https://www.virustotal.com/gui/file/944e5b08bcebb04b95a1f71bae804b0a4976773f082f9bec78af6075c105f3c6?nocache=1)
+- [🔍 Portable için VirusTotal tarama sonuçlarını görüntüle](https://www.virustotal.com/gui/file/14650d000c917acadd5312ddfeb358fa3ef27be11eaadc003150955f4e513971?nocache=1)
   
 ## ☕ Projeyi Destekle
 
