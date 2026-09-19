@@ -5,7 +5,9 @@
 
 ## ⚠️ Disclaimer
 
-RBX Cursor Studio is an independent, community-made tool and is **not affiliated with, endorsed by, or associated with Roblox Corporation** in any way. "Roblox" is a trademark of Roblox Corporation. This tool only modifies local cursor files on your own device and does not interact with, modify, or inject into the Roblox game client itself.
+RBX Cursor Studio is an independent, community-made tool and is **not affiliated with, endorsed by, or associated with Roblox Corporation** in any way. "Roblox" is a trademark of Roblox Corporation.
+
+This tool does not interact with, modify, or inject into the Roblox game client's code or executables. It only replaces cursor image files inside your local Roblox folder. Roblox does not officially support modifying game files, so **use it at your own risk**.
 
 # 🎨 RBX Cursor Studio
 
@@ -27,7 +29,7 @@ A lightweight Windows tool for customizing Roblox cursors.
 - **Center Only** and **Reset Size** shortcuts
 - Manual zoom slider (0.4x – 3x) for fine control
 - Drag-and-drop repositioning directly on the canvas
-- **Colorize** — turn a black-and-white cursor into a colored one with a hue slider
+- **Colorize** — shift the hue of a colored cursor with a slider (pure black or white has no hue, so it can't be recolored)
 - **Generate Color Variations** — create multiple color options from the same cursor in one click
 
 ### 📦 Cursor Packs
@@ -50,7 +52,7 @@ A lightweight Windows tool for customizing Roblox cursors.
 - A small, draggable live status badge shows whether Roblox is currently running
 
 ### 🌈 Bulk Color Changer
-- **Change Color** — recolor every currently active cursor (Normal, Click, Text, Shift Lock) at once with a single hue
+- **Change Color** — recolor every currently active cursor (Normal, Click, Text, Shift Lock) at once with a single hue (pure black or white cursors stay unchanged)
 - Only changes color, never size or position — no re-centering needed
 - Live preview slider plus a quick-pick color strip
 - Applying instantly saves and installs all cursors to Roblox
@@ -68,8 +70,8 @@ A lightweight Windows tool for customizing Roblox cursors.
 - Available as both a **portable executable** and an **NSIS installer**
 - Built on Electron — lightweight, with zero background bloat
 - Ready-made `.bat` scripts for building from source (`install.bat` / `start.bat` / `exe_maker.bat`)
-- 100% open-source, with releases scanned on VirusTotal
-- Never touches the Roblox game client itself — only modifies local cursor files
+- Source code is publicly available (noncommercial license, see below), with releases scanned on VirusTotal
+- Doesn't touch the game's code or executables — only replaces cursor images in the Roblox folder
 
 ## 📥 Download
 
@@ -77,14 +79,19 @@ A lightweight Windows tool for customizing Roblox cursors.
 Download the installer to install RBX Cursor Studio on your PC.
 
 ### Portable
-Use the portable version without installing the application.
+Download and extract the ZIP, then run `RBX Cursor Studio.exe` inside the extracted folder — no installation needed.
 
-> Download the latest version from the [Releases](../../releases) page.
+> Download the latest version from the [Releases](../../releases) page. Only download from this repository's Releases page.
+
+### ❓ Windows shows a "protected your PC" warning. Why?
+
+The app is new and not code-signed, so Windows SmartScreen may show a warning until enough people have downloaded it. This alone is not a sign of malware.
+
+To run it: **More info → Run anyway**
+
+The full source code is available on this page, and VirusTotal scan results for every file are linked in the section below.
 
 ## 🔧 Building from Source
-
-### Portable
-Download and extract the ZIP, then run `RBX Cursor Studio.exe` inside the extracted folder — no installation needed.
 
 **Windows users: the ready-made scripts are enough — no terminal needed.**
 The steps below are for manual setup or non-Windows systems.
@@ -105,10 +112,9 @@ npm run dist     # build the installer and portable exe
 
 The latest release has been scanned with VirusTotal.
 
-- [🔍 View VirusTotal scan results](https://www.virustotal.com/gui/file/1754a25acff19696e9c0a3533ae03a47a7ab21587bcb4fd3dcc570ef348d94e8?nocache=1)
+- [🔍 View VirusTotal scan results for Source](https://www.virustotal.com/gui/file/1754a25acff19696e9c0a3533ae03a47a7ab21587bcb4fd3dcc570ef348d94e8?nocache=1)
 - [🔍 View VirusTotal scan results for Setup](https://www.virustotal.com/gui/file/be9ee436b7a9a99e062b47f55d5e17690ec3a16ed35925c5633b96c46cc78edd?nocache=1)
 - [🔍 View VirusTotal scan results for Portable](https://www.virustotal.com/gui/file/cfa3b29517a9660bfdd7dc92d99e0572c65bb8facd7a94d0ba2fa011afdb0dcf?nocache=1)
-
 
 ## ☕ Support the Project
 
