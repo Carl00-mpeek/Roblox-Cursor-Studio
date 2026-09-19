@@ -1,12 +1,17 @@
 name: Windows Setup.exe Oluştur
 
 # Bu iş akışı GitHub'ın kendi Windows sunucusunda (senin bilgisayarında değil)
-# çalışır, electron-builder ile setup.exe + portable.exe üretir.
+# çalışır; electron-builder ile Setup (kurulum) + Portable exe üretir.
+# Animasyonlu İmleç için native/cursor_helper.exe de burada derlenir.
 #
 # Çalıştırma şekilleri:
-#  1) "v" ile başlayan bir tag push'ladığında (örn. v1.0.0) otomatik çalışır
+#  1) "v" ile başlayan bir tag push'ladığında (örn. v3.3.5) otomatik çalışır
 #     ve çıktıları doğrudan bir GitHub Release'e ekler.
-#     Örnek:  git tag v1.0.0 && git push origin v1.0.0
+#     ÖNEMLİ: tag, package.json'daki "version" ile başlamalı
+#     (v3.3.5  <->  "version": "3.3.5"). Sürümün arkasına _hotfix, -beta gibi
+#     ek gelebilir (v3.3.5_hotfix, v3.3.5-beta.1 kabul edilir);
+#     ama v3.3.6 ile package.json 3.3.5 ise iş akışı bilerek hata verir.
+#     Örnek:  git tag v3.3.5 && git push origin v3.3.5
 #  2) Actions sekmesinden elle "Run workflow" ile de tetiklenebilir
 #     (workflow_dispatch) — bu durumda çıktı sadece "Artifacts" olarak,
 #     Release oluşturmadan indirilebilir.
@@ -20,45 +25,147 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: windows-latest
+    timeout-minutes: 30
     steps:
       - name: Kodu indir
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Node.js kur
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 22
+          cache: npm
 
-      # NOT: Bu iş akışı, package.json'ın repo kökünde olduğunu varsayar.
-      # Eğer repo kökünde "rbx-cursor-studio" adlı bir alt klasör varsa,
-      # aşağıdaki "working-directory: rbx-cursor-studio" satırlarındaki
-      # yorumu kaldır (# işaretini sil).
-      - name: package.json gecerliligini kontrol et
-        run: node -e "JSON.parse(require('fs').readFileSync('package.json', 'utf8')); console.log('package.json gecerli.')"
-        # working-directory: rbx-cursor-studio
+      - name: package.json geçerliliğini ve sürüm/tag uyumunu kontrol et
+        shell: pwsh
+        run: |
+          $pkg = Get-Content package.json -Raw | ConvertFrom-Json
+          Write-Host "package.json geçerli. Sürüm: $($pkg.version)"
+          if ($env:GITHUB_REF -like 'refs/tags/v*') {
+            $tag = $env:GITHUB_REF_NAME
+            # Kabul: v3.3.5 | v3.3.5_hotfix | v3.3.5-beta.1   Red: v3.3.50 | v3.3.6
+            $pattern = '^v' + [regex]::Escape($pkg.version) + '($|[_+-])'
+            if ($tag -notmatch $pattern) {
+              throw "Tag ($tag) package.json sürümüyle ($($pkg.version)) uyuşmuyor. Tag 'v$($pkg.version)' ile başlamalı (sonuna _hotfix gibi ek olabilir)."
+            }
+          }
 
-      - name: Bağımlılıkları kur
-        run: npm install
-        # working-directory: rbx-cursor-studio
+      # Animasyonlu İmleç yardımcısı MinGW g++ ile derlenir (-static ile,
+      # yani son kullanıcıda ekstra DLL/VC++ runtime gerekmez).
+      # cursor_helper.cpp std::thread/std::mutex kullanır; bu yüzden g++'ın
+      # "posix" thread modelli olması gerekir. Runner'daki g++ önce küçük bir
+      # deneme programıyla (aynı bayraklar, static) denenir; çalışmazsa
+      # Chocolatey ile MinGW-w64 kurulup PATH'in başına eklenir.
+      - name: C++ derleyicisini (MinGW g++) hazırla ve dene
+        shell: pwsh
+        run: |
+          # Depoya yanlışlıkla elle derlenmiş bir exe girdiyse CI onu kullanmasın;
+          # her zaman kaynak koddan sıfırdan derlesin.
+          Remove-Item native/cursor_helper.exe -Force -ErrorAction SilentlyContinue
+
+          function Test-Gxx {
+            if (-not (Get-Command g++ -ErrorAction SilentlyContinue)) { return $false }
+            $src = Join-Path $env:RUNNER_TEMP 'gxx_probe.cpp'
+            $exe = Join-Path $env:RUNNER_TEMP 'gxx_probe.exe'
+            Remove-Item $exe -Force -ErrorAction SilentlyContinue
+            $code = @(
+              '#include <thread>',
+              '#include <mutex>',
+              '#include <atomic>',
+              'int main() { std::mutex m; std::atomic<int> a{0}; std::thread t([&] { std::lock_guard<std::mutex> g(m); a = 1; }); t.join(); return a == 1 ? 0 : 1; }'
+            ) -join "`n"
+            Set-Content -Path $src -Value $code -Encoding ascii
+            $prev = $ErrorActionPreference
+            $ErrorActionPreference = 'Continue'
+            try {
+              g++ -std=c++17 -static -static-libgcc -static-libstdc++ $src -o $exe 2>&1 | Out-Host
+              if ($LASTEXITCODE -ne 0 -or -not (Test-Path $exe)) { return $false }
+              & $exe | Out-Null
+              return ($LASTEXITCODE -eq 0)
+            } finally {
+              $ErrorActionPreference = $prev
+            }
+          }
+
+          if (Test-Gxx) {
+            Write-Host 'Runner üzerindeki g++ uygun (std::thread + static çalışıyor).'
+          } else {
+            Write-Host 'Uygun g++ bulunamadı, Chocolatey ile MinGW-w64 kuruluyor...'
+            choco install mingw -y --no-progress
+            $found = Get-ChildItem -Path 'C:\ProgramData\mingw64','C:\ProgramData\chocolatey\lib\mingw','C:\tools','C:\mingw64' -Recurse -Filter g++.exe -ErrorAction SilentlyContinue |
+              Where-Object { $_.DirectoryName -notmatch 'w64-mingw32' } |
+              Sort-Object { $_.FullName.Length } |
+              Select-Object -First 1
+            if (-not $found) { throw 'MinGW kuruldu ama g++.exe bulunamadı.' }
+            $found.DirectoryName | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
+            $env:PATH = "$($found.DirectoryName);$env:PATH"
+            if (-not (Test-Gxx)) { throw 'Kurulan MinGW ile de std::thread + static deneme programı derlenip çalışmadı.' }
+          }
+          g++ --version
+
+      # "npm ci": package-lock.json'a birebir uyar (tekrarlanabilir derleme).
+      # postinstall adımı native/cursor_helper.exe'yi burada derler.
+      - name: Bağımlılıkları kur (ve cursor_helper.exe'yi derle)
+        run: npm ci
+
+      - name: cursor_helper.exe derlendi mi ve bağımsız çalışır mı kontrol et
+        shell: pwsh
+        run: |
+          if (-not (Test-Path native/cursor_helper.exe)) {
+            throw 'native/cursor_helper.exe üretilemedi. Derleme hatası için bir önceki "Bağımlılıkları kur" adımının logunu oku (native/cursor_helper.cpp derleme hatası verir). Bu haliyle Animasyonlu İmleç OLMADAN paket çıkmaz.'
+          }
+          Write-Host ("cursor_helper.exe: {0} KB" -f [math]::Round((Get-Item native/cursor_helper.exe).Length / 1KB))
+          if (Get-Command objdump -ErrorAction SilentlyContinue) {
+            $dlls = @(objdump -p native/cursor_helper.exe | Select-String 'DLL Name' | ForEach-Object { $_.Line.Trim() })
+            $dlls | ForEach-Object { Write-Host $_ }
+            if ($dlls | Where-Object { $_ -match 'libstdc\+\+|libgcc|libwinpthread' }) {
+              throw 'cursor_helper.exe statik derlenmemiş (MinGW runtime DLL bağımlılığı var).'
+            }
+          } else {
+            Write-Host 'objdump bulunamadı, DLL bağımlılık kontrolü atlandı.'
+          }
 
       - name: setup.exe / portable.exe oluştur
         run: npm run dist -- --publish=never
-        # working-directory: rbx-cursor-studio
+
+      - name: Çıktıları doğrula (Setup, Portable ve cursor_helper.exe paketin içinde olmalı)
+        shell: pwsh
+        run: |
+          Get-ChildItem dist -Filter *.exe | ForEach-Object { Write-Host "$($_.Name)  ($([math]::Round($_.Length/1MB,1)) MB)" }
+          $setup    = Get-ChildItem dist -Filter '*Kurulum*.exe'
+          $portable = Get-ChildItem dist -Filter '*Portable*.exe'
+          if (-not $setup)    { throw 'Setup (Kurulum) exe üretilemedi.' }
+          if (-not $portable) { throw 'Portable exe üretilemedi.' }
+          # Uygulama, helper'ı paketlenmiş halde resources/native/ altında arar
+          # (main/anim-cursor.js -> _helperPath). package.json "extraResources" bunu sağlar.
+          $helper = 'dist/win-unpacked/resources/native/cursor_helper.exe'
+          if (-not (Test-Path $helper)) {
+            throw "$helper pakete girmemiş. Animasyonlu İmleç paketlenmiş uygulamada çalışmaz. package.json 'extraResources' ayarını kontrol et."
+          }
+          Write-Host "Helper pakette: $helper"
 
       - name: Çıktıları Artifact olarak yükle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: RBX-Cursor-Studio-Windows
           path: |
-            dist/*.exe
-            !dist/**/*.blockmap
+            dist/*Kurulum*.exe
+            dist/*Portable*.exe
+          if-no-files-found: error
 
       - name: Tag push edildiyse GitHub Release oluştur
         if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
-          files: dist/*.exe
+          files: |
+            dist/*Kurulum*.exe
+            dist/*Portable*.exe
+          fail_on_unmatched_files: true
           generate_release_notes: true
