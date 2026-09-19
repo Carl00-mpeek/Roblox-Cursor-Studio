@@ -11,7 +11,7 @@
 
   <div class="titlebar">
     <div class="titlebar-drag">
-      <img class="tb-logo" src="../assets/backgrounds/logo.png" title="RBX Cursor Studio — Yapımcı: Carl" />
+      <img class="tb-logo" src="../assets/backgrounds/logo.png" data-i18n-title="app_tagline_tooltip" title="RBX Cursor Studio — Yapımcı: Carl" />
       <span>RBX Cursor Studio</span>
     </div>
     <div class="tb-controls">
@@ -24,7 +24,7 @@
   <div class="app">
     <!-- SOL RAY MENÜ: ortalanmış ikon butonları -->
     <nav class="sidebar">
-      <img class="sidebar-logo" src="../assets/backgrounds/logo.png" title="RBX Cursor Studio — Yapımcı: Carl" />
+      <img class="sidebar-logo" src="../assets/backgrounds/logo.png" data-i18n-title="app_tagline_tooltip" title="RBX Cursor Studio — Yapımcı: Carl" />
 
       <div class="side-nav">
         <button class="side-btn active" data-view="home" data-i18n-title="home" title="Ana Sayfa">
@@ -43,11 +43,20 @@
           <span class="side-icon">🕓</span>
           <span class="side-label" data-i18n="history">Geçmiş</span>
         </button>
+        <button class="side-btn" data-view="animcursor" data-i18n-title="animcursor" title="Animasyonlu İmleç">
+          <span class="side-icon">✨</span>
+          <span class="side-label" data-i18n="animcursor">Animasyonlu</span>
+        </button>
         <button class="side-btn" data-view="settings" data-i18n-title="settings" title="Ayarlar">
           <span class="side-icon">⚙️</span>
           <span class="side-label" data-i18n="settings">Ayarlar</span>
         </button>
       </div>
+
+      <button class="side-btn side-donate" id="btn-donate" data-i18n-title="donate_tooltip" title="Projeyi Buy Me a Coffee ile destekle">
+        <span class="side-icon">☕</span>
+        <span class="side-label" data-i18n="donate">Destek</span>
+      </button>
     </nav>
 
     <!-- ANA PANEL -->
@@ -58,9 +67,9 @@
           <p class="muted" data-i18n="welcome_sub">İmleçlerini kişiselleştirmeye devam et</p>
         </div>
         <div class="header-right">
-          <button id="btn-context-preview" class="btn-ghost" data-i18n="context_preview" title="İmleçlerini sahte bir Roblox ekranı üzerinde dene">🖼️ Bağlamda Önizle</button>
-          <button id="btn-color-changer" class="btn-ghost" data-i18n="color_changer" title="Şu an kullandığın tüm imleçlerin rengini tek seferde değiştir">🎨 Renk Değiştir</button>
-          <button id="btn-restore" class="btn-ghost" data-i18n="restore" title="Roblox'un kendi orijinal imleçlerine geri dön">Orijinale Dön</button>
+          <button id="btn-context-preview" class="btn-ghost" data-i18n="context_preview" data-i18n-title="context_preview_tooltip" title="İmleçlerini sahte bir Roblox ekranı üzerinde dene">🖼️ Bağlamda Önizle</button>
+          <button id="btn-color-changer" class="btn-ghost" data-i18n="color_changer" data-i18n-title="color_changer_tooltip" title="Şu an kullandığın tüm imleçlerin rengini tek seferde değiştir">🎨 Renk Değiştir</button>
+          <button id="btn-restore" class="btn-ghost" data-i18n="restore" data-i18n-title="restore_tooltip" title="Roblox'un kendi orijinal imleçlerine geri dön">Orijinale Dön</button>
         </div>
       </header>
 
@@ -71,7 +80,7 @@
             <span class="muted small" id="active-cursor-sub">Kontrol ediliyor…</span>
           </div>
           <div class="active-head-actions">
-            <button id="btn-save-active-pack-home" class="btn-primary small active-save-btn" data-i18n="pack_from_active_short" title="Şu an kullanılan cursorları yeni bir pakete kaydet">📦 Aktif Cursoru Pakete Çevir</button>
+            <button id="btn-save-active-pack-home" class="btn-primary small active-save-btn" data-i18n="pack_from_active_short" data-i18n-title="pack_from_active_tooltip" title="Şu an kullanılan cursorları yeni bir pakete kaydet">📦 Aktif Cursoru Pakete Çevir</button>
             <button id="btn-refresh-active" class="icon-refresh" data-i18n-title="refresh" data-i18n-aria="refresh" title="Aktif cursorları yenile" aria-label="Aktif cursorları yenile">↻</button>
           </div>
         </div>
@@ -146,12 +155,12 @@
         <input id="new-pack-name" class="text-input" type="text" maxlength="80" autocomplete="off" />
 
         <div class="pack-cursor-picker">
-          <div class="pack-picker-title">Cursor Seçimi</div>
-          <div class="pack-picker-hint">Pakete dahil edilecek cursorları seç. Özel/custom cursorların varsa mevcut seçimler otomatik kullanılır.</div>
-          <label class="pack-picker-item"><input type="checkbox" class="new-pack-cursor" value="arrow" checked /> <span>Normal Durum <small>ArrowFarCursor.png</small></span></label>
-          <label class="pack-picker-item"><input type="checkbox" class="new-pack-cursor" value="click" checked /> <span>Tıklama <small>ArrowCursor.png</small></span></label>
-          <label class="pack-picker-item"><input type="checkbox" class="new-pack-cursor" value="text" checked /> <span>Yazı Modu <small>IBeamCursor.png</small></span></label>
-          <label class="pack-picker-item"><input type="checkbox" class="new-pack-cursor" value="shiftlock" checked /> <span>Shift Lock <small>MouseLockedCursor.png</small></span></label>
+          <div class="pack-picker-title" data-i18n="pack_cursor_selection_title">Cursor Seçimi</div>
+          <div class="pack-picker-hint" data-i18n="pack_cursor_selection_hint">Pakete dahil edilecek cursorları seç. Özel/custom cursorların varsa mevcut seçimler otomatik kullanılır.</div>
+          <label class="pack-picker-item"><input type="checkbox" class="new-pack-cursor" value="arrow" checked /> <span><span data-i18n="normal">Normal Durum</span> <small>ArrowFarCursor.png</small></span></label>
+          <label class="pack-picker-item"><input type="checkbox" class="new-pack-cursor" value="click" checked /> <span><span data-i18n="click">Tıklama</span> <small>ArrowCursor.png</small></span></label>
+          <label class="pack-picker-item"><input type="checkbox" class="new-pack-cursor" value="text" checked /> <span><span data-i18n="text">Yazı Modu</span> <small>IBeamCursor.png</small></span></label>
+          <label class="pack-picker-item"><input type="checkbox" class="new-pack-cursor" value="shiftlock" checked /> <span><span data-i18n="shiftlock">Shift Lock</span> <small>MouseLockedCursor.png</small></span></label>
         </div>
       </div>
       <div class="modal-actions">
@@ -171,6 +180,24 @@
     </div>
     <div class="pack-grid" id="history-grid">
       <!-- JS ile dolduruluyor -->
+    </div>
+  </div>
+
+  <!-- ANİMASYONLU İMLEÇ: tam ekran panel -->
+  <div id="overlay-animcursor" class="view-overlay hidden">
+    <div class="view-overlay-head">
+      <h2 data-i18n="animcursor_title">Premium Animasyonlu İmleç (Beta)</h2>
+      <div class="view-overlay-actions">
+        <button class="view-overlay-close" data-close-view data-i18n-title="close" title="Kapat">✕</button>
+      </div>
+    </div>
+    <p class="muted small" data-i18n="animcursor_desc" style="padding: 0 24px;">
+      Her durum için bir .ANI dosyası seç. Bir durum için animasyon atandığında Roblox'un o duruma
+      ait sabit imleci gizlenir ve yerine native, akıcı animasyonlu imleç gösterilir. Animasyon
+      kaldırılırsa gerçek statik imleç aynen geri döner.
+    </p>
+    <div class="settings-panel" id="animcursor-list">
+      <!-- JS ile 4 state (arrow/click/text/shiftlock) için dolduruluyor -->
     </div>
   </div>
 

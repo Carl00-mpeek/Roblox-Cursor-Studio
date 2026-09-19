@@ -58,5 +58,20 @@ contextBridge.exposeInMainWorld('rbx', {
   deleteBackground: (fileName) => ipcRenderer.invoke('bg:delete', fileName),
   importBackground: () => ipcRenderer.invoke('bg:import'),
 
-  openPath: (p) => ipcRenderer.invoke('shell:open-path', p)
+  openPath: (p) => ipcRenderer.invoke('shell:open-path', p),
+  openDonate: () => ipcRenderer.invoke('app:open-donate'),
+
+  // Animasyonlu İmleç (Premium Animated Cursor)
+  animCursorGetConfig: () => ipcRenderer.invoke('animcursor:get-config'),
+  animCursorPickAni: () => ipcRenderer.invoke('animcursor:pick-ani'),
+  animCursorSetAni: (kind, aniPath, options) => ipcRenderer.invoke('animcursor:set-ani', kind, aniPath, options),
+  animCursorClear: (kind) => ipcRenderer.invoke('animcursor:clear', kind),
+  animCursorSetConfig: (kind, options) => ipcRenderer.invoke('animcursor:set-config', kind, options),
+  animCursorPreview: (kind, ms) => ipcRenderer.invoke('animcursor:preview', kind, ms),
+  animCursorSetGlobalSettings: (options) => ipcRenderer.invoke('animcursor:set-global-settings', options),
+  animCursorGetToggle: () => ipcRenderer.invoke('animcursor:get-toggle'),
+  animCursorSetToggleKey: (accelerator) => ipcRenderer.invoke('animcursor:set-toggle-key', accelerator),
+  animCursorToggle: () => ipcRenderer.invoke('animcursor:toggle'),
+  onAnimCursorState: (cb) => ipcRenderer.on('animcursor:state', (_e, state) => cb(state)),
+  onAnimCursorEnabled: (cb) => ipcRenderer.on('animcursor:enabled', (_e, enabled) => cb(enabled))
 });

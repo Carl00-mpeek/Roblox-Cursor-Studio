@@ -37,8 +37,10 @@ if errorlevel 1 (
 REM ---- Script'in bulundugu klasore gec ----
 cd /d "%~dp0"
 
-echo [1/2] Bagimliliklar indiriliyor (npm install)...
-echo       Bu islem internet hizina gore birkac dakika surebilir.
+echo [1/2] Bagimliliklar indiriliyor ve Animasyonlu Imlec (native) yardimci
+echo       programi otomatik derleniyor (npm install)...
+echo       Bilgisayarinda C++ derleyicisi yoksa winget ile otomatik kurulmaya
+echo       calisilacak - bu adim internet hizina gore birkac dakika surebilir.
 echo.
 call npm install
 if errorlevel 1 (

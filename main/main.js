@@ -4,6 +4,7 @@ const { execFileSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 const { buildZip, parseZip } = require('./zip-lite');
+const { AnimCursorController } = require('./anim-cursor');
 
 const APP = 'RBX Cursor Studio';
 
@@ -98,7 +99,9 @@ const DEFAULT_CFG = {
   // Global kısayol (Ctrl+Alt+1/2/3) ile anında geçilecek paketler.
   // Boş string = o slota atanmış paket yok.
   quickSwitch: { '1': '', '2': '', '3': '' },
-  quickSwitchKeys: { '1': 'Control+Alt+1', '2': 'Control+Alt+2', '3': 'Control+Alt+3' }
+  quickSwitchKeys: { '1': 'Control+Alt+1', '2': 'Control+Alt+2', '3': 'Control+Alt+3' },
+  // Global kısayol: animasyonlu imleci aç/kapat (boş string = kısayol yok).
+  animToggleKey: 'Control+Alt+0'
 };
 
 function readCfg() {
@@ -763,6 +766,17 @@ function registerQuickSwitchShortcuts() {
       logError(err);
     }
   }
+
+  // Animasyonlu imleci aç/kapat kısayolu. unregisterAll() yukarıda her şeyi
+  // temizlediği için burada da her seferinde yeniden kaydedilir.
+  const toggleKey = typeof cfg.animToggleKey === 'string' ? cfg.animToggleKey.trim() : 'Control+Alt+0';
+  if (toggleKey) {
+    try {
+      globalShortcut.register(toggleKey, () => { animCursor.toggleEnabled(); });
+    } catch (err) {
+      logError(err);
+    }
+  }
 }
 
 // ---------- Paket dışa/içe aktarma (.rbxcursor / .zip) ----------
@@ -824,6 +838,22 @@ function listBackgrounds() {
   return items;
 }
 
+// ---------- Animasyonlu İmleç (native helper) ----------
+const animCursor = new AnimCursorController({
+  baseDir: BASE,
+  targets: TARGETS,
+  currentDir: CURRENT,
+  canvasSizes: CURSOR_CANVAS_SIZES,
+  applyCurrentToRoblox,
+  logError
+});
+animCursor.onStateChange = (state) => {
+  if (mainWindow) mainWindow.webContents.send('animcursor:state', state);
+};
+animCursor.onEnabledChange = (enabled) => {
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('animcursor:enabled', enabled);
+};
+
 // ---------- Pencere ----------
 function createWindow() {
   const { width, height } = cfg.windowBounds || DEFAULT_CFG.windowBounds;
@@ -866,6 +896,7 @@ app.whenReady().then(() => {
 
     const win = createWindow();
     registerQuickSwitchShortcuts();
+    animCursor.initFromConfig().catch((err) => logError(err));
 
     // ---- Pencere kontrolleri (frameless) ----
     ipcMain.on('win:minimize', () => win.minimize());
@@ -891,6 +922,7 @@ app.on('window-all-closed', () => {
 
 app.on('will-quit', () => {
   try { globalShortcut.unregisterAll(); } catch (_) { /* sorun değil */ }
+  try { animCursor.shutdown(); } catch (_) { /* sorun değil */ }
 });
 
 // ================= IPC API =================
@@ -1138,6 +1170,10 @@ ipcMain.handle('bg:import', async () => {
 
 ipcMain.handle('shell:open-path', (_e, p) => shell.openPath(p));
 
+// Bağış (Buy Me a Coffee) bağlantısı. URL sabit; arayüzden keyfi adres açtırılmaz.
+const DONATE_URL = 'https://buymeacoffee.com/rbxcursor';
+ipcMain.handle('app:open-donate', () => shell.openExternal(DONATE_URL));
+
 // ---------- Hızlı geçiş kısayolları (Ctrl+Alt+1/2/3) ----------
 ipcMain.handle('quickswitch:get', () => cfg.quickSwitch || { '1': '', '2': '', '3': '' });
 
@@ -1205,3 +1241,63 @@ ipcMain.handle('pack:import-pick', async () => {
   const suggested = path.basename(filePath, path.extname(filePath));
   return importPackFromBuffer(buf, suggested);
 });
+
+// ---------- Animasyonlu İmleç (Premium Animated Cursor) ----------
+ipcMain.handle('animcursor:get-config', () => animCursor.getConfig());
+
+ipcMain.handle('animcursor:pick-ani', async () => {
+  const res = await dialog.showOpenDialog({
+    title: 'ANI Dosyası Seç',
+    filters: [{ name: 'Animasyonlu İmleç (.ani)', extensions: ['ani'] }],
+    properties: ['openFile']
+  });
+  if (res.canceled || !res.filePaths.length) return null;
+  return res.filePaths[0];
+});
+
+ipcMain.handle('animcursor:set-ani', async (_e, kind, aniPath, options) => {
+  return animCursor.setStateAni(kind, aniPath, options || {});
+});
+
+ipcMain.handle('animcursor:clear', async (_e, kind) => {
+  return animCursor.setStateAni(kind, '', {});
+});
+
+ipcMain.handle('animcursor:set-config', (_e, kind, options) => {
+  return animCursor.setStateConfig(kind, options || {});
+});
+
+ipcMain.handle('animcursor:preview', async (_e, kind, ms) => {
+  await animCursor.previewState(kind, ms);
+  return true;
+});
+
+ipcMain.handle('animcursor:set-global-settings', (_e, options) => {
+  return animCursor.setGlobalSettings(options || {});
+});
+
+// Animasyonu aç/kapat kısayolu (varsayılan Ctrl+Alt+0)
+ipcMain.handle('animcursor:get-toggle', () => ({
+  key: typeof cfg.animToggleKey === 'string' ? cfg.animToggleKey : 'Control+Alt+0',
+  enabled: animCursor.enabled
+}));
+
+ipcMain.handle('animcursor:set-toggle-key', (_e, accelerator) => {
+  const key = String(accelerator || '').trim();
+  if (!key) throw new Error('Kısayol boş olamaz.');
+  const previous = cfg.animToggleKey;
+  cfg.animToggleKey = key;
+  registerQuickSwitchShortcuts();
+  let registered = false;
+  try { registered = globalShortcut.isRegistered(key); } catch (_) { registered = false; }
+  if (!registered) {
+    // Geçersiz ya da başka bir uygulama tarafından kullanılan kısayol: eskisine dön.
+    cfg.animToggleKey = previous;
+    registerQuickSwitchShortcuts();
+    throw new Error('Bu kısayol kaydedilemedi (geçersiz ya da başka bir uygulama kullanıyor): ' + key);
+  }
+  writeCfg(cfg);
+  return key;
+});
+
+ipcMain.handle('animcursor:toggle', () => animCursor.toggleEnabled());

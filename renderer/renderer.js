@@ -35,6 +35,7 @@ window.rbxLanguageChanged = async () => {
   if (!overlays.history.classList.contains('hidden')) await renderHistoryGrid();
   if (!overlays.backgrounds.classList.contains('hidden')) await renderBackgrounds();
   if (!overlays.settings.classList.contains('hidden')) await renderSettings();
+  if (!overlays.animcursor.classList.contains('hidden')) await renderAnimCursorPanel();
 };
 applyLanguage();
 
@@ -66,7 +67,8 @@ const overlays = {
   backgrounds: document.getElementById('overlay-backgrounds'),
   packs: document.getElementById('overlay-packs'),
   history: document.getElementById('overlay-history'),
-  settings: document.getElementById('overlay-settings')
+  settings: document.getElementById('overlay-settings'),
+  animcursor: document.getElementById('overlay-animcursor')
 };
 
 function closeAllOverlays() {
@@ -93,8 +95,17 @@ document.querySelectorAll('.side-btn').forEach(btn => {
     if (view === 'packs') renderPackGrid();
     if (view === 'history') renderHistoryGrid();
     if (view === 'settings') renderSettings();
+    if (view === 'animcursor') renderAnimCursorPanel();
   };
 });
+
+// Bağış butonu: yukarıdaki genel .side-btn işleyicisini ezer (görünüm değiştirmez).
+const donateBtn = document.getElementById('btn-donate');
+if (donateBtn) {
+  donateBtn.onclick = () => {
+    window.rbx.openDonate().catch((e) => toast(errMsg(e), 'error'));
+  };
+}
 
 document.querySelectorAll('[data-close-view]').forEach(btn => {
   btn.onclick = () => {
@@ -204,7 +215,7 @@ async function renderCursorGrid() {
       <div class="preview"><span style="font-size:22px;opacity:.4">＋</span></div>
       <div class="name">${cursorName(kind)}</div>
       <div class="muted small" title="${t('roblox_file')}">${TYPE_HINTS[kind]}</div>
-      <div class="status">Görsel seç</div>
+      <div class="status">${t('choose_image')}</div>
     `;
     tile.onclick = () => pickAndEdit(kind);
     grid.appendChild(tile);
@@ -826,12 +837,12 @@ async function createPackFromDialog(useActiveOnly = false) {
       const name = input.value.trim();
       if (!name) {
         input.focus();
-        toast(t('pack_name') + ' gerekli.', 'error');
+        toast(t('pack_name_required'), 'error');
         return;
       }
       const selectedKinds = [...document.querySelectorAll('.new-pack-cursor:checked')].map(el => el.value);
       if (!selectedKinds.length) {
-        toast('En az bir cursor seçmelisin.', 'error');
+        toast(t('select_one_cursor_required'), 'error');
         createBtn.disabled = false;
         return;
       }
@@ -1177,6 +1188,284 @@ async function renderSettings() {
   await renderQuickSwitchSettings();
 }
 
+// ---- Animasyonlu İmleç (Premium Animated Cursor) ----
+const ANIM_STATES = ['arrow', 'click', 'text', 'shiftlock'];
+let animCursorLiveState = null;
+
+if (window.rbx.onAnimCursorState) {
+  window.rbx.onAnimCursorState((state) => {
+    animCursorLiveState = state;
+    ANIM_STATES.forEach((k) => {
+      const badge = document.getElementById(`animcursor-live-${k}`);
+      if (badge) badge.classList.toggle('active', state === k);
+    });
+  });
+}
+
+let animCursorEnabled = true;
+function refreshAnimToggleButton() {
+  const btn = document.querySelector('#animcursor-list [data-role="toggle-now"]');
+  if (!btn) return;
+  btn.textContent = animCursorEnabled ? t('animcursor_toggle_on') : t('animcursor_toggle_off');
+  btn.classList.toggle('animcursor-off', !animCursorEnabled);
+}
+
+if (window.rbx.onAnimCursorEnabled) {
+  window.rbx.onAnimCursorEnabled((enabled) => {
+    animCursorEnabled = !!enabled;
+    refreshAnimToggleButton();
+    toast(animCursorEnabled ? t('animcursor_toggled_on') : t('animcursor_toggled_off'), 'success');
+  });
+}
+
+function baseNameOf(p) {
+  if (!p) return '';
+  return String(p).split(/[\\/]/).pop();
+}
+
+async function renderAnimCursorPanel() {
+  const list = document.getElementById('animcursor-list');
+  if (!list) return;
+
+  let animCfg = {};
+  try {
+    animCfg = await window.rbx.animCursorGetConfig();
+  } catch (e) {
+    toast(errMsg(e), 'error');
+    return;
+  }
+
+  list.innerHTML = ANIM_STATES.map((kind) => {
+    const s = animCfg[kind] || {};
+    const hasAni = !!s.ani;
+    return `
+      <div class="settings-row animcursor-row" data-kind="${kind}">
+        <div>
+          <strong>${cursorName(kind)} <span class="animcursor-live-badge" id="animcursor-live-${kind}" title="${t('animcursor_live_title')}">●</span></strong>
+          <p class="muted small" data-role="ani-name">${hasAni ? baseNameOf(s.ani) : (t('animcursor_none') || 'Not assigned — using the real static cursor')}</p>
+          <div class="animcursor-controls${hasAni ? '' : ' hidden'}">
+            <label class="editor-label">${t('animcursor_size_label')}<span data-role="scale-val">${(s.scale ?? 1).toFixed(2)}</span>
+              <input type="range" min="0.25" max="3" step="0.05" value="${s.scale ?? 1}" data-role="scale" />
+            </label>
+            <label class="editor-label">${t('animcursor_speed_label')}<span data-role="speed-val">${(s.speed ?? 1).toFixed(2)}</span>
+              <input type="range" min="0.02" max="4" step="0.01" value="${s.speed ?? 1}" data-role="speed" />
+            </label>
+            <label class="editor-label">${t('animcursor_fps_label')}
+              <div class="animcursor-fps-row">
+                <input type="range" min="0" max="240" step="1" value="${Math.min(s.fps ?? 0, 240)}" data-role="fps-slider" />
+                <input type="number" min="0" max="240" step="1" value="${s.fps ?? 0}" data-role="fps" style="width:64px" />
+              </div>
+            </label>
+            <label class="editor-label animcursor-center-toggle">
+              <input type="checkbox" data-role="center-auto" ${s.centerAuto === false ? '' : 'checked'} />
+              ${t('animcursor_center_auto')}
+            </label>
+            <div class="animcursor-hotspot${s.centerAuto === false ? '' : ' hidden'}" data-role="hotspot-manual">
+              <label>${t('animcursor_hotspot_x')} <input type="number" data-role="hotx" value="${s.hotspotX ?? -1}" style="width:64px" /></label>
+              <label>${t('animcursor_hotspot_y')} <input type="number" data-role="hoty" value="${s.hotspotY ?? -1}" style="width:64px" /></label>
+              <span class="muted small">${t('animcursor_hotspot_hint')}</span>
+            </div>
+          </div>
+        </div>
+        <div class="animcursor-actions">
+          <button type="button" class="btn-ghost small" data-role="pick">${t('animcursor_pick_btn')}</button>
+          <button type="button" class="btn-ghost small" data-role="preview" ${hasAni ? '' : 'disabled'}>${t('animcursor_preview_btn')}</button>
+          <button type="button" class="btn-ghost small" data-role="clear" ${hasAni ? '' : 'disabled'}>${t('animcursor_clear_btn')}</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  const globalCfg = animCfg.__global || { followMs: 8 };
+  list.insertAdjacentHTML('afterbegin',
+    `<div class="settings-row animcursor-row animcursor-global-row">
+      <div style="width:100%">
+        <strong>${t('animcursor_global_title')}</strong>
+        <p class="muted small">${t('animcursor_global_desc')}</p>
+        <label class="editor-label">${t('animcursor_track_interval')} <span data-role="trackms-val">${globalCfg.followMs}</span> ms
+          (~<span data-role="trackhz-val">${Math.round(1000 / globalCfg.followMs)}</span> Hz)
+          <input type="range" min="1" max="33" step="1" value="${globalCfg.followMs}" data-role="trackms" />
+        </label>
+        <span class="muted small">${t('animcursor_track_hint')}</span>
+        <div class="animcursor-toggle-block">
+          <strong>${t('animcursor_toggle_title')}</strong>
+          <p class="muted small">${t('animcursor_toggle_desc')}</p>
+          <div class="animcursor-toggle-controls">
+            <span class="animcursor-toggle-key" data-role="toggle-key-label">Ctrl+Alt+0</span>
+            <button type="button" class="btn-ghost small" data-role="toggle-key-btn">${t('quickswitch_assign')}</button>
+            <button type="button" class="btn-ghost small" data-role="toggle-now"></button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="muted small" style="padding: 0 4px 12px;">
+      ${t('animcursor_fullscreen_warning')}
+    </p>`);
+
+  // ---- Animasyonu aç/kapat kısayolu ----
+  try {
+    const tg = await window.rbx.animCursorGetToggle();
+    animCursorEnabled = !!tg.enabled;
+    list.querySelector('[data-role="toggle-key-label"]').textContent = acceleratorLabel(tg.key) || '—';
+  } catch (_) { /* varsayılan etiket kalsın */ }
+  refreshAnimToggleButton();
+
+  const toggleNowBtn = list.querySelector('[data-role="toggle-now"]');
+  if (toggleNowBtn) {
+    toggleNowBtn.onclick = () => window.rbx.animCursorToggle().catch((e) => toast(errMsg(e), 'error'));
+  }
+
+  const toggleKeyBtn = list.querySelector('[data-role="toggle-key-btn"]');
+  const toggleKeyLabel = list.querySelector('[data-role="toggle-key-label"]');
+  if (toggleKeyBtn) {
+    toggleKeyBtn.onclick = () => {
+      toggleKeyBtn.classList.add('recording');
+      toggleKeyBtn.textContent = t('quickswitch_press');
+      const handler = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (e.key === 'Escape') {
+          document.removeEventListener('keydown', handler, true);
+          toggleKeyBtn.classList.remove('recording');
+          toggleKeyBtn.textContent = t('quickswitch_assign');
+          return;
+        }
+        const acc = keyEventToAccelerator(e, true);
+        if (!acc) return;
+        document.removeEventListener('keydown', handler, true);
+        toggleKeyBtn.classList.remove('recording');
+        toggleKeyBtn.textContent = t('quickswitch_assign');
+        try {
+          await window.rbx.animCursorSetToggleKey(acc);
+          toggleKeyLabel.textContent = acceleratorLabel(acc);
+          toast(t('quickswitch_saved'), 'success');
+        } catch (err) {
+          toast(t('error') + ' ' + errMsg(err), 'error');
+        }
+      };
+      document.addEventListener('keydown', handler, true);
+    };
+  }
+
+  const trackmsInput = list.querySelector('[data-role="trackms"]');
+  if (trackmsInput) {
+    let trackmsTimer = null;
+    trackmsInput.oninput = () => {
+      const v = Number(trackmsInput.value);
+      list.querySelector('[data-role="trackms-val"]').textContent = String(v);
+      list.querySelector('[data-role="trackhz-val"]').textContent = String(Math.round(1000 / v));
+      clearTimeout(trackmsTimer);
+      trackmsTimer = setTimeout(() => {
+        window.rbx.animCursorSetGlobalSettings({ followMs: v }).catch((e) => toast(errMsg(e), 'error'));
+      }, 120);
+    };
+  }
+
+  list.querySelectorAll('.animcursor-row[data-kind]').forEach((row) => {
+    const kind = row.dataset.kind;
+
+    row.querySelector('[data-role="pick"]').onclick = async () => {
+      try {
+        const filePath = await window.rbx.animCursorPickAni();
+        if (!filePath) return;
+        await window.rbx.animCursorSetAni(kind, filePath, {});
+        toast(t('animcursor_applied') || 'Animasyonlu imleç uygulandı.', 'success');
+        await renderAnimCursorPanel();
+      } catch (e) {
+        toast(errMsg(e), 'error');
+      }
+    };
+
+    const previewBtn = row.querySelector('[data-role="preview"]');
+    if (previewBtn) previewBtn.onclick = async () => {
+      previewBtn.disabled = true;
+      const original = previewBtn.textContent;
+      try {
+        await window.rbx.animCursorPreview(kind, 6000);
+        previewBtn.textContent = t('animcursor_preview_running');
+        setTimeout(() => { previewBtn.textContent = original; previewBtn.disabled = false; }, 6200);
+      } catch (e) {
+        toast(errMsg(e), 'error');
+        previewBtn.textContent = original;
+        previewBtn.disabled = false;
+      }
+    };
+
+    const clearBtn = row.querySelector('[data-role="clear"]');
+    clearBtn.onclick = async () => {
+      try {
+        await window.rbx.animCursorClear(kind);
+        toast(t('animcursor_removed') || 'Animasyon kaldırıldı, statik imleç geri döndü.', 'success');
+        await renderAnimCursorPanel();
+      } catch (e) {
+        toast(errMsg(e), 'error');
+      }
+    };
+
+    const debouncedConfig = (() => {
+      let timer = null;
+      return (options) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+          window.rbx.animCursorSetConfig(kind, options).catch((e) => toast(errMsg(e), 'error'));
+        }, 120);
+      };
+    })();
+
+    const scaleInput = row.querySelector('[data-role="scale"]');
+    if (scaleInput) scaleInput.oninput = () => {
+      row.querySelector('[data-role="scale-val"]').textContent = Number(scaleInput.value).toFixed(2);
+      debouncedConfig({ scale: Number(scaleInput.value) });
+    };
+
+    const speedInput = row.querySelector('[data-role="speed"]');
+    if (speedInput) speedInput.oninput = () => {
+      row.querySelector('[data-role="speed-val"]').textContent = Number(speedInput.value).toFixed(2);
+      debouncedConfig({ speed: Number(speedInput.value) });
+    };
+
+    // FPS has two synced inputs: a 0-240 slider for quick adjustment and a
+    // plain number field for precise typing. 0 = use the ANI's own timing.
+    const fpsSlider = row.querySelector('[data-role="fps-slider"]');
+    const fpsInput = row.querySelector('[data-role="fps"]');
+    if (fpsSlider && fpsInput) {
+      fpsSlider.oninput = () => {
+        fpsInput.value = fpsSlider.value;
+        debouncedConfig({ fps: Number(fpsSlider.value) });
+      };
+      fpsInput.oninput = () => {
+        // Clamp to the supported 0-240 range (typing 999 would otherwise be sent as-is).
+        const v = Math.max(0, Math.min(240, Math.round(Number(fpsInput.value) || 0)));
+        fpsSlider.value = String(v);
+        debouncedConfig({ fps: v });
+      };
+      // Show the clamped value once the user leaves the field.
+      fpsInput.onchange = () => {
+        fpsInput.value = String(Math.max(0, Math.min(240, Math.round(Number(fpsInput.value) || 0))));
+      };
+    }
+
+    const centerAutoInput = row.querySelector('[data-role="center-auto"]');
+    const hotspotManualDiv = row.querySelector('[data-role="hotspot-manual"]');
+    if (centerAutoInput) centerAutoInput.onchange = () => {
+      const on = centerAutoInput.checked;
+      if (hotspotManualDiv) hotspotManualDiv.classList.toggle('hidden', on);
+      debouncedConfig({ centerAuto: on });
+    };
+
+    const hotxInput = row.querySelector('[data-role="hotx"]');
+    if (hotxInput) hotxInput.onchange = () => {
+      const v = hotxInput.value.trim();
+      debouncedConfig({ hotspotX: v === '' ? -1 : Number(v) });
+    };
+
+    const hotyInput = row.querySelector('[data-role="hoty"]');
+    if (hotyInput) hotyInput.onchange = () => {
+      const v = hotyInput.value.trim();
+      debouncedConfig({ hotspotY: v === '' ? -1 : Number(v) });
+    };
+  });
+}
+
 // ---- hızlı geçiş kısayolları (Ctrl+Alt+1/2/3) ----
 function acceleratorLabel(accelerator) {
   return String(accelerator || '')
@@ -1191,7 +1480,7 @@ function acceleratorLabel(accelerator) {
     .replace(/\\s+/g, ' ');
 }
 
-function keyEventToAccelerator(e) {
+function keyEventToAccelerator(e, allowBareFunctionKey = false) {
   const parts = [];
   if (e.ctrlKey) parts.push('Control');
   if (e.altKey) parts.push('Alt');
@@ -1208,8 +1497,9 @@ function keyEventToAccelerator(e) {
     'Tab':'Tab'
   };
   key = aliases[key] || (key.length === 1 ? key.toUpperCase() : key);
-  // Global shortcuts without a modifier are intentionally rejected.
-  if (!parts.length) return null;
+  // Global shortcuts without a modifier are intentionally rejected
+  // (except plain F1-F24 when explicitly allowed, e.g. the animation toggle).
+  if (!parts.length && !(allowBareFunctionKey && /^F([1-9]|1\d|2[0-4])$/.test(key))) return null;
   return [...parts, key].join('+');
 }
 
