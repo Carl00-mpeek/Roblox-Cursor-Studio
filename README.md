@@ -97,7 +97,7 @@ npm run dist     # build the installer and portable exe
 The latest release has been scanned with VirusTotal:
 
 - [🔍 Source](https://www.virustotal.com/gui/file/d6164ae95c241574d51e8ae521035cb12dbc00a99e30169d805f5ea60930262f?nocache=1)
-- [🔍 Setup](https://www.virustotal.com/gui/file/944e5b08bcebb04b95a1f71bae804b0a4976773f082f9bec78af6075c105f3c6?nocache=1)
+- [🔍 Setup](https://www.virustotal.com/gui/file/931ff40b0d11505572b12e221d5063987da2312b91bbf7bde741a47b1fd42131?nocache=1)
 - [🔍 Portable](https://www.virustotal.com/gui/file/14650d000c917acadd5312ddfeb358fa3ef27be11eaadc003150955f4e513971?nocache=1)
 
 ## ☕ Support the Project
