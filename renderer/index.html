@@ -9,122 +9,94 @@
   <div id="bg-layer"></div>
   <div id="bg-overlay"></div>
 
-  <div class="titlebar">
-    <div class="titlebar-drag">
-      <img class="tb-logo" src="../assets/backgrounds/logo.png" data-i18n-title="app_tagline_tooltip" title="RBX Cursor Studio — Yapımcı: Carl" />
-      <span>RBX Cursor Studio</span>
+  <!-- ÜST ALAN: logo + sürüm/durum solda, bağış + pencere kontrolleri sağda (frameless pencere) -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <img class="topbar-logo" src="../assets/backgrounds/logo.png" alt="" data-i18n-title="app_tagline_tooltip" title="RBX Cursor Studio — Yapımcı: Carl" />
+      <div class="brand-text">
+        <span class="topbar-title">RBX Cursor Studio</span>
+        <span class="brand-sub"><span class="brand-dot" id="brand-dot"></span><span id="brand-status" data-i18n="ready">Hazır</span><span class="brand-version" id="brand-version"></span></span>
+      </div>
     </div>
-    <div class="tb-controls">
-      <button id="tb-min" data-i18n-title="minimize" title="Küçült">—</button>
-      <button id="tb-max" data-i18n-title="maximize" title="Büyüt">▢</button>
-      <button id="tb-close" data-i18n-title="close" data-i18n-title="close" title="Kapat">✕</button>
+
+    <div class="topbar-right">
+      <button class="topbar-donate" id="btn-donate" data-i18n-title="donate_tooltip" title="Projeyi Buy Me a Coffee ile destekle" aria-label="Destek"><span class="donate-cup" aria-hidden="true">☕</span><span data-i18n="donate">Destek</span></button>
+      <div class="tb-controls">
+        <button id="tb-min" data-i18n-title="minimize" title="Küçült" aria-label="Küçült">—</button>
+        <button id="tb-max" data-i18n-title="maximize" title="Büyüt" aria-label="Büyüt">▢</button>
+        <button id="tb-close" data-i18n-title="close" title="Kapat" aria-label="Kapat">✕</button>
+      </div>
     </div>
-  </div>
+  </header>
 
   <div class="app">
-    <!-- SOL RAY MENÜ: ortalanmış ikon butonları -->
-    <nav class="sidebar">
-      <img class="sidebar-logo" src="../assets/backgrounds/logo.png" data-i18n-title="app_tagline_tooltip" title="RBX Cursor Studio — Yapımcı: Carl" />
-
-      <div class="side-nav">
-        <button class="side-btn active" data-view="home" data-i18n-title="home" title="Ana Sayfa">
-          <span class="side-icon">🏠</span>
-          <span class="side-label" data-i18n="home">Ana Sayfa</span>
-        </button>
-        <button class="side-btn" data-view="backgrounds" data-i18n-title="backgrounds" title="Arkaplanlar">
-          <span class="side-icon">🎬</span>
-          <span class="side-label" data-i18n="backgrounds">Arkaplan</span>
-        </button>
-        <button class="side-btn" data-view="packs" data-i18n-title="packs" title="Kayıtlı Paketler">
-          <span class="side-icon">📦</span>
-          <span class="side-label" data-i18n="packs">Paketler</span>
-        </button>
-        <button class="side-btn" data-view="history" data-i18n-title="history" title="Geçmiş">
-          <span class="side-icon">🕓</span>
-          <span class="side-label" data-i18n="history">Geçmiş</span>
-        </button>
-        <button class="side-btn" data-view="animcursor" data-i18n-title="animcursor" title="Animasyonlu İmleç">
-          <span class="side-icon">✨</span>
-          <span class="side-label" data-i18n="animcursor">Animasyonlu</span>
-        </button>
-        <button class="side-btn" data-view="settings" data-i18n-title="settings" title="Ayarlar">
-          <span class="side-icon">⚙️</span>
-          <span class="side-label" data-i18n="settings">Ayarlar</span>
-        </button>
-      </div>
-
-      <button class="side-btn side-donate" id="btn-donate" data-i18n-title="donate_tooltip" title="Projeyi Buy Me a Coffee ile destekle">
-        <span class="side-icon">☕</span>
-        <span class="side-label" data-i18n="donate">Destek</span>
-      </button>
-    </nav>
-
     <!-- ANA PANEL -->
     <main class="main">
       <header class="main-header">
-        <div>
+        <div class="hero">
           <h1 data-i18n="welcome">Hoş geldin, Carl</h1>
           <p class="muted" data-i18n="welcome_sub">İmleçlerini kişiselleştirmeye devam et</p>
         </div>
         <div class="header-right">
-          <button id="btn-context-preview" class="btn-ghost" data-i18n="context_preview" data-i18n-title="context_preview_tooltip" title="İmleçlerini sahte bir Roblox ekranı üzerinde dene">🖼️ Bağlamda Önizle</button>
-          <button id="btn-color-changer" class="btn-ghost" data-i18n="color_changer" data-i18n-title="color_changer_tooltip" title="Şu an kullandığın tüm imleçlerin rengini tek seferde değiştir">🎨 Renk Değiştir</button>
-          <button id="btn-restore" class="btn-ghost" data-i18n="restore" data-i18n-title="restore_tooltip" title="Roblox'un kendi orijinal imleçlerine geri dön">Orijinale Dön</button>
+          <button id="btn-context-preview" class="btn-ghost with-ico" data-i18n-title="context_preview_tooltip" title="İmleçlerini sahte bir Roblox ekranı üzerinde dene">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="3"/><path d="m3 15 5-4.5 4 3.5 3-2.5 6 5"/><path d="M8 21h8"/></svg><span data-i18n="context_preview">Bağlamda Önizle</span>
+          </button>
+          <button id="btn-color-changer" class="btn-ghost with-ico" data-i18n-title="color_changer_tooltip" title="Şu an kullandığın tüm imleçlerin rengini tek seferde değiştir">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2c-5 0-9 3.7-9 8.3 0 3.1 2.3 5 4.7 5H9a1.7 1.7 0 0 1 1.3 2.8 1.6 1.6 0 0 0 1.2 2.6c5.100 0 9.500-3.400 9.500-8.500C21 6.900 17 3.200 12 3.200z"/><circle cx="7.500" cy="11" r="1"/><circle cx="10.500" cy="7.500" r="1"/><circle cx="15" cy="7.500" r="1"/></svg><span data-i18n="color_changer">Renk Değiştir</span>
+          </button>
+          <button id="btn-restore" class="btn-ghost with-ico tone-warn" data-i18n-title="restore_tooltip" title="Roblox'un kendi orijinal imleçlerine geri dön">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.500 12a8.500 8.500 0 1 0 2.600-6.100"/><path d="M3.500 4.500v4.800h4.800"/></svg><span data-i18n="restore">Orijinale Dön</span>
+          </button>
         </div>
       </header>
 
-      <section class="section">
-        <div class="section-head active-head">
-          <div class="section-title-block">
-            <h2 data-i18n="active_title">Şu An Aktif Olan Cursor</h2>
-            <span class="muted small" id="active-cursor-sub">Kontrol ediliyor…</span>
+      <section class="panel" aria-labelledby="active-title">
+        <div class="panel-head">
+          <div class="panel-title">
+            <h2 id="active-title" data-i18n="active_title">Şu An Aktif Olan Cursor</h2>
+            <span class="panel-sub" id="active-cursor-sub"><span class="sub-dot"></span><span id="active-cursor-sub-text">Kontrol ediliyor…</span></span>
           </div>
           <div class="active-head-actions">
-            <button id="btn-save-active-pack-home" class="btn-primary small active-save-btn" data-i18n="pack_from_active_short" data-i18n-title="pack_from_active_tooltip" title="Şu an kullanılan cursorları yeni bir pakete kaydet">📦 Aktif Cursoru Pakete Çevir</button>
-            <button id="btn-refresh-active" class="icon-refresh" data-i18n-title="refresh" data-i18n-aria="refresh" title="Aktif cursorları yenile" aria-label="Aktif cursorları yenile">↻</button>
+            <button id="btn-save-active-pack-home" class="btn-primary with-ico" data-i18n-title="pack_from_active_tooltip" title="Şu an kullanılan cursorları yeni bir pakete kaydet">
+              <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg><span data-i18n="pack_from_active_short">Aktif Cursoru Pakete Çevir</span>
+            </button>
+            <button id="btn-refresh-active" class="icon-refresh" data-i18n-title="refresh" data-i18n-aria="refresh" title="Aktif cursorları yenile" aria-label="Aktif cursorları yenile">
+              <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.500-5.800"/><path d="M20 4v5h-5"/></svg>
+            </button>
           </div>
         </div>
-        <div class="active-cursor-row" id="active-cursor-row">
-          <!-- JS ile dolduruluyor -->
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="section-head">
-          <div class="section-title-block">
-            <h2 data-i18n="my_cursors">İmleçlerim</h2>
-            <span class="muted small" data-i18n="my_cursors_sub">Yeni bir görsel seçmek için tıkla — önceki seçimlerini <b>Geçmiş</b> sekmesinde bulabilirsin</span>
-          </div>
-        </div>
-        <div class="cursor-grid" id="cursor-grid">
-          <!-- JS ile dolduruluyor -->
-        </div>
-        <div class="home-save-row">
-          <button id="btn-save-pack-home" class="btn-primary small" data-i18n="save">Kaydet</button>
+        <div class="cursor-cards" id="active-cursor-row">
+          <!-- JS ile dolduruluyor: her durum için bir kart (Seç / Düzenle / Kaldır) -->
         </div>
       </section>
     </main>
   </div>
 
+  <!-- ALT GEZİNME: yüzen dock -->
+  <nav class="dock" id="dock" data-i18n-aria="dock_label" aria-label="Ana gezinme">
+    <span class="dock-indicator" id="dock-indicator" aria-hidden="true"></span>
+    <button class="nav-btn active" data-view="home" data-i18n-title="home" title="Ana Sayfa">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.500 11.200 12 3.800l8.500 7.400V20a1 1 0 0 1-1 1H15v-6H9v6H4.500a1 1 0 0 1-1-1z"/></svg>
+      <span data-i18n="home">Ana Sayfa</span>
+    </button>
+    <button class="nav-btn" data-view="packs" data-i18n-title="packs" title="Kayıtlı Paketler">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg>
+      <span data-i18n="packs">Paketler</span>
+    </button>
+    <button class="nav-btn" data-view="animcursor" data-i18n-title="animcursor" title="Animasyonlu İmleç">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 3 14 8-6 1.800L9.500 19z"/><path d="M15 15.500 20 21"/></svg>
+      <span data-i18n="nav_animation">Animasyon</span>
+    </button>
+    <button class="nav-btn" data-view="settings" data-i18n-title="settings" title="Ayarlar">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>
+      <span data-i18n="settings">Ayarlar</span>
+    </button>
+  </nav>
+
   <!-- SAĞ ALT: küçük Roblox durum rozeti -->
   <div id="roblox-float-badge" class="float-badge">
     <span class="float-dot" id="float-dot"></span>
     <span id="float-text">Kontrol ediliyor…</span>
-  </div>
-
-  <!-- ARKAPLANLAR: tam ekran panel -->
-  <div id="overlay-backgrounds" class="view-overlay hidden">
-    <div class="view-overlay-head">
-      <h2 data-i18n="backgrounds">Arkaplanlar</h2>
-      <div class="view-overlay-actions">
-        <button id="btn-bg-default" class="btn-ghost small" data-i18n="background_default">Varsayılana Dön</button>
-        <button id="btn-import-bg" class="btn-ghost small" data-i18n="import">İçe Aktar</button>
-        <button class="view-overlay-close" data-close-view data-i18n-title="close" title="Kapat">✕</button>
-      </div>
-    </div>
-    <div class="nolabel-grid" id="bg-list">
-      <!-- JS ile dolduruluyor -->
-    </div>
   </div>
 
   <!-- KAYITLI PAKETLER: tam ekran panel -->
@@ -134,8 +106,13 @@
       <div class="view-overlay-actions">
         <button id="btn-import-pack" class="btn-ghost small" data-i18n="import_pack">📥 İçe Aktar</button>
         <button id="btn-save-pack" class="btn-primary small" data-i18n="new_pack">+ Yeni Paket</button>
+        <button id="btn-save-anim-pack" class="btn-primary small pack-tab-only-animated hidden" data-i18n="new_anim_pack">+ Yeni Animasyonlu Paket</button>
         <button class="view-overlay-close" data-close-view data-i18n-title="close" title="Kapat">✕</button>
       </div>
+    </div>
+    <div class="pack-tabs" id="pack-tabs">
+      <button type="button" class="pack-tab active" data-pack-tab="normal" data-i18n="packs_tab_normal">Paketler</button>
+      <button type="button" class="pack-tab" data-pack-tab="animated" data-i18n="packs_tab_animated">🎞 Animasyonlu Paketler</button>
     </div>
     <p class="muted small pack-dropzone-hint" data-i18n="pack_dropzone_hint">Bir arkadaşının paylaştığı .rbxcursor / .zip dosyasını buraya sürükleyip bırakabilirsin.</p>
     <div class="pack-grid" id="pack-grid">
@@ -170,34 +147,52 @@
     </div>
   </div>
 
-  <!-- GEÇMİŞ: tam ekran panel -->
-  <div id="overlay-history" class="view-overlay hidden">
-    <div class="view-overlay-head">
-      <h2 data-i18n="history_title">Geçmiş</h2>
-      <div class="view-overlay-actions">
-        <button class="view-overlay-close" data-close-view data-i18n-title="close" title="Kapat">✕</button>
+  <!-- YENİ ANİMASYONLU PAKET: mevcut .ani atamalarını ayrı bir pakete kaydetme penceresi -->
+  <div id="new-anim-pack-modal" class="modal-overlay hidden">
+    <div class="modal new-pack-modal">
+      <div class="modal-head">
+        <h3 data-i18n="new_anim_pack">Yeni Animasyonlu Paket</h3>
+        <button id="new-anim-pack-close" class="modal-close" data-i18n-title="close" title="Kapat">✕</button>
       </div>
-    </div>
-    <div class="pack-grid" id="history-grid">
-      <!-- JS ile dolduruluyor -->
+      <div class="modal-body">
+        <label class="small muted" for="new-anim-pack-name" data-i18n="pack_name">Paket adı</label>
+        <input id="new-anim-pack-name" class="text-input" type="text" maxlength="80" autocomplete="off" />
+
+        <div class="pack-cursor-picker">
+          <div class="pack-picker-title" data-i18n="new_anim_pack_states_title">Dahil Edilecek Animasyonlar</div>
+          <div class="pack-picker-hint" data-i18n="new_anim_pack_states_hint">Şu an .ani atanmış durumlar listelenir; bu paketle birlikte hem animasyon hem de o anki cursor görseli kaydedilir.</div>
+          <div id="new-anim-pack-states">
+            <!-- JS ile dolduruluyor -->
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="new-anim-pack-cancel" class="btn-ghost" data-i18n="cancel">İptal</button>
+        <button id="new-anim-pack-create" class="btn-primary" data-i18n="create">Oluştur</button>
+      </div>
     </div>
   </div>
 
-  <!-- ANİMASYONLU İMLEÇ: tam ekran panel -->
-  <div id="overlay-animcursor" class="view-overlay hidden">
-    <div class="view-overlay-head">
-      <h2 data-i18n="animcursor_title">Premium Animasyonlu İmleç (Beta)</h2>
-      <div class="view-overlay-actions">
-        <button class="view-overlay-close" data-close-view data-i18n-title="close" title="Kapat">✕</button>
+  <!-- ANİMASYONLU İMLEÇ: anasayfa düzeninde tam sayfa (hero + cam paneller + kart ızgarası) -->
+  <div id="overlay-animcursor" class="view-overlay view-page hidden">
+    <div class="view-page-scroll">
+      <header class="main-header">
+        <div class="hero">
+          <h1 data-i18n="animcursor_title">Animasyonlu İmleç (Beta)</h1>
+          <p class="muted" data-i18n="animcursor_desc">
+            🧪 Beta özellik: otomatik durum tespiti bazı oyunlarda ara sıra yanılabilir. Her durum için bir .ANI dosyası seç.
+            Animasyon atanan durumda Roblox’un sabit imleci gizlenir, yerine native animasyonlu imleç gösterilir.
+            Kaldırılırsa statik imleç geri döner.
+          </p>
+        </div>
+        <div class="header-right">
+          <button type="button" id="anim-toggle-now" class="btn-ghost with-ico"></button>
+          <button class="view-overlay-close" data-close-view data-i18n-title="close" title="Kapat">✕</button>
+        </div>
+      </header>
+      <div class="anim-stack" id="animcursor-list">
+        <!-- JS ile dolduruluyor: durum kartları paneli + genel ayarlar paneli -->
       </div>
-    </div>
-    <p class="muted small" data-i18n="animcursor_desc" style="padding: 0 24px;">
-      Her durum için bir .ANI dosyası seç. Bir durum için animasyon atandığında Roblox'un o duruma
-      ait sabit imleci gizlenir ve yerine native, akıcı animasyonlu imleç gösterilir. Animasyon
-      kaldırılırsa gerçek statik imleç aynen geri döner.
-    </p>
-    <div class="settings-panel" id="animcursor-list">
-      <!-- JS ile 4 state (arrow/click/text/shiftlock) için dolduruluyor -->
     </div>
   </div>
 
@@ -209,76 +204,110 @@
         <button class="view-overlay-close" data-close-view data-i18n-title="close" title="Kapat">✕</button>
       </div>
     </div>
-    <div class="settings-panel">
-      <div class="settings-row">
-        <div>
-          <strong data-i18n="language">Dil / Language</strong>
-          <p class="muted small">Türkçe / English</p>
+    <div class="pack-tabs settings-tabs" id="settings-tabs">
+      <button type="button" class="pack-tab active" data-settings-tab="general" data-i18n="settings_tab_general">Genel</button>
+      <button type="button" class="pack-tab" data-settings-tab="backgrounds" data-i18n="backgrounds">Arkaplan</button>
+    </div>
+
+    <!-- Genel -->
+    <div class="settings-pane active" id="settings-pane-general">
+      <div class="settings-panel">
+        <div class="settings-row">
+          <div>
+            <strong data-i18n="language">Dil / Language</strong>
+            <p class="muted small">Türkçe / English</p>
+          </div>
+          <select id="language-select" class="settings-select">
+            <option value="tr" data-i18n="turkish">Türkçe</option>
+            <option value="en" data-i18n="english">English</option>
+          </select>
         </div>
-        <select id="language-select" class="settings-select">
-          <option value="tr" data-i18n="turkish">Türkçe</option>
-          <option value="en" data-i18n="english">English</option>
-        </select>
-      </div>
-      <div class="settings-row">
-        <div>
-          <strong data-i18n="roblox_version">Roblox Sürümü</strong>
-          <p class="muted small" id="settings-roblox-version">Kontrol ediliyor…</p>
+        <div class="settings-row">
+          <div>
+            <strong data-i18n="roblox_version">Roblox Sürümü</strong>
+            <p class="muted small" id="settings-roblox-version">Kontrol ediliyor…</p>
+          </div>
         </div>
-      </div>
-      <div class="settings-row">
-        <div>
-          <strong data-i18n="auto_reinstall">Otomatik Düzeltme</strong>
-          <p class="muted small" data-i18n="auto_reinstall_desc">Roblox güncellendiğinde kayıtlı imleçlerini yeni sürüme otomatik olarak yeniden kurar.</p>
-        </div>
-        <label class="switch">
-          <input type="checkbox" id="toggle-auto-reinstall" />
-          <span class="switch-track"><span class="switch-thumb"></span></span>
-        </label>
-      </div>
-      <div class="settings-row">
-        <div>
-          <strong data-i18n="start_boot">Windows Başlangıcında Aç</strong>
-          <p class="muted small" data-i18n="start_boot_desc">Bilgisayar açıldığında uygulama otomatik olarak başlasın.</p>
-        </div>
-        <label class="switch">
-          <input type="checkbox" id="toggle-start-on-boot" />
-          <span class="switch-track"><span class="switch-thumb"></span></span>
-        </label>
-      </div>
-      <div class="settings-row settings-quickswitch">
-        <div>
-          <strong data-i18n="quickswitch_title">Hızlı Paket Geçişi</strong>
-          <p class="muted small" data-i18n="quickswitch_desc">Her paket için kendi klavye kısayolunu belirle. Roblox içindeyken de çalışır.</p>
-        </div>
-        <div class="quickswitch-grid">
-          <label class="quickswitch-slot">
-            <span id="quickswitch-key-label-1">Ctrl+Alt+1</span>
-            <button type="button" class="btn-ghost small quickswitch-key" id="quickswitch-key-1">⌨️ Tuş Ata</button>
-            <select id="quickswitch-1" class="settings-select"></select>
-          </label>
-          <label class="quickswitch-slot">
-            <span id="quickswitch-key-label-2">Ctrl+Alt+2</span>
-            <button type="button" class="btn-ghost small quickswitch-key" id="quickswitch-key-2">⌨️ Tuş Ata</button>
-            <select id="quickswitch-2" class="settings-select"></select>
-          </label>
-          <label class="quickswitch-slot">
-            <span id="quickswitch-key-label-3">Ctrl+Alt+3</span>
-            <button type="button" class="btn-ghost small quickswitch-key" id="quickswitch-key-3">⌨️ Tuş Ata</button>
-            <select id="quickswitch-3" class="settings-select"></select>
+        <div class="settings-row">
+          <div>
+            <strong data-i18n="auto_reinstall">Otomatik Düzeltme</strong>
+            <p class="muted small" data-i18n="auto_reinstall_desc">Roblox güncellendiğinde kayıtlı imleçlerini yeni sürüme otomatik olarak yeniden kurar.</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle-auto-reinstall" />
+            <span class="switch-track"><span class="switch-thumb"></span></span>
           </label>
         </div>
-      </div>
-      <div class="settings-row settings-about">
-        <div>
-          <strong data-i18n="about">Hakkında</strong>
-          <p class="muted small" data-i18n="about_text">
-            RBX Cursor Studio — Yapımcı: <b>Carl</b><br />
-            © 2026 Carl. Tüm hakları saklıdır. Bu yazılımın yapımcının
-            yazılı izni olmadan kopyalanması, değiştirilip dağıtılması
-            veya paylaşılması yasaktır.
-          </p>
+        <div class="settings-row">
+          <div>
+            <strong data-i18n="start_boot">Windows Başlangıcında Aç</strong>
+            <p class="muted small" data-i18n="start_boot_desc">Bilgisayar açıldığında uygulama otomatik olarak başlasın.</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle-start-on-boot" />
+            <span class="switch-track"><span class="switch-thumb"></span></span>
+          </label>
         </div>
+        <div class="settings-row settings-quickswitch">
+          <div>
+            <strong data-i18n="quickswitch_title">Hızlı Paket Geçişi</strong>
+            <p class="muted small" data-i18n="quickswitch_desc">Her paket için kendi klavye kısayolunu belirle. Roblox içindeyken de çalışır.</p>
+          </div>
+          <div class="quickswitch-grid">
+            <label class="quickswitch-slot">
+              <span id="quickswitch-key-label-1">Ctrl+Alt+1</span>
+              <button type="button" class="btn-ghost small quickswitch-key" id="quickswitch-key-1">⌨️ Tuş Ata</button>
+              <select id="quickswitch-1" class="settings-select"></select>
+            </label>
+            <label class="quickswitch-slot">
+              <span id="quickswitch-key-label-2">Ctrl+Alt+2</span>
+              <button type="button" class="btn-ghost small quickswitch-key" id="quickswitch-key-2">⌨️ Tuş Ata</button>
+              <select id="quickswitch-2" class="settings-select"></select>
+            </label>
+            <label class="quickswitch-slot">
+              <span id="quickswitch-key-label-3">Ctrl+Alt+3</span>
+              <button type="button" class="btn-ghost small quickswitch-key" id="quickswitch-key-3">⌨️ Tuş Ata</button>
+              <select id="quickswitch-3" class="settings-select"></select>
+            </label>
+          </div>
+        </div>
+        <div class="settings-row settings-history">
+          <div class="settings-history-head">
+            <div>
+              <strong data-i18n="history_enabled">Geçmişi Kaydet</strong>
+              <p class="muted small" data-i18n="history_enabled_desc">Düzenleyicide kaydettiğin imleçler Geçmiş listesine eklenir. Kapatırsan yeni kayıt eklenmez; mevcut geçmiş silinmez.</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="toggle-history" />
+              <span class="switch-track"><span class="switch-thumb"></span></span>
+            </label>
+          </div>
+          <div class="history-grid" id="history-grid">
+            <!-- JS ile dolduruluyor -->
+          </div>
+        </div>
+        <div class="settings-row settings-about">
+          <div>
+            <strong data-i18n="about">Hakkında</strong>
+            <p class="muted small" data-i18n="about_text">
+              RBX Cursor Studio — Yapımcı: <b>Carl</b><br />
+              © 2026 Carl. Tüm hakları saklıdır. Bu yazılımın yapımcının
+              yazılı izni olmadan kopyalanması, değiştirilip dağıtılması
+              veya paylaşılması yasaktır.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Arkaplan -->
+    <div class="settings-pane" id="settings-pane-backgrounds">
+      <div class="settings-pane-toolbar">
+        <button id="btn-bg-default" class="btn-ghost small" data-i18n="background_default">Varsayılana Dön</button>
+        <button id="btn-import-bg" class="btn-ghost small" data-i18n="import">İçe Aktar</button>
+      </div>
+      <div class="nolabel-grid" id="bg-list">
+        <!-- JS ile dolduruluyor -->
       </div>
     </div>
   </div>
@@ -286,27 +315,21 @@
   <!-- İMLEÇ DÜZENLEYİCİ (otomatik ortalama + manuel konum/boyut) -->
   <div id="cursor-editor" class="modal-overlay hidden">
     <div class="modal cursor-editor-modal" id="cursor-editor-modal">
-      <div class="modal-head">
-        <h3 id="editor-title" data-i18n="editor_title">İmleci Düzenle</h3>
+      <div class="modal-head editor-head">
+        <div class="editor-head-text">
+          <h3 id="editor-title">İmleç</h3>
+          <span class="editor-subtitle" data-i18n="editor_title">İmleci Düzenle</span>
+        </div>
         <button id="editor-close" class="modal-close" data-i18n-title="close" title="Kapat">✕</button>
       </div>
-      <div class="modal-body">
-        <div class="editor-canvas-wrap">
-          <canvas id="editor-canvas" width="64" height="64"></canvas>
-        </div>
-        <div class="editor-controls">
-          <label class="editor-label">
-            <span data-i18n="size">Boyut (büyüt / küçült)</span>
-            <input type="range" id="editor-scale" min="0.4" max="3" step="0.05" value="1" />
-          </label>
-          <div class="editor-btn-row">
-            <button id="editor-auto-fit" class="btn-ghost small" data-i18n="auto_fit">✨ Otomatik Boyutlandır + Ortala</button>
-            <button id="editor-center" class="btn-ghost small" data-i18n="center">🎯 Sadece Ortala</button>
-            <button id="editor-reset-size" class="btn-ghost small" data-i18n="reset_size">↺ Boyutu Sıfırla</button>
+
+      <div class="modal-body editor-body">
+        <!-- SOL: canlı önizleme -->
+        <div class="editor-preview">
+          <div class="editor-canvas-wrap">
+            <canvas id="editor-canvas" width="64" height="64"></canvas>
           </div>
-          <div class="editor-btn-row">
-            <button id="editor-manual-center" class="btn-ghost small" data-i18n="manual_center">📍 Manuel Ortala (Tam Merkez)</button>
-          </div>
+          <p class="editor-drag-hint" data-i18n="editor_drag_hint">Görseli sürükleyerek konumlandır</p>
           <div class="editor-offset-row">
             <label class="editor-offset-field">
               <span data-i18n="offset_x">X Konumu</span>
@@ -317,23 +340,54 @@
               <input type="number" id="editor-offset-y" step="1" value="0" />
             </label>
           </div>
-          <p class="muted small" data-i18n="editor_help">Yeni görseller açıldığında otomatik olarak 64×64 alana dengeli biçimde sığdırılır ve ortalanır. İstersen sürükleyerek konumu değiştirebilir, boyut çubuğuyla büyütüp küçültebilirsin. Piksel netliğini korumak için yumuşatma kapalıdır.</p>
-          <p class="muted small" data-i18n="manual_center_help">Otomatik ortalama, görselin şeffaf olmayan kısmını algılayıp ona göre konumlandırır — bazı görsellerde bu algılama beklediğin sonucu vermeyebilir. Böyle durumlarda "Manuel Ortala" görseli algılama yapmadan doğrudan 64×64 alanın tam merkezine yerleştirir; X/Y kutularından ya da sürükleyerek de pikseli piksele ince ayar yapabilirsin.</p>
+        </div>
 
-          <div class="editor-color-row">
-            <label class="editor-color-toggle">
-              <input type="checkbox" id="editor-colorize-toggle" />
-              <span data-i18n="colorize">Renklendir (siyah-beyazdan renk üret)</span>
-            </label>
+        <!-- SAĞ: kontroller -->
+        <div class="editor-controls">
+          <section class="editor-group">
+            <div class="editor-group-head">
+              <h4 data-i18n="size">Boyut (büyüt / küçült)</h4>
+              <button id="editor-reset-size" class="editor-link-btn" data-i18n="reset_size">Boyutu Sıfırla</button>
+            </div>
+            <input type="range" id="editor-scale" class="editor-range" min="0.4" max="3" step="0.05" value="1" />
+          </section>
+
+          <section class="editor-group">
+            <div class="editor-group-head"><h4 data-i18n="editor_position">Konum</h4></div>
+            <div class="editor-btn-stack">
+              <button id="editor-auto-fit" class="editor-action primary-soft with-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/><circle cx="12" cy="12" r="2.5"/></svg><span data-i18n="auto_fit">Otomatik Boyutlandır + Ortala</span></button>
+              <div class="editor-btn-row">
+                <button id="editor-center" class="editor-action with-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="1.5"/></svg><span data-i18n="center">Sadece Ortala</span></button>
+                <button id="editor-manual-center" class="editor-action with-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v18M3 12h18"/></svg><span data-i18n="manual_center">Manuel Ortala (Tam Merkez)</span></button>
+              </div>
+            </div>
+          </section>
+
+          <section class="editor-group editor-color-row">
+            <div class="editor-group-head">
+              <h4 data-i18n="editor_color">Renk</h4>
+              <label class="switch editor-switch" data-i18n-title="colorize" title="Renklendir">
+                <input type="checkbox" id="editor-colorize-toggle" />
+                <span class="switch-track"><span class="switch-thumb"></span></span>
+              </label>
+            </div>
+            <p class="editor-note" data-i18n="colorize">Renklendir (siyah-beyazdan renk üret)</p>
             <label class="editor-label" id="editor-hue-wrap">
               <span data-i18n="hue">Renk Tonu</span>
-              <input type="range" id="editor-hue" min="0" max="359" step="1" value="0" />
+              <input type="range" id="editor-hue" class="editor-range hue-range" min="0" max="359" step="1" value="0" />
             </label>
-            <button id="editor-color-variations" type="button" class="btn-ghost small" data-i18n="color_variations">🎨 Renk Varyasyonları Oluştur</button>
+            <button id="editor-color-variations" type="button" class="editor-action with-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2c-5 0-9 3.7-9 8.3 0 3.1 2.3 5 4.7 5H9a1.7 1.7 0 0 1 1.3 2.8 1.6 1.6 0 0 0 1.2 2.6c5.1 0 9.5-3.4 9.5-8.5C21 6.9 17 3.2 12 3.2z"/></svg><span data-i18n="color_variations">Renk Varyasyonları Oluştur</span></button>
             <div id="color-variation-strip" class="color-variation-strip hidden"></div>
-          </div>
+          </section>
+
+          <details class="editor-help">
+            <summary data-i18n="editor_help_title">Nasıl çalışır?</summary>
+            <p class="muted small" data-i18n="editor_help">Yeni görseller açıldığında otomatik olarak 64×64 alana dengeli biçimde sığdırılır ve ortalanır.</p>
+            <p class="muted small" data-i18n="manual_center_help">Manuel ortala.</p>
+          </details>
         </div>
       </div>
+
       <div class="modal-actions">
         <button id="editor-cancel" class="btn-ghost" data-i18n="cancel">İptal</button>
         <button id="editor-save" class="btn-primary" data-i18n="save">Kaydet</button>
@@ -351,7 +405,7 @@
       <div class="modal-body context-body">
         <p class="muted small" data-i18n="context_preview_help">Cursoru gerçek piksel boyutunda, oyun içi bir sahne üzerinde test et.</p>
         <div class="cursor-game-viewer" id="context-scene">
-          <canvas id="context-game-canvas" aria-label="Cursor game viewer"></canvas>
+          <canvas id="context-game-canvas" class="game-canvas" aria-label="Cursor game viewer"></canvas>
           <button type="button" id="context-shiftlock-btn" class="context-shiftlock-btn" data-i18n-title="context_shiftlock" title="Shift Lock modunu dene">⌁</button>
         </div>
       </div>
@@ -388,6 +442,14 @@
 
   <script src="lang.js"></script>
   <script src="cur-parser.js"></script>
+  <script src="editor/image-normalizer.js"></script>
+  <script src="editor/color-editor.js"></script>
+  <script src="editor/cursor-editor.js"></script>
+  <script src="packs/pack-ui.js"></script>
+  <script src="history/history-ui.js"></script>
+  <script src="backgrounds/background-ui.js"></script>
+  <script src="animation/animation-ui.js"></script>
+  <!-- renderer.js en sonda yüklenmeli: init() diğer modüllerin hepsi tanımlandıktan sonra çalışır -->
   <script src="renderer.js"></script>
 </body>
 </html>

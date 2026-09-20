@@ -6,6 +6,9 @@ contextBridge.exposeInMainWorld('rbx', {
   winMaximize: () => ipcRenderer.send('win:maximize'),
   winClose: () => ipcRenderer.send('win:close'),
 
+  // uygulama sürümü (package.json)
+  appVersion: () => ipcRenderer.invoke('app:get-version'),
+
   // config
   getConfig: () => ipcRenderer.invoke('cfg:get'),
   setConfig: (partial) => ipcRenderer.invoke('cfg:set', partial),
@@ -25,6 +28,7 @@ contextBridge.exposeInMainWorld('rbx', {
   currentCursorState: () => ipcRenderer.invoke('cursor:current-state'),
   applyCursors: () => ipcRenderer.invoke('cursor:apply'),
   restoreCursors: () => ipcRenderer.invoke('cursor:restore'),
+  restoreCursor: (kind) => ipcRenderer.invoke('cursor:restore-one', kind),
 
   // geçmiş (anasayfada göstermeden önceki seçimler)
   listHistory: () => ipcRenderer.invoke('history:list'),
@@ -35,6 +39,7 @@ contextBridge.exposeInMainWorld('rbx', {
   listPacks: () => ipcRenderer.invoke('pack:list'),
   savePackAs: (name, selectedKinds) => ipcRenderer.invoke('pack:save-as', name, selectedKinds),
   saveActiveCursorsAsPack: (name) => ipcRenderer.invoke('pack:save-active-as', name),
+  saveAnimPackAs: (name, selectedAnimKinds) => ipcRenderer.invoke('pack:save-anim-as', name, selectedAnimKinds),
   applyPackToCurrent: (name) => ipcRenderer.invoke('pack:apply-to-current', name),
   applyPackInstant: (name) => ipcRenderer.invoke('pack:apply-instant', name),
   getPackCursors: (name) => ipcRenderer.invoke('pack:get-cursors', name),
