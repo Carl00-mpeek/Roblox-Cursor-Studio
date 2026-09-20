@@ -13,7 +13,7 @@ A lightweight Windows tool for customizing Roblox cursors.
 
 **Current version: 4.0.0**
 
-![RBX Cursor Studio Screenshot](assets/screenshot.en.png)
+![RBX Cursor Studio Screenshot]()
 
 ## 🆕 What's New in 4.0.0
 
