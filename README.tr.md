@@ -13,7 +13,7 @@ Roblox imleçlerini özelleştirmek için hafif bir Windows aracı.
 
 **Güncel sürüm: 4.0.0**
 
-![RBX Cursor Studio Ekran Görüntüsü]()
+![RBX Cursor Studio Ekran Görüntüsü]
 
 ## 🆕 4.0.0 ile Gelenler
 
