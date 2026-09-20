@@ -14,7 +14,6 @@ Roblox imleçlerini özelleştirmek için hafif bir Windows aracı.
 **Güncel sürüm: 4.0.0**
 
 ![RBX Cursor Studio Ekran Görüntüsü](assets/screenshot.png)
-*Örnek özel arkaplan ile gösterilmiştir — arkaplan kişiselleştirilebilir*
 
 ## 🆕 4.0.0 ile Gelenler
 
