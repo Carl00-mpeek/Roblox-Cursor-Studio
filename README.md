@@ -11,9 +11,17 @@ RBX Cursor Studio is an independent, community-made tool, **not affiliated with 
 
 A lightweight Windows tool for customizing Roblox cursors.
 
-## 🎬 Live Demo
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=kKYbosdVFig" target="_blank">
+    <img src="https://img.youtube.com/vi/kKYbosdVFig/maxresdefault.jpg" alt="RBX Cursor Studio Demo" width="800">
+  </a>
+</p>
 
-[![RBX Cursor Studio Live Preview](https://img.youtube.com/vi/kKYbosdVFig/0.jpg)](https://www.youtube.com/watch?v=kKYbosdVFig)
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=kKYbosdVFig" target="_blank">
+    ▶️ <strong>Watch Demo Video</strong>
+  </a>
+</p>
 
 **Current version: 4.0.0**
 
