@@ -11,9 +11,11 @@ RBX Cursor Studio, bağımsız ve topluluk tarafından geliştirilmiş bir araç
 
 Roblox imleçlerini özelleştirmek için hafif bir Windows aracı.
 
-**Güncel sürüm: 4.0.0**
+## 🎬 Demo
 
-![RBX Cursor Studio Ekran Görüntüsü]
+> 🎥 **Demo:** RBX Cursor Studio'nun çalışmasını izlemek için yukarıdaki önizlemeye tıklayın.
+
+**Güncel sürüm: 4.0.0**
 
 ## 🆕 4.0.0 ile Gelenler
 
