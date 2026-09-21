@@ -11,7 +11,7 @@ RBX Cursor Studio is an independent, community-made tool, **not affiliated with 
 
 ## 🎬 Demo
 
-[![Watch Demo](https://img.youtube.com/vi/kKYbosdVFig/maxresdefault.png)](https://youtu.be/kKYbosdVFig)
+[![Watch Demo](https://img.youtube.com/vi/kKYbosdVFig/0.jpg)](https://www.youtube.com/watch?v=kKYbosdVFig)
 
 > 🎥 **Demo:** Click the preview above to watch RBX Cursor Studio in action.
 
