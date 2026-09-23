@@ -79,7 +79,6 @@ contextBridge.exposeInMainWorld('rbx', {
   onAnimCursorState: (cb) => ipcRenderer.on('animcursor:state', (_e, state) => cb(state)),
   onAnimCursorEnabled: (cb) => ipcRenderer.on('animcursor:enabled', (_e, enabled) => cb(enabled)),
 
-
   gameWatchGetConfig: () => ipcRenderer.invoke('gamewatch:get-config'),
   gameWatchSetEnabled: (enabled) => ipcRenderer.invoke('gamewatch:set-enabled', enabled),
   gameWatchSetMapping: (placeId, packName) => ipcRenderer.invoke('gamewatch:set-mapping', placeId, packName),

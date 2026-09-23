@@ -11,27 +11,22 @@ RBX Cursor Studio is an independent, community-made tool, **not affiliated with 
 
 A lightweight Windows tool for customizing Roblox cursors.
 
-**Current version: 4.5.0**
+**Current version: 4.0.0**
 
 ![RBX Cursor Studio Screenshot]
 
-## 🆕 What's New in 4.5.0
+## 🆕 What's New in 4.0.0
 
-- 🐛 Animated cursor no longer disappears when a pack is deleted — deleting a pack whose animation was active no longer breaks the animation.
-- 🐛 "Restore Original" now properly clears the animation too — previously, restoring a state to its original could leave the animation assignment behind, causing a blank cursor to show up on the next launch; this is now fixed.
-- 🐛 Animation on/off state is now remembered — closing and reopening the app picks up right where you left the animation (on or off).
-- 🖥️ System tray added — the app can now minimize to the system tray (next to the clock). From the tray icon you can switch between packs, toggle the animation on/off, and fully quit the app.
-- ⚙️ New setting: "Minimize to Tray on Close" — if you enable this in Settings, closing the window won't quit the app; it keeps running in the background from the tray (off by default, you can turn it on).
-- 🕹️ [Experimental] Auto-switch pack by game — in Settings, you can map a Roblox game to a pack; later, opening that game will automatically apply the matching pack. This is still in development and not yet actively functional.
-- ⚡ Performance improvement — for users with a large number of packs (20+), adding/deleting/applying packs is now faster.
-- 📦 Bulk pack import & export — select and import several packs at once, and export multiple packs together in a single go, instead of doing them one by one.
+- 🎨 **Brand-new design** — the whole interface has moved to a completely new look and layout
+- ✨ A soft glow effect now highlights any cursor card once you've assigned a custom image to it
+- 🖼️ Small polish pass on the In-Context Preview scene (Play button, chat box, Shift Lock)
 
 ## ✨ Features
 
 ### 🖱️ Cursor Customization
 Customize every Roblox cursor type (arrow, far arrow, I-beam, mouse-locked...) and apply your selection instantly. Cursors are auto-fitted and centered on a 64×64 canvas, with smoothing off to keep pixel edges crisp.
 
-### ✨ Animated Cursors (.ANI) — 🧪 Beta
+### ✨ Animated Cursors (.ANI)
 > Automatic state detection relies on heuristics and may occasionally misjudge in some games. [Open an issue](../../issues) if you hit a problem.
 
 - Assign a `.ani` file per state — **Normal, Click, Text, Shift Lock**
@@ -47,10 +42,7 @@ Customize every Roblox cursor type (arrow, far arrow, I-beam, mouse-locked...) a
 Auto-Fit + Center, Center Only, and Reset Size shortcuts; a manual zoom slider (0.4x–3x); drag-and-drop positioning; Colorize with a hue slider; and one-click Color Variations.
 
 ### 📦 Cursor Packs
-Create, save and manage as many packs as you like. Export as `.rbxcursor` / `.zip` to share, or import one via drag-and-drop — both single packs and, now, **multiple packs at once** (bulk import and export). **Quick Pack Switching** jumps between saved packs with `Ctrl+Alt+1/2/3`, even while Roblox is running.
-
-### 🖥️ System Tray
-Minimize to the system tray instead of quitting (opt-in in Settings). From the tray icon you can instantly switch between packs, toggle the animated cursor on/off, or quit the app entirely.
+Create, save and manage as many packs as you like. Export as `.rbxcursor` / `.zip` to share, or import one via drag-and-drop. **Quick Pack Switching** jumps between saved packs with `Ctrl+Alt+1/2/3`, even while Roblox is running.
 
 ### 🕹️ Automatic Pack by Game — 🧪 Experimental, opt-in (off by default)
 Map a Roblox game to one of your packs, and the app switches to it automatically when you open that game. This works by **reading Roblox's own local log files** (`%LOCALAPPDATA%\Roblox\logs`), **read-only** — nothing else. The app never reads Roblox's memory, never injects into its process, and makes no network requests for this feature. If you ever pick a pack yourself (menu, hotkey, or tray), automatic switching stays out of the way for the rest of that session.
@@ -113,7 +105,7 @@ npm run dist     # build the installer and portable exe
 
 The latest release has been scanned with VirusTotal:
 
-- [🔍 Source](https://www.virustotal.com/gui/file/71e5bfc7a394671beb798554a1e3156a177c9a763ca1c5cfa484f6370a4bff8d?nocache=1)
+- [🔍 Source](https://www.virustotal.com/gui/file/d6164ae95c241574d51e8ae521035cb12dbc00a99e30169d805f5ea60930262f?nocache=1)
 - [🔍 Setup](https://www.virustotal.com/gui/file/931ff40b0d11505572b12e221d5063987da2312b91bbf7bde741a47b1fd42131?nocache=1)
 - [🔍 Portable](https://virustotal.com/gui/file/0f88aa46f2d5400cc87f80cb897c2c1133e76265f2dbbc20ed9f7e9909974057?nocache=1)
 

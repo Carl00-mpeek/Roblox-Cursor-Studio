@@ -11,27 +11,22 @@ RBX Cursor Studio, bağımsız ve topluluk tarafından geliştirilmiş bir araç
 
 Roblox imleçlerini özelleştirmek için hafif bir Windows aracı.
 
-**Güncel sürüm: 4.5.0**
+**Güncel sürüm: 4.0.0**
 
 ![RBX Cursor Studio Ekran Görüntüsü]
 
-## 🆕 4.5.0 ile Gelenler
+## 🆕 4.0.0 ile Gelenler
 
-- 🐛 Bir paket silindiğinde animasyonlu imleç artık kaybolmuyor — animasyonu aktif olan bir paket silindiğinde animasyon artık bozulmuyor.
-- 🐛 "Orijinale Dön" artık animasyonu da düzgünce temizliyor — önceden bir durumu orijinaline döndürmek animasyon atamasını arkada bırakabiliyor ve bir sonraki açılışta boş bir imleç görünmesine sebep olabiliyordu; bu artık düzeltildi.
-- 🐛 Animasyon açık/kapalı durumu artık hatırlanıyor — uygulamayı kapatıp yeniden açtığında animasyonu nerede bıraktıysan oradan devam ediyor.
-- 🖥️ Sistem tepsisi eklendi — uygulama artık saatin yanındaki sistem tepsisine küçülebiliyor. Tepsi simgesinden paketler arasında geçiş yapabilir, animasyonu açıp kapatabilir ve uygulamadan tamamen çıkabilirsin.
-- ⚙️ Yeni ayar: "Kapatınca Tepsiye Küçül" — Ayarlar'dan bunu açarsan pencereyi kapatmak uygulamayı kapatmaz; arka planda tepsiden çalışmaya devam eder (varsayılan olarak kapalı, istersen açabilirsin).
-- 🕹️ [Deneysel] Oyuna göre otomatik paket değiştirme — Ayarlar'dan bir Roblox oyununu bir pakete eşleyebilirsin; ileride o oyunu açtığında eşlediğin paket otomatik uygulanır. Bu özellik henüz geliştirme aşamasında ve aktif olarak çalışmıyor.
-- ⚡ Performans iyileştirmesi — çok sayıda paketi olan kullanıcılar (20+) için paket ekleme/silme/uygulama artık daha hızlı.
-- 📦 Toplu paket içe/dışa aktarma — artık birden fazla paketi tek seferde seçip içe aktarabilir, yine birden fazla paketi tek işlemde dışa aktarabilirsin; tek tek uğraşmana gerek kalmadı.
+- 🎨 **Bambaşka bir tasarım** — arayüzün tamamı yepyeni bir görünüm ve düzene geçti
+- ✨ Özel bir görsel atadığın imleç kartlarının etrafında artık yumuşak bir parıltı efekti var
+- 🖼️ Bağlamda Önizleme sahnesinde küçük bir cila (OYNA butonu, sohbet kutusu, Shift Lock)
 
 ## ✨ Özellikler
 
 ### 🖱️ İmleç Özelleştirme
 Roblox'un tüm imleç türlerini (ok, uzak ok, I-beam, kilitli fare...) tek tek özelleştir ve seçtiğin görseli anında uygula. İmleçler 64×64 alana otomatik sığdırılır ve ortalanır; piksel netliği için yumuşatma kapalıdır.
 
-### ✨ Animasyonlu İmleçler (.ANI) — 🧪 Beta
+### ✨ Animasyonlu İmleçler (.ANI)
 > Otomatik durum tespiti sezgisel yöntemlere dayanır ve bazı oyunlarda ara sıra yanılabilir. Bir sorunla karşılaşırsan [issue aç](../../issues).
 
 - Her durum için bir `.ani` dosyası ata — **Normal, Tıklama, Yazı, Shift Lock**
@@ -47,10 +42,7 @@ Roblox'un tüm imleç türlerini (ok, uzak ok, I-beam, kilitli fare...) tek tek 
 Otomatik Boyutlandır + Ortala, Sadece Ortala ve Boyutu Sıfırla kısayolları; manuel yakınlaştırma kaydırıcısı (0.4x–3x); sürükle-bırak konumlandırma; ton kaydırıcılı Renklendir; ve tek tıkla Renk Varyasyonları.
 
 ### 📦 Paket Sistemi
-İstediğin kadar paket oluştur, kaydet ve yönet. `.rbxcursor` / `.zip` olarak dışa aktarıp paylaş, ya da sürükle-bırak ile içe aktar — hem tek tek hem de artık **toplu olarak, birden fazla paketi tek seferde** içe/dışa aktarabilirsin. **Hızlı Paket Geçişi**, `Ctrl+Alt+1/2/3` ile Roblox içindeyken bile paketler arasında anında geçiş yapar.
-
-### 🖥️ Sistem Tepsisi
-Uygulamadan çıkmak yerine sistem tepsisine küçül (Ayarlar'dan açılır). Tepsi simgesinden paketler arasında anında geçiş yapabilir, animasyonlu imleci açıp kapatabilir ya da uygulamadan tamamen çıkabilirsin.
+İstediğin kadar paket oluştur, kaydet ve yönet. `.rbxcursor` / `.zip` olarak dışa aktarıp paylaş, ya da sürükle-bırak ile içe aktar. **Hızlı Paket Geçişi**, `Ctrl+Alt+1/2/3` ile Roblox içindeyken bile paketler arasında anında geçiş yapar.
 
 ### 🕹️ Oyuna Göre Otomatik Paket — 🧪 Deneysel, opt-in (varsayılan kapalı)
 Bir Roblox oyununu kayıtlı paketlerinden birine eşle; o oyunu açtığında uygulama otomatik olarak o pakete geçsin. Bu, Roblox'un kendi yerel log dosyalarını (`%LOCALAPPDATA%\Roblox\logs`) **salt okunur** okuyarak çalışır — başka hiçbir şey yapmaz. Uygulama bu özellik için Roblox'un belleğini okumaz, sürecine enjekte olmaz ve ağ isteği atmaz. Bir paketi elle seçersen (menü, kısayol ya da tepsi simgesi), otomatik geçiş o oturum boyunca araya girmez.

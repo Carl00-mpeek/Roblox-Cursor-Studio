@@ -548,7 +548,6 @@ document.getElementById('toggle-auto-reinstall').onchange = async (e) => {
   }
 };
 
-
 document.getElementById('toggle-history').onchange = async (e) => {
   const checked = e.target.checked;
   try {
