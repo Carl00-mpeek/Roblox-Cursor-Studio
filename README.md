@@ -25,6 +25,12 @@ A lightweight Windows tool for customizing Roblox cursors.
 - 🕹️ *[Experimental] Auto-switch pack by game* — in Settings, you can map a Roblox game to a pack; later, opening that game will automatically apply the matching pack. This is still in development and not yet actively functional.
 - ⚡ *Performance improvement* — for users with a large number of packs (20+), adding/deleting/applying packs is now faster.
 
+## 🆕 What's New in 4.0.0
+
+- 🎨 **Brand-new design** — the whole interface has moved to a completely new look and layout
+- ✨ A soft glow effect now highlights any cursor card once you've assigned a custom image to it
+- 🖼️ Small polish pass on the In-Context Preview scene (Play button, chat box, Shift Lock)
+
 ## ✨ Features
 
 ### 🖱️ Cursor Customization
@@ -68,9 +74,8 @@ Swap the app's background image, switch between English and Turkish instantly, l
 
 ### 🔔 Updates
 On launch it sends **one** version query to GitHub's public "latest release" endpoint (no identifying/account data); if a newer version exists it tells you in Settings and on the version tag at the top left.
-- **Installer build:** *Download & install* → the app downloads the update (sha512-verified) and updates itself with *Restart & update*. No need to visit GitHub. You have to install the first build that includes this feature manually; later versions arrive automatically.
-- **Portable build:** cannot update itself; it opens the Releases page when a new version exists.
-The launch check can be turned off in Settings > Updates; downloading/installing only start when you confirm.
+When an update is available, the app opens the [Releases](../../releases) page so you can download the latest Setup or Portable build yourself.
+The launch check can be turned off in Settings > Updates.
 
 ### 💻 Platform & Distribution
 Available as a portable executable or an NSIS installer. Built on Electron; animated cursors run in a small native helper (`cursor_helper.exe`) that only starts when needed. Source is public under a noncommercial license, with releases scanned on VirusTotal.

@@ -25,6 +25,12 @@ Roblox imleçlerini özelleştirmek için hafif bir Windows aracı.
 - 🕹️ *[Deneysel] Oyuna göre otomatik paket* — Ayarlar'dan bir Roblox oyununu bir pakete eşleyebiliyorsun; ileride o oyunu açtığında ilgili paket otomatik uygulanacak. Şu an geliştirme aşamasında, henüz aktif olarak çalışmıyor.
 - ⚡ *Performans iyileştirmesi* — çok sayıda paketin olduğu kullanıcılarda (20+) paket ekleme/silme/uygulama işlemleri artık daha hızlı.
 
+## 🆕 4.0.0 ile Gelenler
+
+- 🎨 **Bambaşka bir tasarım** — arayüzün tamamı yepyeni bir görünüm ve düzene geçti
+- ✨ Özel bir görsel atadığın imleç kartlarının etrafında artık yumuşak bir parıltı efekti var
+- 🖼️ Bağlamda Önizleme sahnesinde küçük bir cila (OYNA butonu, sohbet kutusu, Shift Lock)
+
 ## ✨ Özellikler
 
 ### 🖱️ İmleç Özelleştirme
@@ -68,9 +74,8 @@ Uygulamanın arkaplanını değiştir, Türkçe/İngilizce arasında anında ge�
 
 ### 🔔 Güncellemeler
 Açılışta GitHub'ın herkese açık "latest release" adresine **tek bir** sürüm sorusu gönderilir (kimlik/hesap verisi gönderilmez); yeni sürüm varsa Ayarlar'da ve sol üstteki sürüm etiketinde haber verilir.
-- **Kurulum sürümü:** *İndir ve kur* → uygulama güncellemeyi (sha512 doğrulamalı) indirir, *Yeniden başlat ve güncelle* ile kendini günceller. GitHub sayfasına gitmene gerek yok. İlk kez bu özelliği içeren sürümü elle kurman gerekir; sonrası otomatik gelir.
-- **Portable sürüm:** kendini güncelleyemez; yeni sürüm varsa Releases sayfasını açar.
-Her şey Ayarlar > Güncellemeler'den kapatılabilir; indirme/kurulum yalnızca sen onaylayınca başlar.
+Güncelleme varsa uygulama [Releases](../../releases) sayfasını açar; en son Kurulum veya Portable sürümünü kendin indirebilirsin.
+Açılış kontrolü Ayarlar > Güncellemeler'den kapatılabilir.
 
 ### 💻 Platform ve Dağıtım
 Taşınabilir exe ya da NSIS kurulum dosyası olarak dağıtılır. Electron tabanlı; animasyonlu imleçler yalnızca gerektiğinde başlayan küçük bir native yardımcıda (`cursor_helper.exe`) çalışır. Kaynak kodu açık ve ticari olmayan bir lisansla paylaşılır, sürümler VirusTotal ile taranmıştır.

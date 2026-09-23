@@ -22,14 +22,9 @@ function setState(patch) {
 }
 
 function isSupported(env = {}) {
-  const platform = env.platform || process.platform;
-  const isPackaged = env.isPackaged !== undefined ? env.isPackaged : app.isPackaged;
-  const procEnv = env.env || process.env;
-  const resourcesPath = env.resourcesPath || process.resourcesPath;
-  const exists = env.existsSync || fs.existsSync;
-  if (platform !== 'win32' || !isPackaged) return false;
-  if (procEnv.PORTABLE_EXECUTABLE_FILE) return false;
-  try { return !!resourcesPath && exists(path.join(resourcesPath, 'app-update.yml')); } catch (_) { return false; }
+  // In-app download/install disabled for all builds (Setup + Portable).
+  // Both use the portable flow: check GitHub and open the Releases page.
+  return false;
 }
 
 function load(injected = null) {
