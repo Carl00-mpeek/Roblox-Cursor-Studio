@@ -11,9 +11,19 @@ RBX Cursor Studio, bağımsız ve topluluk tarafından geliştirilmiş bir araç
 
 Roblox imleçlerini özelleştirmek için hafif bir Windows aracı.
 
-**Güncel sürüm: 4.0.0**
+**Güncel sürüm: 4.5.0**
 
 ![RBX Cursor Studio Ekran Görüntüsü]
+
+## 🆕 4.5.0 ile Gelenler
+
+- 🐛 *Animasyonlu imleç artık paket silinse bile kaybolmuyor* — bir paketi sildiğinde, o pakette aktif olan animasyon artık bozulmuyor.
+- 🐛 *"Orijinale Dön" artık animasyonu da düzgün temizliyor* — önceden bir durumu orijinaline döndürünce animasyon ataması arkada kalabiliyor, bir sonraki açılışta boş imleç görünebiliyordu; artık düzeldi.
+- 🐛 *Animasyon açık/kapalı durumu artık hatırlanıyor* — uygulamayı kapatıp açtığında animasyonu nasıl bıraktıysan öyle karşılıyor.
+- 🖥️ *Sistem tepsisi eklendi* — uygulama artık görev çubuğunun tepsisine (saat yanına) küçülebiliyor. Tepsi simgesinden paketler arasında geçiş yapabilir, animasyonu aç/kapatabilir ve uygulamayı buradan tamamen kapatabilirsin.
+- ⚙️ *Yeni ayar: "Kapatınca Tepsiye Küçül"* — Ayarlar'dan açarsan, pencereyi kapatman uygulamayı kapatmaz, arka planda tepsiden çalışmaya devam eder (varsayılan kapalı, istersen açabilirsin).
+- 🕹️ *[Deneysel] Oyuna göre otomatik paket* — Ayarlar'dan bir Roblox oyununu bir pakete eşleyebiliyorsun; ileride o oyunu açtığında ilgili paket otomatik uygulanacak. Şu an geliştirme aşamasında, henüz aktif olarak çalışmıyor.
+- ⚡ *Performans iyileştirmesi* — çok sayıda paketin olduğu kullanıcılarda (20+) paket ekleme/silme/uygulama işlemleri artık daha hızlı.
 
 ## 🆕 4.0.0 ile Gelenler
 

@@ -11,9 +11,19 @@ RBX Cursor Studio is an independent, community-made tool, **not affiliated with 
 
 A lightweight Windows tool for customizing Roblox cursors.
 
-**Current version: 4.0.0**
+**Current version: 4.5.0**
 
 ![RBX Cursor Studio Screenshot]
+
+## 🆕 What's New in 4.5.0
+
+- 🐛 *Animated cursor no longer disappears when a pack is deleted* — deleting a pack whose animation was active no longer breaks the animation.
+- 🐛 *"Restore Original" now properly clears the animation too* — previously, restoring a state to its original could leave the animation assignment behind, causing a blank cursor to show up on the next launch; this is now fixed.
+- 🐛 *Animation on/off state is now remembered* — closing and reopening the app picks up right where you left the animation (on or off).
+- 🖥️ *System tray added* — the app can now minimize to the system tray (next to the clock). From the tray icon you can switch between packs, toggle the animation on/off, and fully quit the app.
+- ⚙️ *New setting: "Minimize to Tray on Close"* — if you enable this in Settings, closing the window won't quit the app; it keeps running in the background from the tray (off by default, you can turn it on).
+- 🕹️ *[Experimental] Auto-switch pack by game* — in Settings, you can map a Roblox game to a pack; later, opening that game will automatically apply the matching pack. This is still in development and not yet actively functional.
+- ⚡ *Performance improvement* — for users with a large number of packs (20+), adding/deleting/applying packs is now faster.
 
 ## 🆕 What's New in 4.0.0
 
