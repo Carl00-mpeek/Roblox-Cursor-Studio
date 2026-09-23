@@ -15,6 +15,21 @@ A lightweight Windows tool for customizing Roblox cursors.
 
 ![RBX Cursor Studio Screenshot]
 
+## 🎬 Demo
+
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=kKYbosdVFig">
+    <img src="https://img.youtube.com/vi/kKYbosdVFig/maxresdefault.jpg" alt="RBX Cursor Studio — Demo" width="720">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=kKYbosdVFig"><strong>▶ Watch the demo on YouTube</strong></a>
+</p>
+
+A short walkthrough of the app: customizing cursors, animated (.ANI) cursors, packs, and settings — so you can see how it works before downloading.
+
+
 ## 🆕 What's New in 4.5.0
 
 - 🐛 *Animated cursor no longer disappears when a pack is deleted* — deleting a pack whose animation was active no longer breaks the animation.
@@ -24,6 +39,12 @@ A lightweight Windows tool for customizing Roblox cursors.
 - ⚙️ *New setting: "Minimize to Tray on Close"* — if you enable this in Settings, closing the window won't quit the app; it keeps running in the background from the tray (off by default, you can turn it on).
 - 🕹️ *[Experimental] Auto-switch pack by game* — in Settings, you can map a Roblox game to a pack; later, opening that game will automatically apply the matching pack. This is still in development and not yet actively functional.
 - ⚡ *Performance improvement* — for users with a large number of packs (20+), adding/deleting/applying packs is now faster.
+
+## 🆕 What's New in 4.0.0
+
+- 🎨 **Brand-new design** — the whole interface has moved to a completely new look and layout
+- ✨ A soft glow effect now highlights any cursor card once you've assigned a custom image to it
+- 🖼️ Small polish pass on the In-Context Preview scene (Play button, chat box, Shift Lock)
 
 ## ✨ Features
 
@@ -107,6 +128,8 @@ npm run dist     # build the installer and portable exe
 ## 🛡️ VirusTotal
 
 The latest release has been scanned with VirusTotal:
+> **About antivirus warnings:** Some engines (especially heuristic ones like ESET) may flag the Setup build as suspicious. This is a **false positive**. The app does not inject into Roblox, does not read process memory, and does not download or run hidden executables — updates simply open the GitHub Releases page. Full source is public; you can build it yourself. If your antivirus quarantines the file, add an exclusion or use the Portable build.
+
 
 - [🔍 Source](https://www.virustotal.com/gui/file/d6164ae95c241574d51e8ae521035cb12dbc00a99e30169d805f5ea60930262f?nocache=1)
 - [🔍 Setup](https://www.virustotal.com/gui/file/931ff40b0d11505572b12e221d5063987da2312b91bbf7bde741a47b1fd42131?nocache=1)

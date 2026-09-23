@@ -15,6 +15,21 @@ Roblox imleçlerini özelleştirmek için hafif bir Windows aracı.
 
 ![RBX Cursor Studio Ekran Görüntüsü]
 
+## 🎬 Demo
+
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=kKYbosdVFig">
+    <img src="https://img.youtube.com/vi/kKYbosdVFig/maxresdefault.jpg" alt="RBX Cursor Studio — Demo" width="720">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://www.youtube.com/watch?v=kKYbosdVFig"><strong>▶ YouTube’da demoyu izle</strong></a>
+</p>
+
+Uygulamanın kısa bir tanıtımı: imleç özelleştirme, animasyonlu (.ANI) imleçler, paketler ve ayarlar — indirmeden önce nasıl çalıştığını görebilirsin.
+
+
 ## 🆕 4.5.0 ile Gelenler
 
 - 🐛 *Animasyonlu imleç artık paket silinse bile kaybolmuyor* — bir paketi sildiğinde, o pakette aktif olan animasyon artık bozulmuyor.
@@ -24,6 +39,12 @@ Roblox imleçlerini özelleştirmek için hafif bir Windows aracı.
 - ⚙️ *Yeni ayar: "Kapatınca Tepsiye Küçül"* — Ayarlar'dan açarsan, pencereyi kapatman uygulamayı kapatmaz, arka planda tepsiden çalışmaya devam eder (varsayılan kapalı, istersen açabilirsin).
 - 🕹️ *[Deneysel] Oyuna göre otomatik paket* — Ayarlar'dan bir Roblox oyununu bir pakete eşleyebiliyorsun; ileride o oyunu açtığında ilgili paket otomatik uygulanacak. Şu an geliştirme aşamasında, henüz aktif olarak çalışmıyor.
 - ⚡ *Performans iyileştirmesi* — çok sayıda paketin olduğu kullanıcılarda (20+) paket ekleme/silme/uygulama işlemleri artık daha hızlı.
+
+## 🆕 4.0.0 ile Gelenler
+
+- 🎨 **Bambaşka bir tasarım** — arayüzün tamamı yepyeni bir görünüm ve düzene geçti
+- ✨ Özel bir görsel atadığın imleç kartlarının etrafında artık yumuşak bir parıltı efekti var
+- 🖼️ Bağlamda Önizleme sahnesinde küçük bir cila (OYNA butonu, sohbet kutusu, Shift Lock)
 
 ## ✨ Özellikler
 
@@ -107,6 +128,8 @@ npm run dist     # yükleyici ve taşınabilir exe oluştur
 ## 🛡️ VirusTotal
 
 En son sürüm VirusTotal ile taranmıştır:
+> **Antivirüs uyarıları hakkında:** Bazı motorlar (özellikle ESET gibi sezgisel tarayıcılar) Setup sürümünü şüpheli olarak işaretleyebilir. Bu bir **yanlış pozitif (false positive)**. Uygulama Roblox’a enjekte olmaz, bellek okumaz ve gizli exe indirip çalıştırmaz — güncellemeler yalnızca GitHub Releases sayfasını açar. Kaynak kodu açıktır; istersen kendin derleyebilirsin. Antivirüs dosyayı karantinaya alırsa istisna ekle veya Portable sürümü kullan.
+
 
 - [🔍 Kaynak](https://www.virustotal.com/gui/file/d6164ae95c241574d51e8ae521035cb12dbc00a99e30169d805f5ea60930262f?nocache=1)
 - [🔍 Setup](https://www.virustotal.com/gui/file/931ff40b0d11505572b12e221d5063987da2312b91bbf7bde741a47b1fd42131?nocache=1)
