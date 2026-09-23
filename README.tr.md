@@ -112,9 +112,9 @@ En son sürüm VirusTotal ile taranmıştır:
 > **Antivirüs uyarıları hakkında:** Bazı motorlar (özellikle ESET gibi sezgisel tarayıcılar) Setup sürümünü şüpheli olarak işaretleyebilir. Bu bir **yanlış pozitif (false positive)**. Uygulama Roblox’a enjekte olmaz, bellek okumaz ve gizli exe indirip çalıştırmaz — güncellemeler yalnızca GitHub Releases sayfasını açar. Kaynak kodu açıktır; istersen kendin derleyebilirsin. Antivirüs dosyayı karantinaya alırsa istisna ekle veya Portable sürümü kullan.
 
 
-- [🔍 Kaynak](https://www.virustotal.com/gui/file/d6164ae95c241574d51e8ae521035cb12dbc00a99e30169d805f5ea60930262f?nocache=1)
-- [🔍 Setup](https://www.virustotal.com/gui/file/931ff40b0d11505572b12e221d5063987da2312b91bbf7bde741a47b1fd42131?nocache=1)
-- [🔍 Portable](https://virustotal.com/gui/file/0f88aa46f2d5400cc87f80cb897c2c1133e76265f2dbbc20ed9f7e9909974057?nocache=1)
+- [🔍 Kaynak](https://www.virustotal.com/gui/file/549cf7cdcdfce502611a5059f7b9e5c795d22839280d975ce15f8202ff8f6e84?nocache=1)
+- [🔍 Setup](https://www.virustotal.com/gui/file/b58c19a78d8b8aef6455347c2782c9b2f70231db8c9d31f9a051a97684666132)
+- [🔍 Portable](https://www.virustotal.com/gui/file/384b845d747200897a83684684ba31298dfdc3f5d52a6a16b6a059126782fa0c)
 
 ## ☕ Projeyi Destekle
 
