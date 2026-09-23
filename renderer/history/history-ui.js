@@ -1,11 +1,3 @@
-// ================= GEÇMİŞ PANELİ =================
-// Bağımlılıklar (global): cursorName, toast, errMsg, refreshRobloxStatus,
-//                         renderActiveCursor -> renderer.js
-
-// ================= GEÇMİŞ (tam ekran panel) =================
-// Anasayfadaki kutucuklar artık önceki seçimi göstermediği için,
-// daha önce işlenmiş her imleç burada listelenir; istenirse tekrar
-// CURRENT'a (uygulanmaya hazır hale) geri getirilebilir.
 
 function formatHistoryDate(ts) {
   try {

@@ -1,8 +1,3 @@
-// ================= PAKETLER =================
-// Paket oluşturma penceresi, kayıtlı paketler paneli, animasyonlu paket kaydı,
-// paket içe/dışa aktarma ve sürükle-bırak.
-// Bağımlılıklar (global): overlays, closeAllOverlays, setActiveNav, toast, errMsg,
-//                         renderActiveCursor -> renderer.js
 
 async function createPackWithName(name, useActiveOnly = false, selectedKinds = null) {
   if (!name || !name.trim()) return null;
@@ -34,9 +29,7 @@ function openNewPackDialog() {
   if (!modal || !input) return;
   modal.classList.remove('hidden');
   input.value = '';
-  // Önceki başarılı kayıttan sonra "Oluştur" butonu disabled kalmış olabilir
-  // (submit() başarı durumunda disabled'ı geri açmıyordu). Modal her açıldığında
-  // burada sıfırlanmazsa, ikinci kullanımda buton tıklamalara tepki vermiyordu.
+
   const createBtn = document.getElementById('new-pack-create');
   if (createBtn) createBtn.disabled = false;
   document.querySelectorAll('.new-pack-cursor').forEach(el => { el.checked = true; });
@@ -78,6 +71,8 @@ async function createPackFromDialog(useActiveOnly = false) {
       createBtn.disabled = true;
       try {
         const result = await createPackWithName(name, useActiveOnly, selectedKinds);
+
+        if (result === null) { createBtn.disabled = false; return; }
         await finish(result);
       } catch (e) {
         createBtn.disabled = false;
@@ -102,13 +97,10 @@ async function createPackFromDialog(useActiveOnly = false) {
   });
 }
 
-// Ana sayfadaki eski/hidden save-active kontrolleri varsa güvenli şekilde bağla.
 document.getElementById('btn-save-active-pack-home')?.addEventListener('click', () => createPackFromDialog(true));
 document.getElementById('btn-save-pack-home')?.addEventListener('click', () => createPackFromDialog(false));
 
-// ================= KAYITLI PAKETLER (tam ekran panel) =================
-
-let currentPackTab = 'normal'; // 'normal' | 'animated'
+let currentPackTab = 'normal';
 
 function setPackTab(tab) {
   currentPackTab = tab;
@@ -141,10 +133,12 @@ async function renderPackGrid() {
       const thumb = Object.values(p.thumbs)[0];
       const item = document.createElement('div');
       item.className = 'pack-card' + (isActive ? ' active-pack' : '') + (p.animated ? ' anim-pack' : '');
-      item.tabIndex = 0; // klavye ile de üzerine gelinebilsin (focus-within ile aynı önizleme açılır)
+      item.tabIndex = 0;
       const bust = Date.now();
-      const fileUrl = (fp) => 'file://' + fp.replace(/\\/g, '/') + '?v=' + bust;
-      // Üzerine gelince açılan 2x2 önizleme: Normal / Tıklama / Yazı / Shift Lock
+
+      const fileUrl = (fp) => 'file:///' + encodeURI(fp.replace(/\\/g, '/').replace(/^\/+/, ''))
+        .replace(/'/g, '%27').replace(/#/g, '%23').replace(/\?/g, '%3F') + '?v=' + bust;
+
       const previewCells = ['arrow', 'click', 'text', 'shiftlock'].map(kind => {
         const fp = p.thumbs[kind];
         return `
@@ -167,9 +161,7 @@ async function renderPackGrid() {
       `;
       item.querySelector('.pack-apply').onclick = async () => {
         try {
-          // Paket geçişi artık tek IPC çağrısıyla doğrudan Roblox'a yazılıyor.
-          // Önceki canvas-normalizasyon + CURRENT + SHA doğrulama zinciri geçişi
-          // gereksiz yere yavaşlatıyordu.
+
           await window.rbx.applyPackInstant(p.name);
           toast(`"${p.name}" ${t('pack_applied_toast')}`, 'success');
           await renderActiveCursor();
@@ -205,11 +197,6 @@ async function renderPackGrid() {
 document.getElementById('btn-save-pack').onclick = async () => {
   await createPackFromDialog(false);
 };
-
-// ================= YENİ ANİMASYONLU PAKET (ayrı, özel kayıt akışı) =================
-// Normal paketlerden bağımsız: burada cursor seçimi yok, sadece o an .ani
-// atanmış durumlar arasından seçim yapılır ve animasyon + o durumun güncel
-// cursor görseli birlikte pakete kaydedilir.
 
 async function openNewAnimPackDialog() {
   let animCfg = null;
@@ -309,8 +296,6 @@ document.getElementById('btn-save-anim-pack')?.addEventListener('click', () => {
   createAnimPackFromDialog();
 });
 
-// ================= PAKET İÇE AKTARMA (dosya seçici + sürükle-bırak) =================
-
 document.getElementById('btn-import-pack').onclick = async () => {
   try {
     const res = await window.rbx.importPackPick();
@@ -323,6 +308,20 @@ document.getElementById('btn-import-pack').onclick = async () => {
     toast(t('pack_import_error') + ' ' + errMsg(e), 'error');
   }
 };
+
+window.rbx.onPackImportedExternal?.((res) => {
+  if (!res) return;
+  if (res.error) {
+    toast(t('pack_import_error') + ' ' + res.error, 'error');
+    return;
+  }
+  closeAllOverlays();
+  setActiveNav('packs');
+  overlays.packs.classList.remove('hidden');
+  setPackTab(res.animated ? 'animated' : 'normal');
+  renderPackGrid();
+  toast(t('pack_imported', { name: res.name }), 'success');
+});
 
 (function setupPackDropzone() {
   const grid = document.getElementById('pack-grid');

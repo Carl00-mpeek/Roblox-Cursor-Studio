@@ -1,5 +1,4 @@
-// RBX Cursor Studio - Localization
-// Languages: Turkish (tr), English (en)
+
 const LANG = {
   tr: {
     'editor_drag_hint':'Görseli sürükleyerek konumlandır','editor_position':'Konum','editor_color':'Renk','editor_help_title':'Nasıl çalışır?',
@@ -19,6 +18,16 @@ const LANG = {
     'history_title':'Geçmiş','settings_title':'Ayarlar','roblox_version':'Roblox Sürümü','auto_reinstall':'Otomatik Düzeltme',
     'auto_reinstall_desc':'Roblox güncellendiğinde kayıtlı imleçlerini yeni sürüme otomatik olarak yeniden kurar.',
     'start_boot':'Windows Başlangıcında Aç','start_boot_desc':'Bilgisayar açıldığında uygulama otomatik olarak başlasın.',
+    'minimize_tray':'Kapatınca Tepsiye Küçül','minimize_tray_desc':'Pencereyi kapatınca uygulama çıkmaz, sistem tepsisinde çalışmaya devam eder. Tepsi simgesinden tekrar açabilir ya da tamamen çıkabilirsin.',
+    'tray_on':'Kapatınca tepsiye küçülecek','tray_off':'Kapatınca uygulama tamamen çıkacak','tray_applied_toast':'Tepsiden \"{name}\" paketi uygulandı ✓',
+    'gamewatch_title':'Oyuna Göre Otomatik Paket','gamewatch_desc':'Roblox\'un kendi log dosyalarını (salt okunur) izleyerek açtığın oyuna göre eşlediğin paketi otomatik uygular. Roblox sürecine dokunmaz, ağa istek atmaz.',
+    'gamewatch_unfinished':'⚠️ Ayrıştırma mantığı gerçek log örnekleriyle henüz tamamlanmadı; bu açık olsa bile şu an hiçbir paketi otomatik değiştirmez.',
+    'gamewatch_mapping_title':'Oyun → Paket Eşlemesi','gamewatch_add_current':'Son oynadığım oyunu ekle',
+    'gamewatch_placeid_placeholder':'placeId (ör. 123456789)','gamewatch_add_mapping':'Ekle',
+    'gamewatch_on':'Oyuna göre otomatik paket açıldı (henüz aktif çalışmıyor — bkz. açıklama)','gamewatch_off':'Oyuna göre otomatik paket kapatıldı',
+    'gamewatch_mapping_added':'Eşleme eklendi','gamewatch_mapping_removed':'Eşleme kaldırıldı','gamewatch_need_placeid_and_pack':'placeId ve paket seç',
+    'gamewatch_last_seen_none':'Henüz bir oyun tespit edilmedi (ayrıştırıcı tamamlanmadan bu normal — üstteki uyarıya bak). placeId\'yi elle yazabilirsin.',
+    'gamewatch_remove':'Kaldır','gamewatch_applied_toast':'Oyuna göre \"{name}\" paketi otomatik uygulandı ✓',
     'about':'Hakkında','about_text':'RBX Cursor Studio — Yapımcı: Carl<br>© 2026 Carl. Tüm hakları saklıdır. Bu yazılımın yapımcının yazılı izni olmadan kopyalanması, değiştirilip dağıtılması veya paylaşılması yasaktır.',
     'editor_title':'İmleci Düzenle','size':'Boyut (büyüt / küçült)','auto_fit':'Otomatik Boyutlandır + Ortala','center':'Sadece Ortala','reset_size':'Boyutu Sıfırla',
     'manual_center':'Manuel Ortala (Tam Merkez)','manual_center_help':'Otomatik ortalama, görselin şeffaf olmayan kısmını algılayıp ona göre konumlandırır — bazı görsellerde bu algılama beklediğin sonucu vermeyebilir. Böyle durumlarda "Manuel Ortala" görseli algılama yapmadan doğrudan 64×64 alanın tam merkezine yerleştirir; X/Y kutularından ya da sürükleyerek de pikseli piksele ince ayar yapabilirsin.',
@@ -63,13 +72,18 @@ const LANG = {
     'context_preview_tooltip':'İmleçlerini sahte bir Roblox ekranı üzerinde dene','color_changer_tooltip':'Şu an kullandığın tüm imleçlerin rengini tek seferde değiştir',
     'restore_tooltip':'Roblox\u2019un kendi orijinal imleçlerine geri dön','pack_from_active_tooltip':'Şu an kullanılan cursorları yeni bir pakete kaydet',
     'app_tagline_tooltip':'RBX Cursor Studio — Yapımcı: Carl',
+    'update_install_btn':'İndir ve kur (v{v})','update_available_inapp':'Yeni sürüm var: v{v} (şu an v{cur}). Uygulama içinden indirilip kurulur.','update_downloading_btn':'İndiriliyor… %{p}','update_downloading':'Güncelleme indiriliyor: %{p}','update_restart_btn':'Yeniden başlat ve güncelle','update_ready':'v{v} indirildi — kurmak için yeniden başlat','update_ready_toast':'Güncelleme hazır (v{v}). Ayarlar > Güncellemeler\'den yeniden başlatıp kurabilirsin.','update_restarting':'Uygulama kapanıp güncellenecek…','update_retry_btn':'Tekrar dene','update_dl_error':'Güncelleme indirilemedi.',
+    'update_title':'Güncellemeler','update_desc':'Açılışta GitHub\'a tek bir sürüm sorusu gönderir; yeni sürüm varsa haber verir. İndirme ve kurulum yalnızca sen onaylayınca başlar.',
+    'update_check_btn':'Şimdi kontrol et','update_checking':'Kontrol ediliyor…','update_auto_title':'Açılışta otomatik kontrol','update_auto_on':'Açılışta güncelleme kontrolü açıldı','update_auto_off':'Açılışta güncelleme kontrolü kapatıldı',
+    'update_available':'Yeni sürüm var: v{v} (şu an v{cur}) — indirmek için tıkla','update_available_toast':'Yeni sürüm var: v{v}. Ayarlar > Güncellemeler\'den ya da sol üstteki sürüm etiketinden indirebilirsin.','update_open_btn':'Sürümü aç',
+    'update_uptodate':'Güncelsin (v{cur})','update_error':'Kontrol edilemedi (internet bağlantını kontrol et)','update_error_rate':'GitHub şu an çok fazla istek aldı; biraz sonra tekrar dene',
     'animcursor_size_label':'Boyut ×','animcursor_speed_label':'Hız ×','animcursor_fps_label':'FPS (0 = ANI orijinal)',
     'animcursor_center_auto':'Otomatik Ortala (tam merkez)','animcursor_hotspot_x':'Hotspot X','animcursor_hotspot_y':'Hotspot Y',
     'animcursor_hotspot_hint':'(-1 = ANI\u2019nin kendi hotspot\u2019u — Otomatik Ortala kapalıyken geçerli)',
     'animcursor_pick_btn':'📂 .ANI Seç','animcursor_preview_btn':'👁️ Önizle (6sn)','animcursor_preview_running':'👁️ Masaüstünde 6sn...','animcursor_clear_btn':'🗑️ Kaldır',
     'animcursor_live_title':'Şu an aktif','animcursor_global_title':'Takip Hassasiyeti',
     'animcursor_global_desc':'Fare imleci takip döngüsünün yenileme aralığı — tüm durumlar (arrow/click/text/shiftlock) için geçerli.',
-    'animcursor_toggle_title':'Animasyonu Aç / Kapat Kısayolu','animcursor_toggle_desc':'Bu tuşa basınca animasyonlu imleç anında gizlenir, tekrar basınca geri gelir (Roblox içindeyken de çalışır). Uygulama her açıldığında animasyon açık başlar.',
+    'animcursor_toggle_title':'Animasyonu Aç / Kapat Kısayolu','animcursor_toggle_desc':'Bu tuşa basınca animasyonlu imleç gizlenir ve önceki (statik) imleçlerin geri gelir; tekrar basınca animasyon geri döner (Roblox içindeyken de çalışır). Roblox imleç dosyalarını yalnızca açılışta okuyorsa değişikliğin görünmesi için Roblox\'u yeniden başlatman gerekebilir. Açık/kapalı durumun hatırlanır; bir sonraki açılışta kaldığın yerden devam eder.',
     'animcursor_toggle_on':'Animasyon: AÇIK (kapatmak için tıkla)','animcursor_toggle_off':'Animasyon: KAPALI (açmak için tıkla)','animcursor_toggled_on':'Animasyonlu imleç açıldı ✓','animcursor_toggled_off':'Animasyonlu imleç kapatıldı',
     'animcursor_track_interval':'Takip Aralığı','animcursor_track_hint':'Düşük ms = daha akıcı/hızlı takip (biraz daha fazla CPU), yüksek ms = daha az yenileme.',
     'animcursor_states_title':'Durum Animasyonları','animcursor_states_sub':'{n}/4 durumda animasyon atandı','animcursor_assigned':'ANI Atandı','animcursor_unassigned':'Atanmadı',
@@ -94,6 +108,16 @@ const LANG = {
     'history_title':'History','settings_title':'Settings','roblox_version':'Roblox Version','auto_reinstall':'Automatic Repair',
     'auto_reinstall_desc':'Automatically reinstalls your saved cursors for the new version when Roblox is updated.',
     'start_boot':'Launch at Windows Startup','start_boot_desc':'Automatically start the app when the computer boots.',
+    'minimize_tray':'Minimize to Tray on Close','minimize_tray_desc':'Closing the window won\'t quit the app — it keeps running in the system tray. Reopen it from the tray icon, or quit from there entirely.',
+    'tray_on':'Will minimize to tray on close','tray_off':'Will fully quit on close','tray_applied_toast':'Applied pack \"{name}\" from tray ✓',
+    'gamewatch_title':'Automatic Pack by Game','gamewatch_desc':'Watches Roblox\'s own log files (read-only) and auto-applies the pack you mapped to the game you open. Doesn\'t touch the Roblox process, no network requests.',
+    'gamewatch_unfinished':'⚠️ The parsing logic isn\'t finished with real log samples yet; even if this is on, it currently never switches a pack automatically.',
+    'gamewatch_mapping_title':'Game → Pack Mapping','gamewatch_add_current':'Add my last played game',
+    'gamewatch_placeid_placeholder':'placeId (e.g. 123456789)','gamewatch_add_mapping':'Add',
+    'gamewatch_on':'Automatic pack by game turned on (not active yet — see description)','gamewatch_off':'Automatic pack by game turned off',
+    'gamewatch_mapping_added':'Mapping added','gamewatch_mapping_removed':'Mapping removed','gamewatch_need_placeid_and_pack':'Pick a placeId and a pack',
+    'gamewatch_last_seen_none':'No game detected yet (expected until the parser is finished — see the warning above). You can type the placeId manually.',
+    'gamewatch_remove':'Remove','gamewatch_applied_toast':'Auto-applied pack \"{name}\" for this game ✓',
     'about':'About','about_text':'RBX Cursor Studio — Created by: <b>Carl</b><br>© 2026 Carl. All rights reserved. Copying, modifying, distributing, or sharing this software without the creator’s written permission is prohibited.',
     'editor_title':'Edit Cursor','size':'Size (increase / decrease)','auto_fit':'Auto Fit + Center','center':'Center Only','reset_size':'Reset Size',
     'manual_center':'Manual Center (Exact Middle)','manual_center_help':'Auto-centering detects the non-transparent part of the image and positions it based on that — for some images this detection may not give the result you expect. In that case, "Manual Center" places the image directly in the exact middle of the 64×64 canvas with no detection involved; you can also fine-tune it pixel by pixel using the X/Y fields or by dragging.',
@@ -138,13 +162,18 @@ const LANG = {
     'context_preview_tooltip':'Try your cursors on a mock Roblox screen','color_changer_tooltip':'Change the color of all your currently used cursors at once',
     'restore_tooltip':'Revert to Roblox\u2019s own original cursors','pack_from_active_tooltip':'Save the cursors currently in use as a new pack',
     'app_tagline_tooltip':'RBX Cursor Studio — Created by: Carl',
+    'update_install_btn':'Download & install (v{v})','update_available_inapp':'New version available: v{v} (you have v{cur}). It will be downloaded and installed from within the app.','update_downloading_btn':'Downloading… {p}%','update_downloading':'Downloading update: {p}%','update_restart_btn':'Restart & update','update_ready':'v{v} downloaded — restart to install','update_ready_toast':'Update ready (v{v}). Restart and install it from Settings > Updates.','update_restarting':'The app will close and update…','update_retry_btn':'Try again','update_dl_error':'Couldn\'t download the update.',
+    'update_title':'Updates','update_desc':'Sends a single version query to GitHub on launch and tells you if a new version exists. Downloading and installing only start when you confirm.',
+    'update_check_btn':'Check now','update_checking':'Checking…','update_auto_title':'Check automatically on launch','update_auto_on':'Update check on launch enabled','update_auto_off':'Update check on launch disabled',
+    'update_available':'New version available: v{v} (you have v{cur}) — click to download','update_available_toast':'New version available: v{v}. Download it from Settings > Updates or the version tag at the top left.','update_open_btn':'Open release',
+    'update_uptodate':'You\'re up to date (v{cur})','update_error':'Couldn\'t check (check your internet connection)','update_error_rate':'GitHub is rate-limiting requests right now; try again later',
     'animcursor_size_label':'Size ×','animcursor_speed_label':'Speed ×','animcursor_fps_label':'FPS (0 = original ANI)',
     'animcursor_center_auto':'Auto Center (exact middle)','animcursor_hotspot_x':'Hotspot X','animcursor_hotspot_y':'Hotspot Y',
     'animcursor_hotspot_hint':'(-1 = the ANI\u2019s own hotspot — applies while Auto Center is off)',
     'animcursor_pick_btn':'📂 Choose .ANI','animcursor_preview_btn':'👁️ Preview (6s)','animcursor_preview_running':'👁️ On desktop for 6s...','animcursor_clear_btn':'🗑️ Remove',
     'animcursor_live_title':'Currently active','animcursor_global_title':'Follow Sensitivity',
     'animcursor_global_desc':'The refresh interval of the cursor-tracking loop — applies to all states (arrow/click/text/shiftlock).',
-    'animcursor_toggle_title':'Animation On / Off Hotkey','animcursor_toggle_desc':'Press this key to instantly hide the animated cursor, press again to bring it back (works while Roblox is focused). The animation always starts ON when the app launches.',
+    'animcursor_toggle_title':'Animation On / Off Hotkey','animcursor_toggle_desc':'Press this key to hide the animated cursor and bring your previous (static) cursors back; press again to re-enable the animation (works while Roblox is focused). If Roblox only reads cursor files at launch, restart Roblox to see the change. The on/off state is remembered, so it picks up where you left it next time.',
     'animcursor_toggle_on':'Animation: ON (click to turn off)','animcursor_toggle_off':'Animation: OFF (click to turn on)','animcursor_toggled_on':'Animated cursor turned on ✓','animcursor_toggled_off':'Animated cursor turned off',
     'animcursor_track_interval':'Follow Interval','animcursor_track_hint':'Lower ms = smoother/faster tracking (slightly more CPU), higher ms = fewer refreshes.',
     'animcursor_states_title':'State Animations','animcursor_states_sub':'{n}/4 states have an animation','animcursor_assigned':'ANI Assigned','animcursor_unassigned':'Not assigned',
@@ -171,5 +200,7 @@ function setLanguage(lang) {
   currentLang = lang;
   localStorage.setItem('rbx-language', lang);
   applyLanguage();
+  if (window.rbx && typeof window.rbx.setLanguage === 'function') window.rbx.setLanguage(lang);
   if (typeof window.rbxLanguageChanged === 'function') window.rbxLanguageChanged();
 }
+if (window.rbx && typeof window.rbx.setLanguage === 'function') window.rbx.setLanguage(currentLang);

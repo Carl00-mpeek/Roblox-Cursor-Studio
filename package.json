@@ -9,7 +9,11 @@
     "start": "electron .",
     "postinstall": "node scripts/build-native.js",
     "predist": "node scripts/build-native.js --require",
-    "dist": "electron-builder"
+    "dist": "electron-builder",
+    "test": "node tests/run.js"
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
   },
   "devDependencies": {
     "electron": "^31.0.0",
@@ -51,15 +55,31 @@
         "nsis",
         "portable"
       ],
-      "icon": "assets/backgrounds/logo.ico"
+      "icon": "assets/backgrounds/logo.ico",
+      "fileAssociations": [
+        {
+          "ext": "rbxcursor",
+          "name": "RBX Cursor Studio Paketi",
+          "description": "RBX Cursor Studio paylaşılabilir imleç paketi",
+          "icon": "assets/backgrounds/logo.ico",
+          "role": "Editor"
+        }
+      ]
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "artifactName": "${productName} Kurulum ${version}.${ext}"
+      "artifactName": "RBX-Cursor-Studio-Kurulum-${version}.${ext}"
     },
     "portable": {
-      "artifactName": "${productName} Portable ${version}.${ext}"
-    }
+      "artifactName": "RBX-Cursor-Studio-Portable-${version}.${ext}"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Carl00-mpeek",
+        "repo": "Roblox-Cursor-Studio"
+      }
+    ]
   }
 }

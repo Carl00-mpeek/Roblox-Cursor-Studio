@@ -1,17 +1,3 @@
-// scripts/build-native.js
-// Runs automatically as npm's "postinstall" step (see package.json), right
-// after `npm install` finishes — i.e. as part of the normal kur.bat /
-// install.bat flow. Its job is to compile native/cursor_helper.exe so the
-// user never has to manually `cd native && build.bat` themselves.
-//
-// Modes:
-//   node scripts/build-native.js            (postinstall) never fails npm install
-//   node scripts/build-native.js --require  (predist)      exits 1 if the exe
-//                                            still doesn't exist, so a build
-//                                            without cursor_helper.exe can't
-//                                            be packaged by accident.
-//
-// Skips: not Windows, no .cpp source, or cursor_helper.exe already built.
 
 const path = require('path');
 const fs = require('fs');
@@ -41,17 +27,13 @@ if (fs.existsSync(exePath)) {
   process.exit(0);
 }
 
-// cmd.exe LF satır sonlu .bat dosyalarını yanlış çalıştırır (satır başındaki
-// ilk karakterleri "yutar": setlocal -> etlocal, cd -> d, if -> f ...).
-// Git/zip/editör satır sonlarını LF'ye çevirmiş olabilir; her seferinde CRLF'e
-// düzeltip öyle çalıştırıyoruz.
 function ensureCrlf(file) {
   try {
     const buf = fs.readFileSync(file);
     const text = buf.toString('utf8');
     const fixed = text.replace(/\r?\n/g, '\r\n');
     if (fixed !== text) fs.writeFileSync(file, fixed, 'utf8');
-  } catch (_) { /* yazılamazsa mevcut haliyle dene */ }
+  } catch (_) {  }
 }
 ensureCrlf(buildScript);
 

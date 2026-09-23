@@ -1,15 +1,9 @@
-// Basit, bağımlılıksız ZIP okuma/yazma yardımcıları.
-// Yazarken "store" (sıkıştırmasız) yöntemi kullanılır — bu, ek bir pakete
-// (adm-zip, archiver vb.) ihtiyaç duymadan geçerli bir .zip üretmemizi
-// sağlar. Okurken hem "store" (0) hem de "deflate" (8) desteklenir, böylece
-// Windows'un kendi "Sıkıştır" özelliğiyle oluşturulmuş normal .zip
-// dosyaları da içe aktarılabilir.
-const zlib = require('zlib');
 
-// Güvenilmeyen .rbxcursor/.zip dosyalarına karşı sınırlar (zip bombası / bozuk
-// ofset). Gerçek paketler bunların çok altındadır (birkaç KB PNG + küçük .ani).
+const zlib = require('zlib');
+const i18n = require('./i18n');
+
 const MAX_ZIP_ENTRIES = 256;
-const MAX_ENTRY_BYTES = 32 * 1024 * 1024; // tek girdinin açılmış boyutu
+const MAX_ENTRY_BYTES = 32 * 1024 * 1024;
 
 const CRC_TABLE = (() => {
   const table = new Uint32Array(256);
@@ -37,7 +31,6 @@ function dosDateTime(date) {
   return { time, day };
 }
 
-// entries: [{ name: 'dosya.png', data: Buffer }]
 function buildZip(entries) {
   const { time, day } = dosDateTime(new Date());
   const localChunks = [];
@@ -54,7 +47,7 @@ function buildZip(entries) {
     localHeader.writeUInt32LE(0x04034b50, 0);
     localHeader.writeUInt16LE(20, 4);
     localHeader.writeUInt16LE(0, 6);
-    localHeader.writeUInt16LE(0, 8); // yöntem: store
+    localHeader.writeUInt16LE(0, 8);
     localHeader.writeUInt16LE(time, 10);
     localHeader.writeUInt16LE(day, 12);
     localHeader.writeUInt32LE(crc, 14);
@@ -112,21 +105,20 @@ function findEOCD(buf) {
   for (let i = buf.length - minLen; i >= start; i--) {
     if (buf.readUInt32LE(i) === 0x06054b50) return i;
   }
-  throw new Error('Geçersiz zip dosyası (EOCD kaydı bulunamadı).');
+  throw new Error(i18n.t('zip_bad_eocd'));
 }
 
-// -> [{ name, data: Buffer }]
 function parseZip(buf) {
   const eocdOffset = findEOCD(buf);
   const totalEntries = buf.readUInt16LE(eocdOffset + 10);
-  if (totalEntries > MAX_ZIP_ENTRIES) throw new Error('Zip dosyasında çok fazla girdi var.');
+  if (totalEntries > MAX_ZIP_ENTRIES) throw new Error(i18n.t('zip_too_many_entries'));
   const centralOffset = buf.readUInt32LE(eocdOffset + 16);
 
   const entries = [];
   let ptr = centralOffset;
   for (let i = 0; i < totalEntries; i++) {
     const sig = buf.readUInt32LE(ptr);
-    if (sig !== 0x02014b50) throw new Error('Geçersiz zip merkezi dizin girdisi.');
+    if (sig !== 0x02014b50) throw new Error(i18n.t('zip_bad_central_entry'));
     const method = buf.readUInt16LE(ptr + 10);
     const compSize = buf.readUInt32LE(ptr + 20);
     const nameLen = buf.readUInt16LE(ptr + 28);
@@ -140,17 +132,17 @@ function parseZip(buf) {
     const lExtraLen = buf.readUInt16LE(localOffset + 28);
     const dataStart = localOffset + 30 + lNameLen + lExtraLen;
     if (compSize > MAX_ENTRY_BYTES || dataStart + compSize > buf.length) {
-      throw new Error('Zip girdisi geçersiz veya çok büyük.');
+      throw new Error(i18n.t('zip_entry_invalid'));
     }
     let data = buf.slice(dataStart, dataStart + compSize);
     if (method === 8) {
       try {
         data = zlib.inflateRawSync(data, { maxOutputLength: MAX_ENTRY_BYTES });
       } catch (err) {
-        throw new Error('Zip girdisi açılamadı (bozuk veya çok büyük): ' + err.message);
+        throw new Error(i18n.t('zip_entry_open_failed', { msg: err.message }));
       }
     } else if (method !== 0) {
-      throw new Error('Desteklenmeyen sıkıştırma yöntemi: ' + method);
+      throw new Error(i18n.t('zip_unsupported_method', { method }));
     }
     entries.push({ name, data });
   }

@@ -1,64 +1,34 @@
-// anim-cursor.js
-// Controller-side (Electron/Node) half of the Premium Animated Cursor
-// feature. Electron's job here is deliberately thin: own the on-disk
-// config, start/stop native/cursor_helper.exe, forward a handful of
-// plain-text commands to it, and — the one piece of real logic that
-// belongs here rather than in the native helper — keep Roblox's own
-// static cursor texture in sync: when a state has an animation
-// assigned, that state's PNG is swapped for a fully transparent one
-// (via png-lite.js) so the native overlay is the only thing visible;
-// when the animation is removed, the original PNG is restored.
-//
-// All animation timing, ANI parsing, mouse-follow and state detection
-// happens in the native helper (see native/cursor_helper.cpp) — nothing
-// here polls anything or touches GDI.
 
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
 const { makeTransparentPng } = require('./png-lite');
+const i18n = require('./i18n');
 
 const STATES = ['arrow', 'click', 'text', 'shiftlock'];
 
-// Per-state FPS override limit (0 = use the .ani's own frame timing).
 const MAX_FPS = 240;
 const clampFps = (v) => Math.max(0, Math.min(MAX_FPS, Math.round(Number(v) || 0)));
 
-// Invisible per-state marker baked into the blanked PNG (see png-lite.js and
-// native/marker.h -- the values MUST match kMarkerHover / kMarkerText there).
-// 'click' is Roblox's ArrowCursor.png = the cursor shown while hovering over
-// something clickable, so the native helper can detect hover without reading
-// any mouse click. States not listed here stay fully transparent (0).
 const MARKERS = { click: 3, text: 5 };
 
 const DEFAULT_STATE_CFG = () => ({
-  ani: '',            // absolute path to a .ani file, or '' = disabled
+  ani: '',
   scale: 1.0,
   speed: 1.0,
-  fps: 0,             // 0 = use the .ani's own per-frame timing
-  centerAuto: true,   // true = force hotspot to the exact center of the frame
-  hotspotX: -1,       // -1 = use the hotspot embedded in the .ani (ignored when centerAuto)
+  fps: 0,
+  centerAuto: true,
+  hotspotX: -1,
   hotspotY: -1
 });
 
-// Global (not per-state) settings, stored under the "__global" key of the
-// same config.json alongside the per-state entries.
 const DEFAULT_GLOBAL_CFG = () => ({
-  followMs: 8   // mouse-follow / redraw pacing interval sent to the native
-                // helper as SETTINGS|trackms=N. Lower = smoother/faster
-                // tracking (more CPU), higher = fewer redraws per second.
+  followMs: 8
+
 });
 
 class AnimCursorController {
-  /**
-   * @param {object} deps
-   * @param {string} deps.baseDir - app data base dir (same BASE as main.js)
-   * @param {object} deps.targets - TARGETS map (kind -> roblox filename)
-   * @param {string} deps.currentDir - CURRENT staging dir
-   * @param {object} deps.canvasSizes - CURSOR_CANVAS_SIZES map
-   * @param {function} deps.applyCurrentToRoblox - async () => count
-   * @param {function} deps.logError - (err) => void
-   */
+
   constructor(deps) {
     this.deps = deps;
     this.animDir = path.join(deps.baseDir, 'anim');
@@ -72,15 +42,13 @@ class AnimCursorController {
     this.stdoutBuf = '';
     this.restartAttempts = 0;
     this.lastState = 'arrow';
-    this.onStateChange = null; // optional (state) => void, wired by main.js for UI updates
-    // Master on/off for the animated overlay (global hotkey). Session-only on
-    // purpose: every app start begins with the animation ON, so a forgotten
-    // "off" can never leave the user without any cursor after a restart.
+    this.onStateChange = null;
+
     this.enabled = true;
-    this.onEnabledChange = null; // optional (enabled) => void, wired by main.js
+    this.onEnabledChange = null;
     this.helperMissingWarned = false;
     this.autoBuildAttempted = false;
-    this.pending = new Map(); // "SETANI:click" | "PREVIEW:click" -> { resolve, reject, timer }
+    this.pending = new Map();
   }
 
   _readCfg() {
@@ -90,12 +58,7 @@ class AnimCursorController {
     for (const s of STATES) {
       const rawState = raw[s] || {};
       cfg[s] = { ...DEFAULT_STATE_CFG(), ...rawState };
-      // Upgrade path: configs saved before centerAuto existed never wrote
-      // that key. If such a config already has a manual hotspot set,
-      // treat it as an intentional manual choice rather than silently
-      // switching those users onto auto-centering (which would ignore
-      // the hotspot they picked). Fresh/never-customized states still
-      // default to centerAuto = true.
+
       if (!('centerAuto' in rawState) && (rawState.hotspotX >= 0 || rawState.hotspotY >= 0)) {
         cfg[s].centerAuto = false;
       }
@@ -113,8 +76,7 @@ class AnimCursorController {
   }
 
   _helperPath() {
-    // Dev: <project>/native/cursor_helper.exe
-    // Packaged: <resources>/native/ (copied there by package.json "extraResources")
+
     const { app } = require('electron');
     const base = app.isPackaged
       ? path.join(process.resourcesPath, 'native')
@@ -122,13 +84,6 @@ class AnimCursorController {
     return path.join(base, 'cursor_helper.exe');
   }
 
-  // Best-effort, one-shot attempt to compile native/cursor_helper.exe on the
-  // fly when it's missing (e.g. `npm install`'s postinstall build step didn't
-  // run, or a compiler was only installed afterwards). Only makes sense in
-  // the dev tree — a packaged build ships the .exe directly and never bundles
-  // the .cpp/build.bat (see package.json "files"), so there's nothing to
-  // compile there. Silent no-op if a compiler still isn't available; the
-  // normal "helper not found" error/log message covers that case.
   _tryAutoBuild() {
     if (this.autoBuildAttempted) return false;
     this.autoBuildAttempted = true;
@@ -142,15 +97,15 @@ class AnimCursorController {
 
     try {
       const { spawnSync } = require('child_process');
-      // cmd.exe LF satır sonlu .bat'i bozuk çalıştırır; CRLF'e düzeltip çalıştır.
+
       try {
         const txt = fs.readFileSync(buildScript, 'utf8');
         const fixed = txt.replace(/\r?\n/g, '\r\n');
         if (fixed !== txt) fs.writeFileSync(buildScript, fixed, 'utf8');
-      } catch (_) { /* yazılamazsa olduğu gibi dene */ }
+      } catch (_) {  }
       const result = spawnSync(process.env.ComSpec || 'cmd.exe', ['/d', '/c', 'call', 'build.bat'], { cwd: nativeDir, windowsHide: true, timeout: 60000 });
       if (result.status === 0) return true;
-    } catch (_) { /* compiler missing or build failed — fall through to the usual error */ }
+    } catch (_) {  }
     return false;
   }
 
@@ -160,11 +115,7 @@ class AnimCursorController {
 
     let exePath = this._helperPath();
     if (!fs.existsSync(exePath)) {
-      // Not built yet (e.g. postinstall's auto-build didn't run, or the
-      // user only just installed a compiler). Try to build it on the spot
-      // instead of just complaining — this call blocks the main process
-      // for a few seconds at most, which is acceptable since it only
-      // happens once, the first time an animated-cursor action is used.
+
       this._tryAutoBuild();
     }
     if (!fs.existsSync(exePath)) {
@@ -187,18 +138,13 @@ class AnimCursorController {
 
     this.stdoutBuf = '';
     this.proc.stdout.on('data', (chunk) => this._onStdout(chunk));
-    this.proc.stderr.on('data', () => { /* helper only logs structured lines to stdout */ });
+    this.proc.stderr.on('data', () => {  });
     this.proc.on('exit', () => {
       this.proc = null;
-      // Native side crashed or was killed unexpectedly: back off a little
-      // and let the next command lazily respawn it, rather than looping
-      // tightly if the exe is fundamentally broken on this machine.
+
       this.restartAttempts++;
     });
 
-    // Re-send whatever is currently configured so a respawn is transparent.
-    // Fire-and-forget here: this is an internal resync after a (re)spawn,
-    // not a user-initiated action waiting on a toast.
     this._pushLine(`TARGET|proc=RobloxPlayerBeta.exe`);
     this._pushLine(`SETTINGS|trackms=${this.cfg.__global.followMs}`);
     this._pushLine(`ENABLE|on=${this.enabled ? 1 : 0}`);
@@ -243,8 +189,7 @@ class AnimCursorController {
       const m = /state=([a-z]+)/.exec(line);
       if (m) this._settlePending(`PREVIEW:${m[1]}`, new Error('Bu durum için yüklü bir animasyon yok.'));
     }
-    // READY / CONFIGURED / CLEARED / PONG / TARGETSET / PREVIEWEND are
-    // informational only; nothing else currently needs to react to them.
+
   }
 
   _settlePending(key, err, value) {
@@ -255,29 +200,20 @@ class AnimCursorController {
     if (err) p.reject(err); else p.resolve(value);
   }
 
-  // Sends a line and resolves once the helper reports a definitive
-  // success/failure for `key` (or rejects on timeout / spawn failure).
-  // Without this, the UI would show "başarılı" toasts even when the
-  // native side silently failed to start or the .ani failed to parse.
   _sendAndAwait(line, key, timeoutMs = 5000) {
     if (!this._ensureProcess()) {
-      return Promise.reject(new Error(
-        `Native animasyon yardımcı programı (cursor_helper.exe) bulunamadı veya başlatılamadı.\n` +
-        `Uygulama otomatik derlemeyi denedi ama başarısız oldu — muhtemelen bir C++ derleyicisi\n` +
-        `(MinGW g++ veya MSVC cl.exe) kurulu değil. Birini kurup uygulamayı yeniden başlat, ya da\n` +
-        `elle "native\\build.bat" çalıştır. Beklenen konum: ${this._helperPath()}`
-      ));
+      return Promise.reject(new Error(i18n.t('native_helper_not_found', { path: this._helperPath() })));
     }
     return new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pending.delete(key);
-        reject(new Error('Native yardımcı zamanında yanıt vermedi (helper çökmüş olabilir, error.log kontrol et).'));
+        reject(new Error(i18n.t('native_helper_timeout')));
       }, timeoutMs);
       this.pending.set(key, { resolve, reject, timer });
       if (!this._pushLine(line)) {
         clearTimeout(timer);
         this.pending.delete(key);
-        reject(new Error('Native yardımcıya komut gönderilemedi.'));
+        reject(new Error(i18n.t('native_helper_send_failed')));
       }
     });
   }
@@ -308,14 +244,10 @@ class AnimCursorController {
     );
   }
 
-  /**
-   * Global (not per-state) helper settings — currently just the
-   * mouse-follow / redraw pacing interval in ms.
-   */
   setGlobalSettings(options = {}) {
     this.cfg.__global = { ...this.cfg.__global, ...options };
     if (typeof this.cfg.__global.followMs === 'number') {
-      // Keep it inside the same sane range the native side clamps to.
+
       this.cfg.__global.followMs = Math.max(1, Math.min(50, Math.round(this.cfg.__global.followMs)));
     }
     this._writeCfg();
@@ -323,11 +255,6 @@ class AnimCursorController {
     return this.cfg.__global;
   }
 
-  /**
-   * Turns the animated overlay on/off (bound to a global hotkey in main.js).
-   * Only talks to the helper if it is already running; a helper that is
-   * spawned later gets the current value during _ensureProcess()'s resync.
-   */
   setEnabled(on) {
     this.enabled = !!on;
     if (this.proc && !this.proc.killed) this._pushLine(`ENABLE|on=${this.enabled ? 1 : 0}`);
@@ -338,10 +265,6 @@ class AnimCursorController {
   toggleEnabled() {
     return this.setEnabled(!this.enabled);
   }
-
-  // ---- Static-PNG blanking, so Roblox's own draw disappears exactly
-  // for states with an animation assigned, and comes back untouched
-  // the moment that state's animation is removed. ----
 
   _pngPathFor(kind) {
     return path.join(this.deps.currentDir, this.deps.targets[kind]);
@@ -362,11 +285,6 @@ class AnimCursorController {
     await this.deps.applyCurrentToRoblox().catch((err) => this.deps.logError(err));
   }
 
-  // Older versions blanked these PNGs with plain alpha=0 (no marker). For
-  // states that already have an ANI assigned, rewrite the blank PNG once
-  // with its marker so hover/text detection works without the user having
-  // to re-assign every animation. Roblox must be restarted afterwards to
-  // pick up the new PNG (it only loads cursor textures at startup).
   async _upgradeBlankMarkers() {
     let changed = false;
     for (const kind of Object.keys(MARKERS)) {
@@ -395,14 +313,12 @@ class AnimCursorController {
     }
   }
 
-  // ---- Public API used by main.js IPC handlers ----
-
   async setStateAni(kind, aniPath, options = {}) {
-    if (!STATES.includes(kind)) throw new Error('Geçersiz durum: ' + kind);
+    if (!STATES.includes(kind)) throw new Error(i18n.t('anim_state_invalid', { kind }));
     const stateCfg = { ...this.cfg[kind], ...options };
 
     if (!aniPath) {
-      // Disable: clear native side first, then restore the real PNG.
+
       this.cfg[kind] = { ...stateCfg, ani: '' };
       this._writeCfg();
       this._pushLine(`CLEAR|state=${kind}`);
@@ -410,14 +326,10 @@ class AnimCursorController {
       return this.cfg[kind];
     }
 
-    if (!fs.existsSync(aniPath)) throw new Error('ANI dosyası bulunamadı: ' + aniPath);
+    if (!fs.existsSync(aniPath)) throw new Error(i18n.t('anim_file_not_found', { path: aniPath }));
 
     stateCfg.ani = aniPath;
 
-    // Ask the native helper to actually load & parse the file BEFORE we
-    // touch config/disk/PNGs — if the helper is missing or the .ani is
-    // unreadable, the user gets a real error instead of a false "başarılı"
-    // toast while the on-disk cursor silently stays blank with no overlay.
     await this._sendAndAwait(this._buildSetAniLine(kind, stateCfg), `SETANI:${kind}`);
 
     this.cfg[kind] = stateCfg;
@@ -426,21 +338,14 @@ class AnimCursorController {
     return stateCfg;
   }
 
-  /**
-   * Forces one state's overlay to show near the mouse for a few seconds,
-   * regardless of whether Roblox is focused or which state would normally
-   * be detected. Useful both as a preview and as the fastest way to tell
-   * "the render pipeline itself is fine" apart from "Roblox is in
-   * exclusive fullscreen / isn't focused / helper isn't running".
-   */
   async previewState(kind, ms = 6000) {
-    if (!STATES.includes(kind)) throw new Error('Geçersiz durum: ' + kind);
-    if (!this.cfg[kind].ani) throw new Error('Önce bu durum için bir .ani dosyası ata.');
+    if (!STATES.includes(kind)) throw new Error(i18n.t('anim_state_invalid', { kind }));
+    if (!this.cfg[kind].ani) throw new Error(i18n.t('anim_no_ani_assigned'));
     await this._sendAndAwait(`PREVIEW|state=${kind}|ms=${ms}`, `PREVIEW:${kind}`);
   }
 
   setStateConfig(kind, options = {}) {
-    if (!STATES.includes(kind)) throw new Error('Geçersiz durum: ' + kind);
+    if (!STATES.includes(kind)) throw new Error(i18n.t('anim_state_invalid', { kind }));
     this.cfg[kind] = { ...this.cfg[kind], ...options };
     this._writeCfg();
     if (this.cfg[kind].ani) this._sendConfig(kind, this.cfg[kind]);
@@ -448,9 +353,7 @@ class AnimCursorController {
   }
 
   async restoreAllStaticPngsIfOrphaned() {
-    // Safety net for app updates/crashes: if a backup exists but its
-    // state is no longer configured with an ANI, restore it so the
-    // user is never stuck with a permanently blank cursor.
+
     for (const kind of STATES) {
       if (!this.cfg[kind].ani && fs.existsSync(this._backupPathFor(kind))) {
         await this._restoreStaticPng(kind);

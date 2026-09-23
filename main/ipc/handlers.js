@@ -1,31 +1,32 @@
-// ipc/handlers.js
-// Renderer'ın preload.js üzerinden çağırdığı tüm 'ipcMain.handle' /
-// 'ipcMain.on' kayıtları burada toplanır. Bu dosya iş mantığını kendi
-// içinde barındırmaz; roblox/, packs/, animation/ ve config/ modüllerini
-// çağırıp sonucu IPC üzerinden döndürür. Global kısayollar
-// (Ctrl+Alt+1/2/3 hızlı geçiş) da buradadır çünkü doğrudan quickswitch
-// IPC uçlarıyla aynı state'i paylaşır.
 
 const { app, ipcMain, dialog, shell, globalShortcut } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
 const configManager = require('../config/config-manager');
+const i18n = require('../i18n');
 const detector = require('../roblox/detector');
 const cursorManager = require('../roblox/cursor-manager');
 const updater = require('../roblox/updater');
 const packManager = require('../packs/pack-manager');
+const appUpdate = require('../app-update');
+const selfUpdate = require('../self-update');
 const { logError } = require('../logger');
 
-// Bağış (Buy Me a Coffee) bağlantısı. URL sabit; arayüzden keyfi adres açtırılmaz.
 const DONATE_URL = 'https://buymeacoffee.com/rbxcursor';
 
-// registerIpcHandlers() çağrıldığında doldurulur; registerQuickSwitchShortcuts()
-// ve animcursor:* uçları bunlara ihtiyaç duyar.
 let _animCursor = null;
 let _getMainWindow = () => null;
 
-// ---------- Arkaplanlar ----------
+let _refreshTray = () => {};
+
+let _manualOverrideActive = false;
+function setManualOverride(v) { _manualOverrideActive = !!v; }
+function isManualOverrideActive() { return _manualOverrideActive; }
+
+let _onGameWatchToggled = null;
+let _getLastSeenPlaceId = null;
+
 function listBackgrounds() {
   const items = [];
   if (fs.existsSync(configManager.BUNDLED_BG)) {
@@ -41,13 +42,8 @@ function listBackgrounds() {
   return items;
 }
 
-// ---------- Global kısayol: hızlı paket geçişi (Ctrl+Alt+1/2/3) ----------
-// Roblox penceresi odaktayken bile çalışır (Electron'un globalShortcut'ı
-// işletim sistemi seviyesinde kaydedilir). Kullanıcı Ayarlar panelinden her
-// slota bir paket atayabilir; burada sadece bu üç kısayol kullanıldığı için
-// her seferinde tümünü temizleyip yeniden kaydetmek güvenlidir.
 function registerQuickSwitchShortcuts() {
-  try { globalShortcut.unregisterAll(); } catch (_) { /* zaten kayıtlı değilse sorun yok */ }
+  try { globalShortcut.unregisterAll(); } catch (_) {  }
 
   const cfg = configManager.getConfig();
   const map = cfg.quickSwitch || {};
@@ -58,13 +54,15 @@ function registerQuickSwitchShortcuts() {
     try {
       globalShortcut.register(accelerator, async () => {
         try {
-          const dir = path.join(configManager.PACKS, packName);
-          if (!fs.existsSync(dir)) throw new Error('Paket bulunamadı: ' + packName);
+          const dir = packManager.resolvePackDir(packName);
+          if (!fs.existsSync(dir)) throw new Error(i18n.t('pack_not_found_named', { name: packName }));
           const result = await packManager.applyPackInstant(packName);
           const win = _getMainWindow();
           if (win && !win.isDestroyed()) {
             win.webContents.send('quickswitch:applied', { slot, pack: packName, count: result.count, accelerator });
           }
+          setManualOverride(true);
+          _refreshTray();
         } catch (err) {
           logError(err);
           const win = _getMainWindow();
@@ -78,8 +76,6 @@ function registerQuickSwitchShortcuts() {
     }
   }
 
-  // Animasyonu aç/kapat kısayolu. unregisterAll() yukarıda her şeyi
-  // temizlediği için burada da her seferinde yeniden kaydedilir.
   const toggleKey = typeof cfg.animToggleKey === 'string' ? cfg.animToggleKey.trim() : 'Control+Alt+0';
   if (toggleKey && _animCursor) {
     try {
@@ -90,23 +86,29 @@ function registerQuickSwitchShortcuts() {
   }
 }
 
-// ---------- Pencere kontrolleri (frameless) ----------
 function registerWindowControls(win) {
   ipcMain.on('win:minimize', () => win.minimize());
   ipcMain.on('win:maximize', () => win.isMaximized() ? win.unmaximize() : win.maximize());
   ipcMain.on('win:close', () => win.close());
 }
 
-// ---------- Tüm ipcMain.handle uçları ----------
-function registerIpcHandlers({ animCursor, getMainWindow }) {
+function registerIpcHandlers({ animCursor, getMainWindow, refreshTray, onGameWatchToggled, getLastSeenPlaceId }) {
   _animCursor = animCursor;
   _getMainWindow = getMainWindow || (() => null);
+  _refreshTray = typeof refreshTray === 'function' ? refreshTray : () => {};
+  _onGameWatchToggled = typeof onGameWatchToggled === 'function' ? onGameWatchToggled : null;
+  _getLastSeenPlaceId = typeof getLastSeenPlaceId === 'function' ? getLastSeenPlaceId : null;
 
-  // ---- config ----
   ipcMain.handle('cfg:get', () => configManager.getConfig());
   ipcMain.handle('cfg:set', (_e, partial) => configManager.setConfig(partial));
 
-  // ---- roblox durumu ----
+  ipcMain.handle('app:set-language', (_e, lang) => {
+    if (lang !== 'en' && lang !== 'tr') return { ok: false };
+    i18n.setLang(lang);
+    configManager.setConfig({ language: lang });
+    return { ok: true };
+  });
+
   ipcMain.handle('roblox:status', async () => {
     try {
       const dirs = detector.robloxDirs();
@@ -128,20 +130,22 @@ function registerIpcHandlers({ animCursor, getMainWindow }) {
 
   ipcMain.handle('roblox:active-cursors', () => {
     try {
-      return cursorManager.activeCursorInfo(packManager.listPacks);
+      return cursorManager.activeCursorInfo(
+        packManager.listPacks,
+        (kind) => (_animCursor && _animCursor.cfg[kind] ? _animCursor.cfg[kind].ani : '')
+      );
     } catch (err) {
       logError(err);
       return { found: false, files: {}, activePackName: null, error: err.message };
     }
   });
 
-  // ---------- Windows başlangıcında aç ----------
   ipcMain.handle('app:get-start-on-boot', () => {
     const cfg = configManager.getConfig();
     try {
       cfg.startOnBoot = app.getLoginItemSettings().openAtLogin;
       configManager.saveConfig();
-    } catch (_) { /* dev ortamında desteklenmeyebilir, cfg değerini kullan */ }
+    } catch (_) {  }
     return !!cfg.startOnBoot;
   });
 
@@ -179,15 +183,14 @@ function registerIpcHandlers({ animCursor, getMainWindow }) {
     return res.filePaths[0];
   });
 
-  // Renderer, <canvas> ile yeniden boyutlandırdığı PNG'yi buffer (ArrayBuffer) olarak yollar
   ipcMain.handle('cursor:save-processed', (_e, kind, arrayBuffer) => {
-    if (!detector.TARGETS[kind]) throw new Error('Geçersiz imleç türü: ' + kind);
+    if (!detector.TARGETS[kind]) throw new Error(i18n.t('cursor_type_invalid', { kind }));
     const buf = Buffer.from(arrayBuffer);
     const validation = cursorManager.validateCursorPngBuffer(kind, buf);
     if (!validation.ok) throw new Error(validation.reason);
     const dst = path.join(configManager.CURRENT, detector.TARGETS[kind]);
     fs.writeFileSync(dst, buf);
-    // Ayarlar > Geçmiş'ten kapatılmışsa yeni kayıt eklenmez (mevcut geçmiş korunur).
+
     if (configManager.getConfig().historyEnabled !== false) {
       try { cursorManager.addHistoryEntry(kind, buf); } catch (err) { logError(err); }
     }
@@ -206,14 +209,6 @@ function registerIpcHandlers({ animCursor, getMainWindow }) {
   ipcMain.handle('history:apply', (_e, id) => cursorManager.applyHistoryItemToCurrent(id));
   ipcMain.handle('history:delete', (_e, id) => cursorManager.deleteHistoryItem(id));
 
-  // "Bağlamda Önizleme" penceresi buradan okur. ÖNEMLİ: burası bilerek
-  // uygulamanın kendi iç CURRENT (staging) klasörü yerine, Roblox'ta O AN
-  // GERÇEKTEN aktif olan dosyaları okur — activeCursorInfo() ile birebir
-  // aynı kaynak (currentCursorDir()). Önceden burası CURRENT'ı okuyordu;
-  // bu da paket "Hızlı Geçiş" (Ctrl+Alt+1/2/3) veya "Orijinale Dön" gibi
-  // CURRENT'ı güncellemeyen/geçersiz kılan işlemlerden sonra önizlemenin
-  // eski, boş ya da gerçekte artık aktif olmayan bir cursor göstermesine
-  // (ya da hiç göstermemesine) yol açıyordu.
   ipcMain.handle('cursor:current-state', () => {
     const dirInfo = detector.currentRobloxDirInfo();
     const state = {};
@@ -225,23 +220,47 @@ function registerIpcHandlers({ animCursor, getMainWindow }) {
   });
 
   ipcMain.handle('cursor:apply', async () => {
+
+    if (_animCursor) await _animCursor.refreshBlanks({ apply: false });
     const count = await cursorManager.applyCurrentToRoblox();
+    _refreshTray();
     return { count };
   });
 
   ipcMain.handle('cursor:restore', async () => {
     const count = await cursorManager.restoreDefaults();
+
+    if (_animCursor) _animCursor.clearAllAssignments();
+    _refreshTray();
     return { count };
   });
 
   ipcMain.handle('cursor:restore-one', async (_e, kind) => {
     await cursorManager.restoreOne(String(kind || ''));
+    if (_animCursor) _animCursor.clearAssignment(String(kind || ''));
+    _refreshTray();
     return { ok: true };
   });
 
   ipcMain.handle('app:get-version', () => app.getVersion());
 
-  // ---- paketler ----
+  ipcMain.handle('app:check-update', async (_e, manual) => {
+    const isManual = !!manual;
+    if (!isManual && configManager.getConfig().checkUpdates === false) {
+      return { ok: true, skipped: true, current: app.getVersion() };
+    }
+
+    return selfUpdate.check({ manual: isManual });
+  });
+  ipcMain.handle('selfupdate:state', () => selfUpdate.getState());
+  ipcMain.handle('selfupdate:download', () => selfUpdate.download());
+  ipcMain.handle('selfupdate:install', () => selfUpdate.install(() => {
+
+    try { if (_animCursor) _animCursor.shutdown(); } catch (_) {  }
+    try { globalShortcut.unregisterAll(); } catch (_) {  }
+  }));
+  ipcMain.handle('app:open-release', () => shell.openExternal(appUpdate.getReleaseUrl()));
+
   ipcMain.handle('pack:list', () => packManager.listPacks());
 
   ipcMain.handle('pack:save-as', (_e, name, selectedKinds) => {
@@ -249,23 +268,34 @@ function registerIpcHandlers({ animCursor, getMainWindow }) {
     const cfg = configManager.getConfig();
     cfg.lastPack = saved;
     configManager.saveConfig();
+    _refreshTray();
     return saved;
   });
-  ipcMain.handle('pack:save-active-as', (_e, name) => packManager.saveActiveCursorsAsPack(name));
-  ipcMain.handle('pack:save-anim-as', (_e, name, selectedAnimKinds) => packManager.saveAnimPackAs(name, selectedAnimKinds));
+  ipcMain.handle('pack:save-active-as', (_e, name) => {
+    const saved = packManager.saveActiveCursorsAsPack(name);
+    _refreshTray();
+    return saved;
+  });
+  ipcMain.handle('pack:save-anim-as', (_e, name, selectedAnimKinds) => {
+    const saved = packManager.saveAnimPackAs(name, selectedAnimKinds);
+    _refreshTray();
+    return saved;
+  });
 
   ipcMain.handle('pack:apply-to-current', (_e, name) => {
     const count = packManager.applyPackToCurrent(name);
     return { count };
   });
-  ipcMain.handle('pack:apply-instant', async (_e, name) => packManager.applyPackInstant(name));
+  ipcMain.handle('pack:apply-instant', async (_e, name) => {
+    const result = await packManager.applyPackInstant(name);
+    setManualOverride(true);
+    _refreshTray();
+    return result;
+  });
 
-  // Renderer'da Roblox'un varsayılan 64x64 cursor ölçülerine göre normalize edilen
-  // eski paket görsellerini hem pakete hem CURRENT'a yazar. Böylece eski paketler
-  // de yeni otomatik boyutlandırma/ortalama standardına tek seferde geçirilir.
   ipcMain.handle('pack:get-cursors', (_e, name) => {
-    const dir = path.join(configManager.PACKS, name);
-    if (!fs.existsSync(dir)) throw new Error('Paket bulunamadı.');
+    const dir = packManager.resolvePackDir(name);
+    if (!fs.existsSync(dir)) throw new Error(i18n.t('pack_not_found'));
     const out = {};
     for (const [kind, file] of Object.entries(detector.TARGETS)) {
       const p = path.join(dir, file);
@@ -275,9 +305,9 @@ function registerIpcHandlers({ animCursor, getMainWindow }) {
   });
 
   ipcMain.handle('pack:save-normalized-cursor', (_e, name, kind, arrayBuffer) => {
-    if (!detector.TARGETS[kind]) throw new Error('Geçersiz imleç türü: ' + kind);
-    const dir = path.join(configManager.PACKS, name);
-    if (!fs.existsSync(dir)) throw new Error('Paket bulunamadı.');
+    if (!detector.TARGETS[kind]) throw new Error(i18n.t('cursor_type_invalid', { kind }));
+    const dir = packManager.resolvePackDir(name);
+    if (!fs.existsSync(dir)) throw new Error(i18n.t('pack_not_found'));
     const buf = Buffer.from(arrayBuffer);
     const validation = cursorManager.validateCursorPngBuffer(kind, buf);
     if (!validation.ok) throw new Error(validation.reason);
@@ -290,27 +320,26 @@ function registerIpcHandlers({ animCursor, getMainWindow }) {
 
   ipcMain.handle('pack:delete', (_e, name) => {
     packManager.deletePack(name);
+    _refreshTray();
     return true;
   });
 
-  // ---- arkaplanlar ----
   ipcMain.handle('bg:list', () => listBackgrounds());
 
   ipcMain.handle('bg:delete', (_e, fileName) => {
     if (typeof fileName !== 'string' || !fileName.trim()) {
-      throw new Error('Geçersiz arkaplan.');
+      throw new Error(i18n.t('background_invalid'));
     }
 
     const safeName = path.basename(fileName);
     const target = path.join(configManager.USER_BG, safeName);
 
-    // Uygulama ile birlikte gelen varsayılan görseller silinemez.
     if (fs.existsSync(configManager.BUNDLED_BG) && fs.existsSync(path.join(configManager.BUNDLED_BG, safeName))) {
-      throw new Error('Varsayılan arkaplanlar silinemez.');
+      throw new Error(i18n.t('background_default_cannot_delete'));
     }
 
     if (!target.startsWith(configManager.USER_BG + path.sep)) {
-      throw new Error('Geçersiz arkaplan yolu.');
+      throw new Error(i18n.t('background_invalid_path'));
     }
 
     if (fs.existsSync(target)) fs.unlinkSync(target);
@@ -334,9 +363,6 @@ function registerIpcHandlers({ animCursor, getMainWindow }) {
       .replace(/-+/g, '-')
       .slice(0, 80) || 'background';
 
-    // İçe aktarılan görseller uygulamanın kalıcı veri klasörüne kopyalanır.
-    // Aynı isimde bir dosya varsa eskisinin üzerine yazmak yerine benzersiz
-    // bir isim üretir; böylece kullanıcının import ettiği görseller kaybolmaz.
     let fileName = `${baseName}${ext}`;
     let dst = path.join(configManager.USER_BG, fileName);
     let counter = 2;
@@ -353,7 +379,6 @@ function registerIpcHandlers({ animCursor, getMainWindow }) {
   ipcMain.handle('shell:open-path', (_e, p) => shell.openPath(p));
   ipcMain.handle('app:open-donate', () => shell.openExternal(DONATE_URL));
 
-  // ---------- Hızlı geçiş kısayolları (Ctrl+Alt+1/2/3) ----------
   ipcMain.handle('quickswitch:get', () => configManager.getConfig().quickSwitch || { '1': '', '2': '', '3': '' });
 
   ipcMain.handle('quickswitch:set', (_e, partial) => {
@@ -365,9 +390,9 @@ function registerIpcHandlers({ animCursor, getMainWindow }) {
   });
 
   ipcMain.handle('quickswitch:set-key', (_e, slot, accelerator) => {
-    if (!['1', '2', '3'].includes(String(slot))) throw new Error('Geçersiz kısayol slotu.');
+    if (!['1', '2', '3'].includes(String(slot))) throw new Error(i18n.t('shortcut_slot_invalid'));
     const key = String(accelerator || '').trim();
-    if (!key) throw new Error('Kısayol boş olamaz.');
+    if (!key) throw new Error(i18n.t('shortcut_empty'));
     const cfg = configManager.getConfig();
     cfg.quickSwitchKeys = { ...(cfg.quickSwitchKeys || {}), [String(slot)]: key };
     configManager.saveConfig();
@@ -375,13 +400,14 @@ function registerIpcHandlers({ animCursor, getMainWindow }) {
     return cfg.quickSwitchKeys;
   });
 
-  // ---------- Paket dışa/içe aktarma ----------
   ipcMain.handle('pack:export', async (_e, name) => packManager.exportPack(name));
 
   ipcMain.handle('pack:import-from-path', (_e, filePath) => {
     const buf = fs.readFileSync(filePath);
     const suggested = path.basename(filePath, path.extname(filePath));
-    return packManager.importPackFromBuffer(buf, suggested);
+    const result = packManager.importPackFromBuffer(buf, suggested);
+    _refreshTray();
+    return result;
   });
 
   ipcMain.handle('pack:import-pick', async () => {
@@ -394,10 +420,11 @@ function registerIpcHandlers({ animCursor, getMainWindow }) {
     const filePath = res.filePaths[0];
     const buf = fs.readFileSync(filePath);
     const suggested = path.basename(filePath, path.extname(filePath));
-    return packManager.importPackFromBuffer(buf, suggested);
+    const result = packManager.importPackFromBuffer(buf, suggested);
+    _refreshTray();
+    return result;
   });
 
-  // ---------- Animasyonlu İmleç (Premium Animated Cursor) ----------
   ipcMain.handle('animcursor:get-config', () => _animCursor.getConfig());
 
   ipcMain.handle('animcursor:pick-ani', async () => {
@@ -431,7 +458,6 @@ function registerIpcHandlers({ animCursor, getMainWindow }) {
     return _animCursor.setGlobalSettings(options || {});
   });
 
-  // Animasyonu aç/kapat kısayolu (varsayılan Ctrl+Alt+0)
   ipcMain.handle('animcursor:get-toggle', () => ({
     key: typeof configManager.getConfig().animToggleKey === 'string' ? configManager.getConfig().animToggleKey : 'Control+Alt+0',
     enabled: _animCursor.enabled
@@ -439,7 +465,7 @@ function registerIpcHandlers({ animCursor, getMainWindow }) {
 
   ipcMain.handle('animcursor:set-toggle-key', (_e, accelerator) => {
     const key = String(accelerator || '').trim();
-    if (!key) throw new Error('Kısayol boş olamaz.');
+    if (!key) throw new Error(i18n.t('shortcut_empty'));
     const cfg = configManager.getConfig();
     const previous = cfg.animToggleKey;
     cfg.animToggleKey = key;
@@ -447,20 +473,50 @@ function registerIpcHandlers({ animCursor, getMainWindow }) {
     let registered = false;
     try { registered = globalShortcut.isRegistered(key); } catch (_) { registered = false; }
     if (!registered) {
-      // Geçersiz ya da başka bir uygulama tarafından kullanılan kısayol: eskisine dön.
+
       cfg.animToggleKey = previous;
       registerQuickSwitchShortcuts();
-      throw new Error('Bu kısayol kaydedilemedi (geçersiz ya da başka bir uygulama kullanıyor): ' + key);
+      throw new Error(i18n.t('shortcut_register_failed', { key }));
     }
     configManager.saveConfig();
     return key;
   });
 
   ipcMain.handle('animcursor:toggle', () => _animCursor.toggleEnabled());
+
+  ipcMain.handle('gamewatch:get-config', () => {
+    const cfg = configManager.getConfig();
+    return { enabled: !!(cfg.gameWatch && cfg.gameWatch.enabled), mapping: (cfg.gameWatch && cfg.gameWatch.mapping) || {} };
+  });
+
+  ipcMain.handle('gamewatch:set-enabled', (_e, enabled) => {
+    const cfg = configManager.getConfig();
+    if (!cfg.gameWatch) cfg.gameWatch = { enabled: false, mapping: {} };
+    cfg.gameWatch.enabled = !!enabled;
+    configManager.saveConfig();
+    if (typeof _onGameWatchToggled === 'function') _onGameWatchToggled(cfg.gameWatch.enabled);
+    return cfg.gameWatch.enabled;
+  });
+
+  ipcMain.handle('gamewatch:set-mapping', (_e, placeId, packName) => {
+    const id = String(placeId || '').trim();
+    if (!id) throw new Error(i18n.t('placeid_empty'));
+    const cfg = configManager.getConfig();
+    if (!cfg.gameWatch) cfg.gameWatch = { enabled: false, mapping: {} };
+    if (!cfg.gameWatch.mapping) cfg.gameWatch.mapping = {};
+    if (packName) cfg.gameWatch.mapping[id] = String(packName);
+    else delete cfg.gameWatch.mapping[id];
+    configManager.saveConfig();
+    return cfg.gameWatch.mapping;
+  });
+
+  ipcMain.handle('gamewatch:get-last-seen', () => (typeof _getLastSeenPlaceId === 'function' ? _getLastSeenPlaceId() : null));
 }
 
 module.exports = {
   registerIpcHandlers,
   registerWindowControls,
-  registerQuickSwitchShortcuts
+  registerQuickSwitchShortcuts,
+  setManualOverride,
+  isManualOverrideActive
 };

@@ -1,11 +1,4 @@
-// ================= RENDERER GİRİŞ NOKTASI =================
-// Ortak sabitler/yardımcılar (toast, errMsg, overlay/nav), anasayfa, ayarlar,
-// hızlı geçiş kısayolları, oyun sahnesi önizlemesi ve init().
-// index.html'de EN SON yüklenir; diğer tüm modüller tanımlandıktan sonra init() çalışır.
 
-// NOT: main.js gerçek dosya eşlemesini kendi TARGETS'ında tutar; buradaki
-// değerler sadece görüntü amaçlıdır ama karışıklığı önlemek için doğru
-// eşlemeyi (ArrowFarCursor.png = düz ok, ArrowCursor.png = tıklama) yansıtır.
 const TARGETS = { arrow: 'ArrowFarCursor.png', click: 'ArrowCursor.png', text: 'IBeamCursor.png', shiftlock: 'MouseLockedCursor.png' };
 const NAME_KEYS = { arrow: 'normal', click: 'click', text: 'text', shiftlock: 'shiftlock' };
 const NAMES = { arrow: 'Normal Durum', click: 'Tıklama', text: 'Yazı Modu', shiftlock: 'Shift Lock' };
@@ -13,18 +6,11 @@ function cursorName(kind) { return t(NAME_KEYS[kind] || kind); }
 const TYPE_HINTS = { arrow: 'ArrowFarCursor.png', click: 'ArrowCursor.png', text: 'IBeamCursor.png', shiftlock: 'MouseLockedCursor.png' };
 const EXPORT_SIZE = 64;
 
-// Roblox'un gerçek imleç dosyaları aynı boyutta değildir: Arrow/Click/Text
-// 64x64'tür ama Shift Lock (MouseLockedCursor.png) native olarak 32x32'dir
-// ve ikon tuvalin tamamını kaplar. Düzenleyicideki ÇALIŞMA alanı (canvas)
-// tutarlılık için her zaman 64x64 kalır — sadece diske/Roblox'a YAZILAN
-// son dosyanın boyutu bu fonksiyonla türe göre belirlenir.
 function exportSizeFor(kind) {
   return kind === 'shiftlock' ? 32 : EXPORT_SIZE;
 }
 
 let cfg = {};
-
-
 
 const languageSelect = document.getElementById('language-select');
 if (languageSelect) {
@@ -43,12 +29,10 @@ window.rbxLanguageChanged = async () => {
 };
 applyLanguage();
 
-// ---- pencere kontrolleri ----
 document.getElementById('tb-min').onclick = () => window.rbx.winMinimize();
 document.getElementById('tb-max').onclick = () => window.rbx.winMaximize();
 document.getElementById('tb-close').onclick = () => window.rbx.winClose();
 
-// ---- toast ----
 function toast(msg, type = 'normal') {
   const el = document.getElementById('toast');
   el.textContent = msg;
@@ -65,8 +49,6 @@ function errMsg(e) {
   return (e && e.message) ? e.message.replace(/^Error invoking remote method[^:]*:\s*/, '') : String(e);
 }
 
-// ================= ÜST ÇUBUK GEZİNME / TAM EKRAN PANELLER =================
-
 const overlays = {
   packs: document.getElementById('overlay-packs'),
   settings: document.getElementById('overlay-settings'),
@@ -77,7 +59,6 @@ function closeAllOverlays() {
   Object.values(overlays).forEach(o => o.classList.add('hidden'));
 }
 
-// Dock'taki kayan gösterge: aktif düğmenin konum ve genişliğine oturur.
 function moveDockIndicator() {
   const dock = document.getElementById('dock');
   const ind = document.getElementById('dock-indicator');
@@ -86,7 +67,7 @@ function moveDockIndicator() {
   ind.style.width = active.offsetWidth + 'px';
   ind.style.transform = `translateX(${active.offsetLeft}px)`;
   if (!ind.classList.contains('ready')) {
-    // ilk yerleşimde animasyon olmasın: önce konumla, sonraki karede geçişleri aç
+
     dock.classList.add('dock-ready');
     requestAnimationFrame(() => ind.classList.add('ready'));
   }
@@ -116,7 +97,6 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
   };
 });
 
-// Bağış butonu: görünüm değiştirmez, doğrudan bağış sayfasını açar.
 const donateBtn = document.getElementById('btn-donate');
 if (donateBtn) {
   donateBtn.onclick = () => {
@@ -131,9 +111,6 @@ document.querySelectorAll('[data-close-view]').forEach(btn => {
   };
 });
 
-// ================= SAĞ ALT: küçük Roblox durum rozeti =================
-
-// Roblox'un sürüm klasörü "version-<hash>" biçimindedir; kullanıcıya kısa hash gösterilir.
 function shortRobloxVersion(v) {
   return String(v || '').replace(/^version-/i, '').slice(0, 8);
 }
@@ -176,11 +153,6 @@ async function refreshRobloxStatus() {
   }
 }
 
-// ---- anasayfa: şu an aktif olan cursor ----
-// Her durum (Normal / Tıklama / Yazı / Shift Lock) için tek bir kart:
-//   Seç      → yeni bir görsel seç ve düzenleyicide aç
-//   Düzenle  → Roblox'ta şu an duran imleci düzenleyicide aç
-//   Kaldır   → sadece bu imleci Roblox'un orijinaline döndür
 let lastActivePackName = null;
 let lastActiveInfo = null;
 
@@ -205,9 +177,7 @@ async function renderActiveCursor() {
       lastActivePackName = null;
       return null;
     }
-    // file:// görselleri Chromium tarafından aynı yol üzerinden cache'lenebildiği
-    // için her yenilemede cache-buster kullanıyoruz. Böylece Roblox dosyası
-    // değiştiğinde uygulamayı kapatıp açmadan yeni görsel görünür.
+
     const cacheBust = info.cacheKey || Date.now();
     const originals = info.originals || {};
 
@@ -280,8 +250,6 @@ async function pickAndEdit(kind) {
   loadImageIntoEditor(kind, 'file://' + filePath.replace(/\\/g, '/'));
 }
 
-// Roblox'ta şu an duran imleci düzenleyicide aç. Dosya zaten 64x64 (Shift Lock: 32x32)
-// olarak hazırlandığı için otomatik boyutlandırma atlanır; görsel olduğu gibi açılır.
 function editActiveCursor(kind) {
   const p = lastActiveInfo && lastActiveInfo.files && lastActiveInfo.files[kind];
   if (!p) { toast(t('cursor_edit_missing')); return; }
@@ -289,7 +257,6 @@ function editActiveCursor(kind) {
   loadImageIntoEditor(kind, fileUrl(p, bust), { autoFit: false });
 }
 
-// Tek bir imleci Roblox'un orijinaline döndür (diğer imleçlere dokunmaz).
 async function removeActiveCursor(kind) {
   if (!window.confirm(t('cursor_remove_confirm', { name: cursorName(kind) }))) return;
   try {
@@ -302,9 +269,6 @@ async function removeActiveCursor(kind) {
   }
 }
 
-// ================= HEADER EYLEMLERİ =================
-
-// manuel geri alma / orijinale dönme seçeneği
 document.getElementById('btn-restore').onclick = async () => {
   try {
     const res = await window.rbx.restoreCursors();
@@ -315,8 +279,6 @@ document.getElementById('btn-restore').onclick = async () => {
     toast(t('error') + ' ' + errMsg(e));
   }
 };
-
-// ================= AYARLAR (tam ekran panel) =================
 
 async function renderSettings() {
   try {
@@ -335,6 +297,9 @@ async function renderSettings() {
     bootToggle.checked = !!cfg.startOnBoot;
   }
 
+  const trayToggle = document.getElementById('toggle-minimize-tray');
+  if (trayToggle) trayToggle.checked = !!cfg.minimizeToTray;
+
   const versionEl = document.getElementById('settings-roblox-version');
   try {
     const status = await window.rbx.robloxStatus();
@@ -346,12 +311,16 @@ async function renderSettings() {
   const historyToggle = document.getElementById('toggle-history');
   if (historyToggle) historyToggle.checked = cfg.historyEnabled !== false;
 
+  const updateToggle = document.getElementById('toggle-check-updates');
+  if (updateToggle) updateToggle.checked = cfg.checkUpdates !== false;
+  applyUpdateResult(updateInfo);
+
   await renderQuickSwitchSettings();
-  await renderHistoryGrid(); // Geçmiş artık Genel ayarların içinde
+  await renderGameWatchSettings();
+  await renderHistoryGrid();
   await renderSettingsTabContent();
 }
 
-// ---- Ayarlar alt sekmeleri: Genel / Arkaplan ----
 let currentSettingsTab = 'general';
 
 async function renderSettingsTabContent() {
@@ -369,7 +338,6 @@ document.querySelectorAll('#settings-tabs .pack-tab').forEach(btn => {
   btn.onclick = () => setSettingsTab(btn.dataset.settingsTab);
 });
 
-// ---- hızlı geçiş kısayolları (Ctrl+Alt+1/2/3) ----
 function acceleratorLabel(accelerator) {
   return String(accelerator || '')
     .replace(/CommandOrControl/g, 'Ctrl')
@@ -400,8 +368,7 @@ function keyEventToAccelerator(e, allowBareFunctionKey = false) {
     'Tab':'Tab'
   };
   key = aliases[key] || (key.length === 1 ? key.toUpperCase() : key);
-  // Global shortcuts without a modifier are intentionally rejected
-  // (except plain F1-F24 when explicitly allowed, e.g. the animation toggle).
+
   if (!parts.length && !(allowBareFunctionKey && /^F([1-9]|1\d|2[0-4])$/.test(key))) return null;
   return [...parts, key].join('+');
 }
@@ -470,6 +437,106 @@ async function renderQuickSwitchSettings() {
   }
 }
 
+// ---- Oyuna göre otomatik paket (bkz. main/gamewatch/) ----
+// NOT: placeId ayrıştırma mantığı gerçek log örnekleriyle henüz
+// tamamlanmadı; ayar/eşleme burada saklanır ama otomatik geçiş şu an
+// pratikte hiç tetiklenmez (arayüzde de açıkça belirtiliyor).
+async function renderGameWatchSettings() {
+  if (!window.rbx.gameWatchGetConfig) return; // eski preload ile uyum
+  const toggle = document.getElementById('toggle-gamewatch');
+  const packSel = document.getElementById('gamewatch-new-pack');
+  const placeIdInput = document.getElementById('gamewatch-new-placeid');
+  const addBtn = document.getElementById('btn-gamewatch-add-mapping');
+  const addCurrentBtn = document.getElementById('btn-gamewatch-add-current');
+  const listEl = document.getElementById('gamewatch-mapping-list');
+  if (!toggle || !listEl) return;
+
+  let gwCfg = { enabled: false, mapping: {} };
+  let packs = [];
+  try {
+    [gwCfg, packs] = await Promise.all([window.rbx.gameWatchGetConfig(), window.rbx.listPacks()]);
+  } catch (e) { return; }
+
+  toggle.checked = !!gwCfg.enabled;
+  toggle.onchange = async (e) => {
+    const checked = e.target.checked;
+    try {
+      await window.rbx.gameWatchSetEnabled(checked);
+      toast(checked ? t('gamewatch_on') : t('gamewatch_off'));
+    } catch (err) {
+      toast(t('error') + ' ' + errMsg(err), 'error');
+      e.target.checked = !checked;
+    }
+  };
+
+  if (packSel) {
+    packSel.innerHTML = packs.map(p => `<option value="${String(p.name).replace(/"/g, '&quot;')}">${p.name}</option>`).join('');
+  }
+
+  function renderMappingList() {
+    const entries = Object.entries(gwCfg.mapping || {});
+    if (!entries.length) {
+      listEl.innerHTML = `<p class="muted small">—</p>`;
+      return;
+    }
+    listEl.innerHTML = entries.map(([placeId, packName]) => `
+      <div class="gamewatch-mapping-row" data-placeid="${placeId}">
+        <span class="gamewatch-mapping-placeid">${placeId}</span>
+        <span class="gamewatch-mapping-arrow">→</span>
+        <span class="gamewatch-mapping-pack">${String(packName)}</span>
+        <button type="button" class="btn-ghost small gamewatch-mapping-remove" data-placeid="${placeId}">${t('gamewatch_remove')}</button>
+      </div>
+    `).join('');
+    listEl.querySelectorAll('.gamewatch-mapping-remove').forEach((btn) => {
+      btn.onclick = async () => {
+        const id = btn.dataset.placeid;
+        try {
+          gwCfg.mapping = await window.rbx.gameWatchSetMapping(id, null);
+          toast(t('gamewatch_mapping_removed'));
+          renderMappingList();
+        } catch (err) {
+          toast(t('error') + ' ' + errMsg(err), 'error');
+        }
+      };
+    });
+  }
+  renderMappingList();
+
+  if (addBtn) {
+    addBtn.onclick = async () => {
+      const id = (placeIdInput && placeIdInput.value || '').trim();
+      const packName = packSel ? packSel.value : '';
+      if (!id || !packName) {
+        toast(t('gamewatch_need_placeid_and_pack'), 'error');
+        return;
+      }
+      try {
+        gwCfg.mapping = await window.rbx.gameWatchSetMapping(id, packName);
+        if (placeIdInput) placeIdInput.value = '';
+        toast(t('gamewatch_mapping_added'), 'success');
+        renderMappingList();
+      } catch (err) {
+        toast(t('error') + ' ' + errMsg(err), 'error');
+      }
+    };
+  }
+
+  if (addCurrentBtn) {
+    addCurrentBtn.onclick = async () => {
+      try {
+        const lastSeen = await window.rbx.gameWatchGetLastSeen();
+        if (!lastSeen) {
+          toast(t('gamewatch_last_seen_none'));
+          return;
+        }
+        if (placeIdInput) placeIdInput.value = lastSeen;
+      } catch (err) {
+        toast(t('error') + ' ' + errMsg(err), 'error');
+      }
+    };
+  }
+}
+
 document.getElementById('toggle-auto-reinstall').onchange = async (e) => {
   const checked = e.target.checked;
   try {
@@ -503,12 +570,20 @@ document.getElementById('toggle-start-on-boot').onchange = async (e) => {
   }
 };
 
-// ================= OYUN SAHNESİ MOTORU (paylaşılan) =================
-// CSS cursor/url yerine tamamen Canvas tabanlı, sabit koordinatlı bir viewer.
-// Böylece Windows DPI, Chromium hotspot ve CSS cursor ölçekleme farkları
-// görüntüyü bozmaz. Cursor PNG'si native piksel boyutunda nearest-neighbor
-// olarak çizilir. Hem "Bağlamda Önizleme" modalı hem de anasayfanın altına
-// gömülü "Deneme Alanı" AYNI motoru kullanır — ikisi de birebir aynı sahne.
+const trayToggleEl = document.getElementById('toggle-minimize-tray');
+if (trayToggleEl) {
+  trayToggleEl.onchange = async (e) => {
+    const checked = e.target.checked;
+    try {
+      cfg = await window.rbx.setConfig({ minimizeToTray: checked });
+      toast(checked ? t('tray_on') : t('tray_off'));
+    } catch (err) {
+      toast(t('error') + ' ' + errMsg(err));
+      e.target.checked = !checked;
+    }
+  };
+}
+
 function createCursorGameScene(canvas, { shiftButton = null } = {}) {
   const ctx = canvas.getContext('2d', { alpha: false });
   ctx.imageSmoothingEnabled = false;
@@ -519,8 +594,8 @@ function createCursorGameScene(canvas, { shiftButton = null } = {}) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
 
   const images = {};
-  let shiftLockOn = false;   // sahnedeki kilit ikonuna tıklayınca kalıcı olarak açılır/kapanır
-  let shiftHeld = false;     // fare sahnenin üzerindeyken fiziksel Shift tuşu basılı tutuluyor
+  let shiftLockOn = false;
+  let shiftHeld = false;
   let mouse = { x: W / 2, y: H / 2, inside: false };
   let hoverKind = 'arrow';
 
@@ -532,31 +607,27 @@ function createCursorGameScene(canvas, { shiftButton = null } = {}) {
   function draw() {
     const shiftActive = shiftLockOn || shiftHeld;
     ctx.clearRect(0, 0, W, H);
-    // Game-like blocky terrain background — intentionally generic, no Roblox UI
-    // assets/logos, so the viewer is deterministic and has no external assets.
+
     const sky = ctx.createLinearGradient(0, 0, 0, H);
     sky.addColorStop(0, '#182b46'); sky.addColorStop(.55, '#29445a'); sky.addColorStop(1, '#182a2d');
     ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
 
-    // distant mountains
     ctx.fillStyle = '#17283a';
     ctx.beginPath(); ctx.moveTo(0, 300); ctx.lineTo(120, 190); ctx.lineTo(225, 290); ctx.lineTo(345, 155); ctx.lineTo(500, 295); ctx.lineTo(640, 175); ctx.lineTo(790, 300); ctx.lineTo(900, 205); ctx.lineTo(W, 295); ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.fill();
-    // ground tiles
+
     ctx.fillStyle = '#344c3c'; ctx.fillRect(0, 300, W, H - 300);
     ctx.strokeStyle = 'rgba(255,255,255,.07)'; ctx.lineWidth = 1;
     for (let x = -40; x < W + 80; x += 52) { ctx.beginPath(); ctx.moveTo(x, 300); ctx.lineTo(x + 70, H); ctx.stroke(); }
     for (let y = 340; y < H; y += 42) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
 
-    // top game bar
     ctx.fillStyle = 'rgba(8,12,20,.82)'; ctx.fillRect(0, 0, W, 58);
     ctx.fillStyle = '#fff'; ctx.font = '700 15px Segoe UI'; ctx.fillText('RBX CURSOR TEST WORLD', 22, 26);
     ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.font = '12px Segoe UI'; ctx.fillText('Cursor preview • live', 22, 45);
-    // health / status panels
+
     ctx.fillStyle = 'rgba(8,12,20,.7)'; rounded(720, 12, 110, 34, 9); rounded(842, 12, 116, 34, 9);
     ctx.fillStyle = '#6ee7b7'; ctx.font = '700 12px Segoe UI'; ctx.fillText('HP 100', 736, 34);
     ctx.fillStyle = '#ffd166'; ctx.fillText('COINS 1,240', 854, 34);
 
-    // center world marker / empty play area
     ctx.strokeStyle = 'rgba(255,255,255,.32)'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(490, 205); ctx.lineTo(490, 245); ctx.moveTo(470, 225); ctx.lineTo(510, 225); ctx.stroke();
     ctx.fillStyle = 'rgba(20,25,35,.86)'; rounded(392, 260, 196, 82, 16);
@@ -564,23 +635,19 @@ function createCursorGameScene(canvas, { shiftButton = null } = {}) {
     ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.font = '12px Segoe UI'; ctx.fillText('Move over buttons / chat to test cursor states', 490, 316);
     ctx.textAlign = 'left';
 
-    // interactive play button — gerçekten tıklanabilir, sadece süs değil
     const playHover = inRect(playRect);
     ctx.fillStyle = playHover ? '#8da8ff' : '#6f8df5'; rounded(playRect.x, playRect.y, playRect.w, playRect.h, 14);
     ctx.fillStyle = '#08101e'; ctx.font = '900 16px Segoe UI'; ctx.textAlign = 'center';
     ctx.fillText(t('context_play'), playRect.x + playRect.w / 2, playRect.y + 34); ctx.textAlign = 'left';
 
-    // chat box (küçük Roblox sohbet penceresi)
     ctx.fillStyle = 'rgba(8,12,20,.82)'; rounded(22, 486, 420, 48, 12);
     ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.stroke();
     ctx.fillStyle = 'rgba(255,255,255,.58)'; ctx.font = '13px Segoe UI'; ctx.fillText(t('context_chat_placeholder'), 38, 516);
 
-    // shift lock indicator
     ctx.fillStyle = shiftActive ? 'rgba(111,141,245,.45)' : 'rgba(8,12,20,.72)'; rounded(shiftRect.x, shiftRect.y, shiftRect.w, shiftRect.h, 13);
     ctx.strokeStyle = shiftActive ? '#8da8ff' : 'rgba(255,255,255,.16)'; ctx.stroke();
     ctx.fillStyle = '#fff'; ctx.font = '20px Segoe UI'; ctx.fillText(shiftActive ? '⌁' : '⊙', shiftRect.x + 19, shiftRect.y + 36);
 
-    // cursor: native 64x64 or 32x32, no interpolation and no CSS scaling.
     if (mouse.inside) {
       const kind = shiftActive ? 'shiftlock' : hoverKind;
       const img = images[kind] || images.arrow;
@@ -613,7 +680,7 @@ function createCursorGameScene(canvas, { shiftButton = null } = {}) {
       if (shiftButton) shiftButton.classList.toggle('active', shiftLockOn);
       draw();
     } else if (inRect(playRect)) {
-      // Butonun tamamı basılabilir — sadece yazı değil, tüm dikdörtgen tıklamayı yakalar.
+
       toast(t('context_play_toast'), 'success');
     }
   };
@@ -621,8 +688,6 @@ function createCursorGameScene(canvas, { shiftButton = null } = {}) {
     shiftButton.onclick = () => { shiftLockOn = !shiftLockOn; shiftButton.classList.toggle('active', shiftLockOn); draw(); };
   }
 
-  // Fiziksel Shift tuşu: sadece fare bu sahnenin üzerindeyken etkili olur,
-  // böylece uygulamanın başka bir yerinde Shift'e basmak hiçbir şeyi etkilemez.
   function onKeyDown(e) {
     if (e.key !== 'Shift' || !mouse.inside || shiftHeld) return;
     shiftHeld = true; draw();
@@ -653,7 +718,6 @@ function createCursorGameScene(canvas, { shiftButton = null } = {}) {
   };
 }
 
-// ---- Bağlamda Önizleme (modal) ----
 let contextScene = null;
 async function openContextPreview() {
   let state = {};
@@ -678,7 +742,6 @@ document.getElementById('context-preview-close').onclick = () => {
   if(modal) modal.classList.add('hidden');
 };
 
-// ---- başlangıç ----
 async function init() {
   try {
     cfg = await window.rbx.getConfig();
@@ -692,14 +755,13 @@ async function init() {
     const v = window.rbx.appVersion ? await window.rbx.appVersion() : '';
     const verEl = document.getElementById('brand-version');
     if (verEl && v) verEl.textContent = 'v' + v;
-  } catch (_) { /* sürüm okunamazsa etiket boş kalır */ }
+  } catch (_) {  }
   await refreshRobloxStatus();
   await renderActiveCursor();
+  runStartupUpdateCheck();
   moveDockIndicator();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(moveDockIndicator);
 
-  // Global kısayol (Ctrl+Alt+1/2/3) ana süreçte tetiklendiğinde arayüzü
-  // güncelle — pencere odakta olmasa bile bu olaylar gelir.
   if (window.rbx.onQuickSwitchApplied) {
     window.rbx.onQuickSwitchApplied(async (data) => {
       toast(t('quickswitch_applied_toast', { slot: data.slot, name: data.pack }).replace(`Ctrl+Alt+${data.slot}`, acceleratorLabel(data.accelerator || `Control+Alt+${data.slot}`)), 'success');
@@ -714,9 +776,27 @@ async function init() {
     });
   }
 
+  if (window.rbx.onGameWatchApplied) {
+    window.rbx.onGameWatchApplied(async (data) => {
+      toast(t('gamewatch_applied_toast', { name: data.pack }), 'success');
+      await refreshRobloxStatus();
+      await renderActiveCursor();
+      if (!overlays.packs.classList.contains('hidden')) await renderPackGrid();
+    });
+  }
+
+  if (window.rbx.onTrayPackApplied) {
+    window.rbx.onTrayPackApplied(async (data) => {
+      toast(t('tray_applied_toast', { name: data.pack }), 'success');
+      await refreshRobloxStatus();
+      await renderActiveCursor();
+      if (!overlays.packs.classList.contains('hidden')) await renderPackGrid();
+    });
+  }
+
   try {
     const bgs = await window.rbx.listBackgrounds();
-    // Varsayılan açılış arka planı her zaman bundled background.png'dir.
+
     const chosen = bgs.find(b => b.file === 'background.png') || bgs.find(b => b.file === cfg.background) || bgs[0];
     if (chosen) {
       if (cfg.background !== chosen.file) {
@@ -724,11 +804,131 @@ async function init() {
       }
       applyBackground(chosen.path);
     }
-  } catch (_) { /* arkaplan yoksa sorun değil */ }
+  } catch (_) {  }
 
-  // Roblox her an açılıp kapanabileceği (veya güncellenebileceği) için
-  // durumu düzenli tazele; otomatik düzeltme kontrolü de bu tazeleme
-  // sırasında ana süreçte (main.js) yapılır.
   setInterval(refreshRobloxStatus, 5000);
 }
+
+let updateInfo = null;
+let updateDl = { status: 'idle', percent: 0, version: null, error: null };
+
+function applyUpdateResult(res) {
+  if (res !== undefined) updateInfo = res || null;
+  const r = updateInfo;
+  const hasUpdate = !!(r && r.ok && r.hasUpdate) || updateDl.status === 'downloaded';
+  const canInstall = !!(r && r.canInstall) || updateDl.status === 'downloaded' || updateDl.status === 'downloading';
+  const ver = updateDl.version || (r && r.latest);
+  const statusEl = document.getElementById('update-status');
+  const btn = document.getElementById('btn-check-update');
+  const brand = document.getElementById('brand-version');
+  const label = hasUpdate && r ? t('update_available', { v: ver, cur: r.current }) : '';
+  if (brand) {
+    brand.classList.toggle('has-update', hasUpdate);
+    brand.title = hasUpdate ? t('update_available', { v: ver, cur: (r && r.current) || '' }) : '';
+  }
+
+  let btnText = t('update_check_btn');
+  let btnDisabled = false;
+  let status = '';
+  if (updateDl.status === 'downloading') {
+    btnText = t('update_downloading_btn', { p: updateDl.percent });
+    btnDisabled = true;
+    status = t('update_downloading', { p: updateDl.percent });
+  } else if (updateDl.status === 'downloaded') {
+    btnText = t('update_restart_btn');
+    status = t('update_ready', { v: ver });
+  } else if (updateDl.status === 'error') {
+    btnText = hasUpdate && canInstall ? t('update_retry_btn') : t('update_check_btn');
+    status = t('update_dl_error');
+  } else if (r && r.skipped) {
+    status = '';
+  } else if (r && !r.ok) {
+    status = r.error === 'rate_limit' ? t('update_error_rate') : t('update_error');
+  } else if (hasUpdate) {
+    btnText = canInstall ? t('update_install_btn', { v: ver }) : t('update_open_btn');
+    status = canInstall ? t('update_available_inapp', { v: ver, cur: r.current }) : label;
+  } else if (r) {
+    status = t('update_uptodate', { cur: r.current });
+  }
+  if (btn) { btn.textContent = btnText; btn.disabled = btnDisabled; }
+  if (statusEl) statusEl.textContent = status;
+}
+
+async function runStartupUpdateCheck() {
+
+  setTimeout(async () => {
+    try {
+      const res = await window.rbx.checkUpdate(false);
+      if (!res || res.skipped) return;
+      applyUpdateResult(res);
+      if (res.ok && res.hasUpdate) toast(t('update_available_toast', { v: res.latest }), 'success');
+    } catch (_) {  }
+  }, 3000);
+}
+
+async function handleUpdateAction() {
+  try {
+    if (updateDl.status === 'downloading') return;
+    if (updateDl.status === 'downloaded') {
+      toast(t('update_restarting'), 'success');
+      await window.rbx.installUpdate();
+      return;
+    }
+    if (updateInfo && updateInfo.ok && updateInfo.hasUpdate) {
+      if (updateInfo.canInstall) {
+        updateDl = { ...updateDl, status: 'downloading', percent: 0, error: null };
+        applyUpdateResult();
+        await window.rbx.downloadUpdate();
+      } else {
+        await window.rbx.openReleasePage();
+      }
+      return;
+    }
+    const statusEl = document.getElementById('update-status');
+    const btn = document.getElementById('btn-check-update');
+    if (btn) btn.disabled = true;
+    if (statusEl) statusEl.textContent = t('update_checking');
+    try {
+      applyUpdateResult(await window.rbx.checkUpdate(true));
+    } catch (_) {
+      applyUpdateResult({ ok: false, error: 'network' });
+    }
+  } catch (e) {
+
+    updateDl = { ...updateDl, status: 'error', error: errMsg(e) };
+    applyUpdateResult();
+    toast(t('update_dl_error') + ' ' + errMsg(e), 'error');
+  }
+}
+
+if (window.rbx.onSelfUpdateState) {
+  window.rbx.onSelfUpdateState((st) => {
+    if (!st) return;
+    updateDl = { ...updateDl, ...st };
+    applyUpdateResult();
+    if (st.status === 'downloaded') toast(t('update_ready_toast', { v: st.version || '' }), 'success');
+  });
+}
+
+const checkUpdateBtn = document.getElementById('btn-check-update');
+if (checkUpdateBtn) checkUpdateBtn.onclick = handleUpdateAction;
+
+const brandVersionEl = document.getElementById('brand-version');
+if (brandVersionEl) {
+  brandVersionEl.onclick = () => {
+    if (brandVersionEl.classList.contains('has-update')) handleUpdateAction();
+  };
+}
+
+document.getElementById('toggle-check-updates').onchange = async (e) => {
+  const checked = e.target.checked;
+  try {
+    cfg = await window.rbx.setConfig({ checkUpdates: checked });
+    toast(checked ? t('update_auto_on') : t('update_auto_off'));
+  } catch (err) {
+    toast(t('error') + ' ' + errMsg(err));
+    e.target.checked = !checked;
+  }
+};
+
 init();

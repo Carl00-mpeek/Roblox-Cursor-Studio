@@ -1,0 +1,17 @@
+Bu klasör, main/gamewatch/log-parser.js'in gerçek placeId ayrıştırma
+mantığını yazmak için gereken GERÇEK Roblox log örneklerini bekliyor.
+
+Nasıl örnek eklenir:
+1) Roblox'u aç, birkaç farklı oyuna gir/çık.
+2) %LOCALAPPDATA%\Roblox\logs altındaki en güncel .log dosyasını bul.
+3) placeId (ya da oyuna giriş/oyun bilgisi) geçen satırları seç.
+4) Kullanıcı adı, makine adı, IP, dosya yollarındaki Windows kullanıcı
+   klasörü gibi KİŞİSEL VERİLERİ TEMİZLE.
+5) Temizlenmiş satırları buraya örn. sample-1.log, sample-2.log olarak
+   ekle (birden fazla oyun/oturumdan örnek olursa biçimin sabit/değişken
+   kısımlarını ayırt etmek daha kolay olur).
+6) main/gamewatch/log-parser.js -> parsePlaceIdFromLine() bu örneklere göre
+   yazılabilir; bir test bu fixture dosyalarına karşı doğrulanabilir.
+
+Bu klasör boşken (yalnızca bu dosya varken) parsePlaceIdFromLine() her
+zaman null döner ve oyuna-göre-otomatik-paket özelliği hiçbir şey yapmaz.

@@ -1,8 +1,3 @@
-// roblox/updater.js
-// ---------- Otomatik Düzeltme ----------
-// Sadece version klasörü değiştiğinde değil; aktif Roblox cursor dosyaları
-// beklenen CURRENT dosyalarıyla uyuşmadığında da onarım yapar. Böylece başka
-// bir mod/temizleyici dosyaları değiştirse bile sistem kendini toparlayabilir.
 
 const path = require('path');
 const fs = require('fs');
@@ -52,9 +47,7 @@ async function maybeAutoReinstall(dirs) {
     configManager.saveConfig();
     return { performed: true, count };
   } catch (err) {
-    // Hedef dosyalar Roblox tarafından geçici olarak kilitlenmiş olabilir.
-    // Version bilgisini başarısız denemede ilerletmiyoruz; sonraki 5 sn
-    // kontrolü tekrar deneyebilsin.
+
     logError(err);
     return { performed: false, error: err.message, retrying: true };
   }

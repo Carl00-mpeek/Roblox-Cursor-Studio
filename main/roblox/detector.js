@@ -1,31 +1,18 @@
-// roblox/detector.js
-// Roblox'un yüklü sürüm klasörlerini, hangi sürümün gerçekten çalışmakta
-// olduğunu ve her imleç türünün Roblox içindeki dosya yolunu bulan katman.
-// Burada disk üzerinde hiçbir şey DEĞİŞTİRİLMEZ; sadece "nerede" sorusuna
-// cevap verilir (yazma/kopyalama işlemleri roblox/cursor-manager.js'te).
 
 const path = require('path');
 const fs = require('fs');
 const { execFileSync } = require('child_process');
 
-// Roblox'taki hedef dosya adları — ÖNEMLİ: Roblox'ta isimlendirme kafa
-// karıştırıcıdır: "ArrowCursor.png" aslında tıklanabilir bir şeyin üstüne
-// gelindiğinde çıkan TIKLAMA (el) imlecidir; "ArrowFarCursor.png" ise
-// normal/düz ok imlecidir. IBeamCursor.png ise metin imlecidir (doğru).
 const TARGETS = {
   arrow: 'ArrowFarCursor.png',
   click: 'ArrowCursor.png',
   text: 'IBeamCursor.png',
-  // Shift Lock (kamera kilidi) aktifken ekranda görünen imleç.
+
   shiftlock: 'MouseLockedCursor.png'
 };
 
 const CURSOR_CANVAS_SIZES = { arrow: 64, click: 64, text: 64, shiftlock: 32 };
 
-// Roblox'ta Shift Lock cursoru diğer cursorlardan farklı bir konumdadır.
-// MouseLockedCursor.png, KeyboardMouse altında değil, doğrudan
-// <version>\content\textures\MouseLockedCursor.png yolundadır.
-// Arrow/Click/Text ise KeyboardMouse klasöründedir.
 const ROBLOX_CURSOR_SUBDIRS = {
   arrow: path.join('content', 'textures', 'Cursors', 'KeyboardMouse'),
   click: path.join('content', 'textures', 'Cursors', 'KeyboardMouse'),
@@ -40,15 +27,12 @@ function robloxCursorPath(dirInfo, kind) {
   return path.join(dirInfo.versionDir, subdir, TARGETS[kind]);
 }
 
-// ---------- Roblox sürüm/imleç klasörlerini bul ----------
 const ROBLOX_PROCESS = 'RobloxPlayerBeta.exe';
 
 function runningRobloxExecutables() {
   if (process.platform !== 'win32') return [];
   const paths = new Set();
 
-  // Önce CIM/PowerShell. Roblox güncellendiğinde mtime yerine gerçekten
-  // çalışan RobloxPlayerBeta.exe'nin bulunduğu version klasörünü seçeriz.
   try {
     const ps = [
       '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command',
@@ -58,11 +42,8 @@ function runningRobloxExecutables() {
     for (const line of String(out).split(/\r?\n/).map(x => x.trim()).filter(Boolean)) {
       if (path.basename(line).toLowerCase() === ROBLOX_PROCESS.toLowerCase() && fs.existsSync(line)) paths.add(path.normalize(line));
     }
-  } catch (_) { /* fallback aşağıda */ }
+  } catch (_) {  }
 
-  // Eski Windows kurulumlarında PowerShell/CIM erişilemezse tasklist ile
-  // sadece sürecin çalıştığını doğrularız; version seçimi yine dosya yapısına
-  // göre yapılır.
   if (!paths.size) {
     try {
       const out = execFileSync('tasklist.exe', ['/FI', `IMAGENAME eq ${ROBLOX_PROCESS}`, '/FO', 'CSV', '/NH'], {
@@ -108,8 +89,6 @@ function robloxDirs() {
     });
   }
 
-  // Öncelik sırası: gerçekten çalışan version > RobloxPlayerBeta.exe içeren
-  // version > mtime. mtime yalnızca güvenli fallback'tir.
   out.sort((a, b) => {
     if (a.isRunning !== b.isRunning) return a.isRunning ? -1 : 1;
     if (a.hasExecutable !== b.hasExecutable) return a.hasExecutable ? -1 : 1;

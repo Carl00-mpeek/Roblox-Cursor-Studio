@@ -9,13 +9,11 @@ RBX Cursor Studio is an independent, community-made tool, **not affiliated with 
 
 # 🎨 RBX Cursor Studio
 
-## 🎬 Demo
-
-[![Watch Demo](https://img.youtube.com/vi/kKYbosdVFig/0.jpg)](https://www.youtube.com/watch?v=kKYbosdVFig)
-
-> 🎥 **Demo:** Click the preview above to watch RBX Cursor Studio in action.
+A lightweight Windows tool for customizing Roblox cursors.
 
 **Current version: 4.0.0**
+
+![RBX Cursor Studio Screenshot]
 
 ## 🆕 What's New in 4.0.0
 
@@ -46,6 +44,9 @@ Auto-Fit + Center, Center Only, and Reset Size shortcuts; a manual zoom slider (
 ### 📦 Cursor Packs
 Create, save and manage as many packs as you like. Export as `.rbxcursor` / `.zip` to share, or import one via drag-and-drop. **Quick Pack Switching** jumps between saved packs with `Ctrl+Alt+1/2/3`, even while Roblox is running.
 
+### 🕹️ Automatic Pack by Game — 🧪 Experimental, opt-in (off by default)
+Map a Roblox game to one of your packs, and the app switches to it automatically when you open that game. This works by **reading Roblox's own local log files** (`%LOCALAPPDATA%\Roblox\logs`), **read-only** — nothing else. The app never reads Roblox's memory, never injects into its process, and makes no network requests for this feature. If you ever pick a pack yourself (menu, hotkey, or tray), automatic switching stays out of the way for the rest of that session.
+
 ### 🕓 History
 Every cursor you've selected is saved in a History tab you can reapply anytime.
 
@@ -60,6 +61,12 @@ Recolor every currently active cursor with a single hue, without touching size o
 
 ### 🎬 Personalization & ⚙️ Settings
 Swap the app's background image, switch between English and Turkish instantly, launch on Windows startup, and check the detected Roblox version — all from Settings.
+
+### 🔔 Updates
+On launch it sends **one** version query to GitHub's public "latest release" endpoint (no identifying/account data); if a newer version exists it tells you in Settings and on the version tag at the top left.
+- **Installer build:** *Download & install* → the app downloads the update (sha512-verified) and updates itself with *Restart & update*. No need to visit GitHub. You have to install the first build that includes this feature manually; later versions arrive automatically.
+- **Portable build:** cannot update itself; it opens the Releases page when a new version exists.
+The launch check can be turned off in Settings > Updates; downloading/installing only start when you confirm.
 
 ### 💻 Platform & Distribution
 Available as a portable executable or an NSIS installer. Built on Electron; animated cursors run in a small native helper (`cursor_helper.exe`) that only starts when needed. Source is public under a noncommercial license, with releases scanned on VirusTotal.

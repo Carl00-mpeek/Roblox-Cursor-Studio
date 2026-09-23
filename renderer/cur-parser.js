@@ -1,22 +1,15 @@
-// Bağımlılıksız .cur / .ico çözücü.
-// Tarayıcı <img> etiketi .cur dosyalarını doğrudan açamadığı için,
-// dosyayı elle ayrıştırıp bir <canvas>'a (ya da PNG gövdeliyse bir
-// Blob URL'sine) çeviriyoruz. Sonuç, geri kalan editör kodunun
-// (drawImage vb.) hiç değişmeden kullanabileceği bir "img benzeri"
-// nesne (Image ya da HTMLCanvasElement) olur.
 
 function decodeCurOrIco(arrayBuffer) {
   const view = new DataView(arrayBuffer);
   const bytes = new Uint8Array(arrayBuffer);
 
   const reserved = view.getUint16(0, true);
-  const type = view.getUint16(2, true); // 1 = ICO, 2 = CUR
+  const type = view.getUint16(2, true);
   const count = view.getUint16(4, true);
   if (reserved !== 0 || (type !== 1 && type !== 2) || count === 0) {
     throw new Error('Geçersiz .cur/.ico dosyası');
   }
 
-  // En büyük görseli seç (genelde en net sonucu verir)
   let best = null;
   for (let i = 0; i < count; i++) {
     const off = 6 + i * 16;
@@ -33,13 +26,11 @@ function decodeCurOrIco(arrayBuffer) {
 
   const data = new Uint8Array(arrayBuffer, best.imageOffset, best.bytesInRes);
 
-  // Gövde bir PNG mi? (büyük ikon/cursor dosyalarında yaygın)
   if (data.length > 8 && data[0] === 0x89 && data[1] === 0x50 && data[2] === 0x4E && data[3] === 0x47) {
     const blob = new Blob([data], { type: 'image/png' });
     return { isPng: true, blobUrl: URL.createObjectURL(blob) };
   }
 
-  // Değilse klasik BMP/DIB gövdesi (çoğu 32x32 .cur dosyası bu türde)
   const dibBuffer = data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength);
   const canvas = decodeDibToCanvas(dibBuffer);
   return { isPng: false, canvas };
@@ -50,7 +41,7 @@ function decodeDibToCanvas(dibBuffer) {
   const headerSize = dv.getUint32(0, true);
   const width = dv.getInt32(4, true);
   const rawHeight = dv.getInt32(8, true);
-  const height = Math.floor(Math.abs(rawHeight) / 2); // AND maskesi yüzünden ikiye katlanmış
+  const height = Math.floor(Math.abs(rawHeight) / 2);
   const bitCount = dv.getUint16(14, true);
   const compression = dv.getUint32(16, true);
 
@@ -64,7 +55,7 @@ function decodeDibToCanvas(dibBuffer) {
     palette = [];
     for (let i = 0; i < paletteCount; i++) {
       const o = paletteOffset + i * 4;
-      palette.push([dv.getUint8(o + 2), dv.getUint8(o + 1), dv.getUint8(o)]); // BGRA -> RGB
+      palette.push([dv.getUint8(o + 2), dv.getUint8(o + 1), dv.getUint8(o)]);
     }
   }
 
@@ -82,7 +73,7 @@ function decodeDibToCanvas(dibBuffer) {
   const imgData = ctx.createImageData(width, height);
 
   for (let y = 0; y < height; y++) {
-    const srcY = height - 1 - y; // DIB satırları alttan üste saklanır
+    const srcY = height - 1 - y;
     const rowOffset = xorStart + srcY * rowSizeXor;
     const andRowOffset = andStart + srcY * andRowSize;
 
@@ -106,7 +97,6 @@ function decodeDibToCanvas(dibBuffer) {
         r = c[0]; g = c[1]; b = c[2];
       }
 
-      // 32-bit olmayan formatlarda saydamlık AND maskesinden gelir
       if (bitCount !== 32) {
         const byteIndex = andRowOffset + Math.floor(x / 8);
         const bitIndex = 7 - (x % 8);

@@ -1,7 +1,3 @@
-// ================= ARKAPLANLAR PANELİ =================
-// Bağımlılıklar (global): cfg, toast, errMsg -> renderer.js
-
-// ================= ARKAPLANLAR (tam ekran panel, isimsiz kartlar) =================
 
 async function renderBackgrounds() {
   let list = [];
@@ -27,7 +23,6 @@ async function renderBackgrounds() {
       item.appendChild(check);
     }
 
-    // Sadece kullanıcı tarafından içe aktarılan arkaplanlarda çöp kutusu göster.
     if (bg.source === 'user') {
       const del = document.createElement('button');
       del.type = 'button';
@@ -44,7 +39,6 @@ async function renderBackgrounds() {
         try {
           await window.rbx.deleteBackground(bg.file);
 
-          // Silinen arkaplan aktifse güvenli şekilde varsayılana dön.
           if (cfg.background === bg.file) {
             const freshList = await window.rbx.listBackgrounds();
             const def = freshList.find(x => x.file === 'background.png') || freshList.find(x => x.source === 'bundled');
@@ -85,8 +79,7 @@ document.getElementById('btn-import-bg').onclick = async () => {
   try {
     const res = await window.rbx.importBackground();
     if (res) {
-      // Import edilen görsel kalıcı olarak uygulama veri klasörüne kaydedilir
-      // ve hemen aktif arkaplan yapılır.
+
       cfg = await window.rbx.setConfig({ background: res.file });
       applyBackground(res.path);
       toast(t('background_imported'));
@@ -97,7 +90,6 @@ document.getElementById('btn-import-bg').onclick = async () => {
   }
 };
 
-// arkaplanı varsayılana (orijinaline) döndür
 document.getElementById('btn-bg-default').onclick = async () => {
   try {
     const list = await window.rbx.listBackgrounds();

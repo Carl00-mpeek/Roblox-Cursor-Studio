@@ -85,6 +85,9 @@ button:focus-visible, select:focus-visible, input:focus-visible {
 .brand-dot.bad { background: var(--bad); box-shadow: 0 0 0 3px rgba(249, 123, 123, .18); }
 .brand-version { margin-left: 4px; padding-left: 9px; border-left: 1px solid rgba(255, 255, 255, .22); color: #aeb7d0; font-variant-numeric: tabular-nums; }
 .brand-version:empty { display: none; }
+.brand-version.has-update { cursor: pointer; color: #9fe3b0; }
+.brand-version.has-update::after { content: ' ↑'; }
+.update-controls { display: flex; align-items: center; gap: 12px; }
 
 .topbar-right { -webkit-app-region: no-drag; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
 .topbar-donate {
@@ -479,6 +482,24 @@ body:has(.view-overlay:not(.hidden)) .main { visibility: hidden; }
 .history-grid .pack-card { background: rgba(255, 255, 255, .045); border-color: rgba(255, 255, 255, .09); }
 .settings-about { align-items: flex-start; grid-column: 1 / -1; }
 .settings-about p { line-height: 1.5; }
+/* Oyuna göre otomatik paket (bkz. main/gamewatch/) */
+.settings-gamewatch-mapping { grid-column: 1 / -1; flex-direction: column; align-items: stretch; gap: 12px; }
+.settings-gamewatch-mapping-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.gamewatch-add-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.gamewatch-add-row input[type="text"] {
+  flex: 1 1 220px; min-width: 0; background: rgba(255,255,255,.05); border: 1px solid var(--card-border);
+  border-radius: 8px; padding: 7px 10px; color: var(--text); font-size: 12.5px;
+}
+.gamewatch-add-row .settings-select { flex: 1 1 160px; min-width: 0; }
+.gamewatch-mapping-list { display: flex; flex-direction: column; gap: 6px; }
+.gamewatch-mapping-row {
+  display: flex; align-items: center; gap: 8px; font-size: 12.5px;
+  background: rgba(255,255,255,.035); border: 1px solid var(--card-border);
+  border-radius: 8px; padding: 6px 10px;
+}
+.gamewatch-mapping-placeid { font-variant-numeric: tabular-nums; color: var(--muted); }
+.gamewatch-mapping-arrow { color: var(--muted); }
+.gamewatch-mapping-pack { font-weight: 600; flex: 1; }
 
 /* ---- animasyonlu imleç sayfası: anasayfa düzeni (hero + cam paneller + kart ızgarası) ---- */
 /* Bu sayfada arka plan anasayfadaki gibi açık kalır (koyu perde yok), içerik cam panellerde durur. */

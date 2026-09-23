@@ -1,17 +1,6 @@
-// png-lite.js
-// Tiny, dependency-free PNG writer. The project intentionally avoids
-// adding native/npm image libraries (see zip-lite.js for the same
-// philosophy applied to zip files), so this implements just the one
-// thing the animated-cursor feature needs: a fully transparent RGBA
-// PNG of an exact width/height, used to "blank out" Roblox's own
-// cursor texture for states where the native animated overlay is
-// doing the drawing instead.
 
 const zlib = require('zlib');
 
-// CRC32 (PNG chunk footer). Node's zlib.crc32 exists on newer Node
-// versions but not all Electron builds guarantee it, so we ship a
-// small table-based fallback that always works.
 const CRC_TABLE = (() => {
   const table = new Uint32Array(256);
   for (let n = 0; n < 256; n++) {
@@ -45,20 +34,6 @@ function chunk(type, data) {
   return Buffer.concat([lenBuf, typeBuf, data, crcBuf]);
 }
 
-/**
- * Builds a (practically) fully transparent 32-bit RGBA PNG.
- *
- * `marker` (0..15) lets the native helper tell otherwise identical blank
- * cursors apart: every pixel is set to (marker, marker, marker, marker),
- * i.e. an alpha of at most 15/255 with near-black colour -- invisible on
- * screen, but readable from the OS cursor bitmap (see native/marker.h).
- * marker = 0 gives the classic all-zero fully transparent image.
- *
- * @param {number} width
- * @param {number} height
- * @param {number} [marker=0]
- * @returns {Buffer}
- */
 function makeTransparentPng(width, height, marker = 0) {
   const w = Math.max(1, width | 0);
   const h = Math.max(1, height | 0);
@@ -68,19 +43,18 @@ function makeTransparentPng(width, height, marker = 0) {
   const ihdrData = Buffer.alloc(13);
   ihdrData.writeUInt32BE(w, 0);
   ihdrData.writeUInt32BE(h, 4);
-  ihdrData.writeUInt8(8, 8);   // bit depth
-  ihdrData.writeUInt8(6, 9);   // color type: RGBA
-  ihdrData.writeUInt8(0, 10);  // compression
-  ihdrData.writeUInt8(0, 11);  // filter
-  ihdrData.writeUInt8(0, 12);  // interlace
+  ihdrData.writeUInt8(8, 8);
+  ihdrData.writeUInt8(6, 9);
+  ihdrData.writeUInt8(0, 10);
+  ihdrData.writeUInt8(0, 11);
+  ihdrData.writeUInt8(0, 12);
 
-  // Raw scanlines: 1 filter-type byte (0 = None) + w*4 zero bytes, per row.
   const rowBytes = 1 + w * 4;
-  const raw = Buffer.alloc(rowBytes * h); // all zero => filter=0, RGBA=0,0,0,0
+  const raw = Buffer.alloc(rowBytes * h);
   const m = Math.max(0, Math.min(15, marker | 0));
   if (m > 0) {
     for (let y = 0; y < h; y++) {
-      // byte 0 of each row is the filter type (stays 0); the rest is RGBA.
+
       raw.fill(m, y * rowBytes + 1, (y + 1) * rowBytes);
     }
   }

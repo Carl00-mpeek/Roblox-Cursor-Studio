@@ -11,13 +11,9 @@ RBX Cursor Studio, bağımsız ve topluluk tarafından geliştirilmiş bir araç
 
 Roblox imleçlerini özelleştirmek için hafif bir Windows aracı.
 
-## 🎬 Demo
-
-[![Watch Demo](https://img.youtube.com/vi/kKYbosdVFig/0.jpg)](https://www.youtube.com/watch?v=kKYbosdVFig)
-
-> 🎥 **Demo:** RBX Cursor Studio'nun çalışmasını izlemek için yukarıdaki önizlemeye tıklayın.
-
 **Güncel sürüm: 4.0.0**
+
+![RBX Cursor Studio Ekran Görüntüsü]
 
 ## 🆕 4.0.0 ile Gelenler
 
@@ -48,6 +44,9 @@ Otomatik Boyutlandır + Ortala, Sadece Ortala ve Boyutu Sıfırla kısayolları;
 ### 📦 Paket Sistemi
 İstediğin kadar paket oluştur, kaydet ve yönet. `.rbxcursor` / `.zip` olarak dışa aktarıp paylaş, ya da sürükle-bırak ile içe aktar. **Hızlı Paket Geçişi**, `Ctrl+Alt+1/2/3` ile Roblox içindeyken bile paketler arasında anında geçiş yapar.
 
+### 🕹️ Oyuna Göre Otomatik Paket — 🧪 Deneysel, opt-in (varsayılan kapalı)
+Bir Roblox oyununu kayıtlı paketlerinden birine eşle; o oyunu açtığında uygulama otomatik olarak o pakete geçsin. Bu, Roblox'un kendi yerel log dosyalarını (`%LOCALAPPDATA%\Roblox\logs`) **salt okunur** okuyarak çalışır — başka hiçbir şey yapmaz. Uygulama bu özellik için Roblox'un belleğini okumaz, sürecine enjekte olmaz ve ağ isteği atmaz. Bir paketi elle seçersen (menü, kısayol ya da tepsi simgesi), otomatik geçiş o oturum boyunca araya girmez.
+
 ### 🕓 Geçmiş
 Daha önce seçtiğin her imleç, istediğin zaman tekrar uygulayabileceğin bir Geçmiş sekmesinde saklanır.
 
@@ -62,6 +61,12 @@ Boyut ve konuma dokunmadan, şu an aktif tüm imleçleri tek bir renk tonuyla bo
 
 ### 🎬 Kişiselleştirme & ⚙️ Ayarlar
 Uygulamanın arkaplanını değiştir, Türkçe/İngilizce arasında anında geçiş yap, Windows başlangıcında otomatik aç ve algılanan Roblox sürümünü Ayarlar'dan gör.
+
+### 🔔 Güncellemeler
+Açılışta GitHub'ın herkese açık "latest release" adresine **tek bir** sürüm sorusu gönderilir (kimlik/hesap verisi gönderilmez); yeni sürüm varsa Ayarlar'da ve sol üstteki sürüm etiketinde haber verilir.
+- **Kurulum sürümü:** *İndir ve kur* → uygulama güncellemeyi (sha512 doğrulamalı) indirir, *Yeniden başlat ve güncelle* ile kendini günceller. GitHub sayfasına gitmene gerek yok. İlk kez bu özelliği içeren sürümü elle kurman gerekir; sonrası otomatik gelir.
+- **Portable sürüm:** kendini güncelleyemez; yeni sürüm varsa Releases sayfasını açar.
+Her şey Ayarlar > Güncellemeler'den kapatılabilir; indirme/kurulum yalnızca sen onaylayınca başlar.
 
 ### 💻 Platform ve Dağıtım
 Taşınabilir exe ya da NSIS kurulum dosyası olarak dağıtılır. Electron tabanlı; animasyonlu imleçler yalnızca gerektiğinde başlayan küçük bir native yardımcıda (`cursor_helper.exe`) çalışır. Kaynak kodu açık ve ticari olmayan bir lisansla paylaşılır, sürümler VirusTotal ile taranmıştır.

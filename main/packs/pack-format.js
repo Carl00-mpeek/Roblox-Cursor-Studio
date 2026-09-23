@@ -1,24 +1,10 @@
-// packs/pack-format.js
-// Bir paketin .rbxcursor/.zip dosya biçimini bilir: manifest.json,
-// pack-meta.json (animasyonlu paketler) ve cursor PNG'lerinin zip içindeki
-// düzeni. Diskte paketlerin nerede/nasıl saklandığıyla ilgilenmez — o iş
-// packs/pack-manager.js'te; burası sadece bayt <-> yapı dönüşümü yapar.
 
 const path = require('path');
 const { buildZip, parseZip } = require('../zip-lite');
-
-// ---- Güvenilmeyen zip içeriği için doğrulama ----
-// Bir .rbxcursor dosyasını herkes hazırlayabilir; içindeki yollar ve pack-meta.json
-// alanları KÖTÜ NİYETLİ olabilir (../ ile klasör dışına yazma, UNC/mutlak yol,
-// native yardımcıya giden komut satırına enjeksiyon...). Bu yüzden her şey burada
-// beyaz liste ile filtrelenir; pack-manager sadece temizlenmiş veriyi görür.
+const i18n = require('../i18n');
 
 const RESERVED_WIN_NAMES = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
 
-// Sadece 'anim/<ad>.ani' biçimini kabul eder (dışa aktarma zaten böyle yazar:
-// anim/arrow.ani, anim/click.ani ...). Alt klasör, '..', ':' (NTFS akışları,
-// sürücü harfi), boşluk/nokta hileleri ve Windows'un ayrılmış adları reddedilir.
-// Güvenliyse normalize edilmiş 'anim/<ad>.ani' döner, değilse null.
 function safeAnimEntryName(rawName) {
   const parts = String(rawName).replace(/\\/g, '/').split('/');
   if (parts.length !== 2 || parts[0].toLowerCase() !== 'anim') return null;
@@ -35,9 +21,6 @@ function clampNum(v, min, max, fallback, integer = false) {
   return integer ? Math.round(c) : c;
 }
 
-// pack-meta.json'u sıfırdan yeniden kurar: sadece bilinen imleç türleri, sadece
-// pakette gerçekten var olan güvenli .ani dosyaları ve sadece SAYISAL ayarlar
-// (aralıklar arayüzdeki kaydırıcılarla aynı). Geçerli hiçbir girdi kalmazsa null.
 function sanitizePackMeta(raw, animFiles, kinds) {
   if (!raw || typeof raw !== 'object' || !raw.animated || !raw.anim || typeof raw.anim !== 'object') return null;
   const out = { animated: true, anim: {}, global: {} };
@@ -64,8 +47,6 @@ function sanitizePackMeta(raw, animFiles, kinds) {
   return out;
 }
 
-// cursorFiles: [{ file, data }]
-// animMeta: null | { metaBuffer, aniEntries: [{ relPath, data }] }
 function serializePack({ name, cursorFiles, animMeta }) {
   const entries = [];
   const manifest = { app: 'RBXCursorStudio', formatVersion: 1, name, exportedAt: new Date().toISOString() };
@@ -75,8 +56,6 @@ function serializePack({ name, cursorFiles, animMeta }) {
     entries.push({ name: file, data });
   }
 
-  // Animasyonlu Paketse, .ani dosyalarını ve pack-meta.json'u da pakete dahil et
-  // ki arkadaşına gönderdiğinde animasyonu da birlikte gitsin.
   if (animMeta) {
     entries.push({ name: 'pack-meta.json', data: animMeta.metaBuffer });
     for (const { relPath, data } of animMeta.aniEntries) {
@@ -84,13 +63,10 @@ function serializePack({ name, cursorFiles, animMeta }) {
     }
   }
 
-  if (entries.length <= 1) throw new Error('Dışa aktarılacak imleç yok.');
+  if (entries.length <= 1) throw new Error(i18n.t('pack_nothing_to_export'));
   return buildZip(entries);
 }
 
-// targets: TARGETS map (kind -> roblox dosya adı)
-// Döner: { manifestName, fileMap (kind -> Buffer), metaRaw (TEMİZLENMİŞ meta veya null),
-//          animFiles (sadece güvenli 'anim/x.ani' adları -> Buffer) }
 function deserializePack(buf, targets) {
   const entries = parseZip(buf);
   let manifestName = null;
@@ -106,16 +82,16 @@ function deserializePack(buf, targets) {
       try {
         const manifest = JSON.parse(entry.data.toString('utf-8'));
         if (manifest && manifest.name) manifestName = manifest.name;
-      } catch (_) { /* manifest bozuksa yoksay */ }
+      } catch (_) {  }
       continue;
     }
     if (base.toLowerCase() === 'pack-meta.json') {
-      try { metaRaw = JSON.parse(entry.data.toString('utf-8')); } catch (_) { /* meta bozuksa normal paket olarak devam et */ }
+      try { metaRaw = JSON.parse(entry.data.toString('utf-8')); } catch (_) {  }
       continue;
     }
     if (/^anim\//i.test(normName)) {
       const safeName = safeAnimEntryName(normName);
-      if (safeName) animFiles[safeName] = entry.data; // güvenli olmayan yollar sessizce atlanır
+      if (safeName) animFiles[safeName] = entry.data;
       continue;
     }
     for (const [kind, target] of Object.entries(targets)) {

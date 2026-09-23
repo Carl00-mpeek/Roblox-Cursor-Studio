@@ -1,8 +1,3 @@
-// ================= GÖRSEL NORMALİZASYONU =================
-// Yüklenen görseli Roblox'un orijinal imleç ölçülerine göre ölçekleyip hizalayan
-// yardımcılar: alfa sınırı ölçümü, referans profilleri, otomatik sığdırma,
-// dosya/canvas yardımcıları.
-// Bağımlılıklar (global): TARGETS, EXPORT_SIZE, exportSizeFor -> renderer.js
 
 function isCurOrIco(pathOrUrl) {
   return /\.(cur|ico)(\?.*)?$/i.test(pathOrUrl);
@@ -34,9 +29,6 @@ function getAlphaBounds(source, alphaThreshold = 8) {
   }
 }
 
-// Varsayılanlar artık sabit koordinat olarak kodlanmıyor. Uygulama ile gelen
-// gerçek Roblox cursor PNG'leri referans alınarak açılışta piksel seviyesinde
-// ölçülüyor. Referans okunamazsa güvenli fallback değerleri kullanılır.
 const FALLBACK_CURSOR_REFERENCE = {
   arrow:     { minX: 29, minY: 32, maxX: 45, maxY: 57, width: 17, height: 26, canvas: 64 },
   click:     { minX: 24, minY: 32, maxX: 44, maxY: 59, width: 21, height: 28, canvas: 64 },
@@ -101,8 +93,6 @@ function scaleAndAlignToReference(kind, img) {
   const scale = Math.max(0.05, Math.min(3, fitRatio / baseRatio));
   const ratio = baseRatio * scale;
 
-  // Referansın gerçek görsel alanının SOL/ÜST köşesini hedefleriz. Bu,
-  // yalnızca canvas merkezini eşitlemekten daha kararlıdır.
   const centeredImageLeft = (EXPORT_SIZE - img.width * ratio) / 2;
   const centeredImageTop = (EXPORT_SIZE - img.height * ratio) / 2;
   const offsetX = ref.minX - (centeredImageLeft + bounds.minX * ratio);

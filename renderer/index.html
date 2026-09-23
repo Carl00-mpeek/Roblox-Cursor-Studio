@@ -248,6 +248,30 @@
             <span class="switch-track"><span class="switch-thumb"></span></span>
           </label>
         </div>
+        <div class="settings-row">
+          <div>
+            <strong data-i18n="minimize_tray">Kapatınca Tepsiye Küçül</strong>
+            <p class="muted small" data-i18n="minimize_tray_desc">Pencereyi kapatınca uygulama çıkmaz, sistem tepsisinde çalışmaya devam eder. Tepsi simgesinden tekrar açabilir ya da tamamen çıkabilirsin.</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle-minimize-tray" />
+            <span class="switch-track"><span class="switch-thumb"></span></span>
+          </label>
+        </div>
+        <div class="settings-row">
+          <div>
+            <strong data-i18n="update_title">Güncellemeler</strong>
+            <p class="muted small" data-i18n="update_desc">Açılışta GitHub'a tek bir sürüm sorusu gönderir; yeni sürüm varsa haber verir. İndirme ve kurulum yalnızca sen onaylayınca başlar.</p>
+            <p class="muted small" id="update-status"></p>
+          </div>
+          <div class="update-controls">
+            <button type="button" class="btn-ghost small" id="btn-check-update" data-i18n="update_check_btn">Şimdi kontrol et</button>
+            <label class="switch" data-i18n-title="update_auto_title" title="Açılışta otomatik kontrol">
+              <input type="checkbox" id="toggle-check-updates" />
+              <span class="switch-track"><span class="switch-thumb"></span></span>
+            </label>
+          </div>
+        </div>
         <div class="settings-row settings-quickswitch">
           <div>
             <strong data-i18n="quickswitch_title">Hızlı Paket Geçişi</strong>
@@ -270,6 +294,29 @@
               <select id="quickswitch-3" class="settings-select"></select>
             </label>
           </div>
+        </div>
+        <div class="settings-row settings-gamewatch">
+          <div>
+            <strong data-i18n="gamewatch_title">Oyuna Göre Otomatik Paket</strong>
+            <p class="muted small" data-i18n="gamewatch_desc">Roblox'un kendi log dosyalarını (salt okunur) izleyerek açtığın oyuna göre eşlediğin paketi otomatik uygular. Roblox sürecine dokunmaz, ağa istek atmaz.</p>
+            <p class="muted small" data-i18n="gamewatch_unfinished">⚠️ Ayrıştırma mantığı gerçek log örnekleriyle henüz tamamlanmadı; bu açık olsa bile şu an hiçbir paketi otomatik değiştirmez.</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle-gamewatch" />
+            <span class="switch-track"><span class="switch-thumb"></span></span>
+          </label>
+        </div>
+        <div class="settings-row settings-gamewatch-mapping">
+          <div class="settings-gamewatch-mapping-head">
+            <strong data-i18n="gamewatch_mapping_title">Oyun → Paket Eşlemesi</strong>
+            <button type="button" class="btn-ghost small" id="btn-gamewatch-add-current" data-i18n="gamewatch_add_current">Son oynadığım oyunu ekle</button>
+          </div>
+          <div class="gamewatch-add-row">
+            <input type="text" id="gamewatch-new-placeid" data-i18n-placeholder="gamewatch_placeid_placeholder" placeholder="placeId (ör. 123456789)" />
+            <select id="gamewatch-new-pack" class="settings-select"></select>
+            <button type="button" class="btn-ghost small" id="btn-gamewatch-add-mapping" data-i18n="gamewatch_add_mapping">Ekle</button>
+          </div>
+          <div id="gamewatch-mapping-list" class="gamewatch-mapping-list"></div>
         </div>
         <div class="settings-row settings-history">
           <div class="settings-history-head">

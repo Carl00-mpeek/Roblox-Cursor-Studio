@@ -1,44 +1,33 @@
-// packs/pack-manager.js
-// Paket (pack) yönetimi: listeleme, kaydetme, uygulama, silme, dışa/içe
-// aktarma. Animasyonlu Paket meta verisi de burada tutulur. Sıkı biçim
-// (zip içeriği) bilgisini pack-format.js'e devreder; kalıcı uygulama
-// (dosyaları Roblox'a yazma) roblox/cursor-manager.js'in applyLock
-// kuyruğunu (withApplyLock) kullanır.
 
 const fs = require('fs');
 const path = require('path');
 const { dialog } = require('electron');
 
 const configManager = require('../config/config-manager');
+const i18n = require('../i18n');
 const detector = require('../roblox/detector');
 const { validateCursorFile, backupIfNeeded, withApplyLock } = require('../roblox/cursor-manager');
 const { serializePack, deserializePack } = require('./pack-format');
 
 const { TARGETS, CURSOR_CANVAS_SIZES } = detector;
 
-// Animasyonlu Paket uygulanırken (applyPackInstant) çağrılır. Döngüsel
-// require'dan kaçınmak için animation/anim-controller.js örneği main.js
-// tarafından burada set edilir.
 let animController = null;
 function setAnimController(controller) {
   animController = controller;
 }
 
-// Bir paketin "Animasyonlu Paket" olup olmadığını ve varsa hangi
-// durumların hangi .ani dosyasıyla ilişkilendirildiğini tutan küçük bir
-// metadata dosyası. Bu dosya olmayan paketler normal (statik) pakettir —
-// eski paketlerle tam geriye dönük uyumluluk için.
-// Bir yolu 'base' klasörünün İÇİNDE çözer; '..', mutlak yol, UNC vb. ile dışarı
-// çıkmaya çalışan her şeyi reddeder. Dosya adı/yolu güvenilmeyen bir kaynaktan
-// (zip, pack-meta.json) geliyorsa path.join yerine bunu kullan.
 function resolveInside(base, ...segments) {
   const root = path.resolve(base);
   const target = path.resolve(root, ...segments);
   const rel = path.relative(root, target);
   if (!rel || rel === '..' || rel.startsWith('..' + path.sep) || path.isAbsolute(rel)) {
-    throw new Error('Geçersiz dosya yolu: paket klasörünün dışına çıkılamaz.');
+    throw new Error(i18n.t('pack_invalid_path'));
   }
   return target;
+}
+
+function resolvePackDir(name) {
+  return resolveInside(configManager.PACKS, String(name == null ? '' : name));
 }
 
 function packMetaPath(dir) { return path.join(dir, 'pack-meta.json'); }
@@ -49,8 +38,6 @@ function readPackMeta(dir) {
   try { return JSON.parse(fs.readFileSync(p, 'utf-8')); } catch (_) { return null; }
 }
 
-// animCursor.snapshotForPack()'ten gelen anlık görüntüyü pakete gömer:
-// kullanılan .ani dosyalarını pakete kopyalar ve pack-meta.json'u yazar.
 function writePackAnimData(dir, snapshot) {
   if (!snapshot) return;
   const animDir = path.join(dir, 'anim');
@@ -67,7 +54,7 @@ function writePackAnimData(dir, snapshot) {
 
 function listPacks() {
   return fs.readdirSync(configManager.PACKS, { withFileTypes: true })
-    .filter(d => d.isDirectory())
+    .filter(d => d.isDirectory() && !d.name.startsWith('.'))
     .map(d => {
       const dir = path.join(configManager.PACKS, d.name);
       const thumbs = {};
@@ -76,13 +63,32 @@ function listPacks() {
         if (fs.existsSync(p)) thumbs[kind] = p;
       }
       const meta = readPackMeta(dir);
-      return { name: d.name, dir, thumbs, count: Object.keys(thumbs).length, animated: !!(meta && meta.animated) };
+
+      const animFiles = {};
+      if (meta && meta.animated && meta.anim) {
+        for (const [kind, entry] of Object.entries(meta.anim)) {
+          if (!TARGETS[kind] || !entry || !entry.ani) continue;
+          try {
+            const p = resolveInside(dir, ...String(entry.ani).split('/'));
+            if (fs.existsSync(p)) animFiles[kind] = p;
+          } catch (_) {  }
+        }
+      }
+      const animKinds = Object.keys(animFiles);
+      return { name: d.name, dir, thumbs, count: Object.keys(thumbs).length, animated: !!(meta && meta.animated), animKinds, animFiles };
     });
 }
 
+function sanitizePackName(base) {
+  let safe = String(base).replace(/[\\/:*?"<>|\x00-\x1f]/g, '_').trim().replace(/[. ]+$/, '').slice(0, 100);
+  if (!safe || /^\.+$/.test(safe)) return '';
+  if (/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$/i.test(safe)) safe = '_' + safe;
+  return safe;
+}
+
 function safePackName(name) {
-  const safe = String(name).replace(/[\\\\/:*?"<>|]/g, '_').trim();
-  if (!safe) throw new Error('Geçersiz paket adı.');
+  const safe = sanitizePackName(name);
+  if (!safe) throw new Error(i18n.t('pack_invalid_name'));
   return safe;
 }
 
@@ -90,14 +96,12 @@ function removePackIfExists(dir) {
   try {
     if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
   } catch (err) {
-    throw new Error('Eski paket silinemedi: ' + err.message);
+    throw new Error(i18n.t('pack_old_delete_failed', { msg: err.message }));
   }
 }
 
 function findRobloxCursorSources() {
-  // Çalışan sürüm robloxDirs() tarafından ilk sıraya alınır; Roblox kapalıysa
-  // en yeni uygun sürüm seçilir. Böylece aktif cursoru paketlemek için Roblox'un
-  // o anda açık olması zorunlu değildir.
+
   for (const info of detector.robloxDirs()) {
     const files = {};
     for (const [kind, file] of Object.entries(TARGETS)) {
@@ -109,7 +113,7 @@ function findRobloxCursorSources() {
   return { info: null, files: {} };
 }
 
-function copySourcesToPack(name, sourceResolver) {
+function copySourcesToPack(name, sourceResolver, beforeCommit = null) {
   const safe = safePackName(name);
   const dst = path.join(configManager.PACKS, safe);
   const temp = path.join(configManager.PACKS, `.${safe}.tmp-${process.pid}-${Date.now()}`);
@@ -125,10 +129,11 @@ function copySourcesToPack(name, sourceResolver) {
     }
 
     if (!copied) {
-      throw new Error('Kaydedilecek cursor bulunamadı. Önce cursor seçin veya Roblox cursorlarının bulunduğundan emin olun.');
+      throw new Error(i18n.t('pack_no_cursor_to_save'));
     }
 
-    // Aynı isimde eski paket varsa tamamen yenisiyle değiştir.
+    if (typeof beforeCommit === 'function') beforeCommit(temp);
+
     removePackIfExists(dst);
     fs.renameSync(temp, dst);
     const cfg = configManager.getConfig();
@@ -141,6 +146,20 @@ function copySourcesToPack(name, sourceResolver) {
   }
 }
 
+function resolveArtSource(kind, file, active) {
+  const real = animController && animController.getRealArtPath(kind);
+  if (real) return real;
+  const animated = animController && animController.isStateAnimated(kind);
+  if (!animated) {
+    const currentFile = path.join(configManager.CURRENT, file);
+    if (fs.existsSync(currentFile)) return currentFile;
+    if (active && active.files[kind] && fs.existsSync(active.files[kind])) return active.files[kind];
+  }
+
+  const bundled = path.join(configManager.BUNDLED_ORIGINALS, file);
+  return fs.existsSync(bundled) ? bundled : null;
+}
+
 function savePackAs(name, selectedKinds = null) {
   const active = findRobloxCursorSources();
   const selected = Array.isArray(selectedKinds) && selectedKinds.length
@@ -148,64 +167,49 @@ function savePackAs(name, selectedKinds = null) {
     : new Set(Object.keys(TARGETS));
   return copySourcesToPack(name, (kind, file) => {
     if (!selected.has(kind)) return null;
-    const currentFile = path.join(configManager.CURRENT, file);
-    // Öncelik: uygulamada seçilmiş/current cursor -> Roblox'taki aktif cursor
-    // -> uygulama içindeki güvenli varsayılan cursor. Böylece New Pack,
-    // Roblox kapalıyken veya CURRENT boşken de mutlaka çalışabilir.
-    if (fs.existsSync(currentFile)) return currentFile;
-    if (active.files[kind] && fs.existsSync(active.files[kind])) return active.files[kind];
-    const bundled = path.join(configManager.BUNDLED_ORIGINALS, file);
-    return fs.existsSync(bundled) ? bundled : null;
+
+    return resolveArtSource(kind, file, active);
   });
 }
 
 function saveActiveCursorsAsPack(name) {
   const active = findRobloxCursorSources();
   if (!Object.keys(active.files).length) {
-    throw new Error('Roblox cursor dosyaları bulunamadı. Önce Roblox\'u açıp cursorların oluştuğundan emin olun.');
+    throw new Error(i18n.t('pack_no_roblox_cursor_files'));
   }
-  return copySourcesToPack(name, (kind) => active.files[kind]);
+  return copySourcesToPack(name, (kind, file) => {
+
+    const real = animController && animController.getRealArtPath(kind);
+    if (real) return real;
+    if (animController && animController.isStateAnimated(kind)) return resolveArtSource(kind, file, active);
+    return active.files[kind];
+  });
 }
 
-// Animasyonlu Paket: normal paketlerden tamamen ayrı bir kayıt yeri.
-// Sadece şu an .ani atanmış (ve kullanıcının seçtiği) durumları alır; her
-// durum için hem animasyon ayarlarını (anim-cursor.js -> snapshotForPack)
-// hem de o durumun o anki cursor görselini pakete gömer.
 function saveAnimPackAs(name, selectedAnimKinds) {
-  if (!animController) throw new Error('Animasyon denetleyicisi henüz hazır değil.');
+  if (!animController) throw new Error(i18n.t('pack_anim_controller_not_ready'));
   const snapshot = animController.snapshotForPack(selectedAnimKinds);
-  if (!snapshot) throw new Error('Seçilen durumlar için atanmış bir .ani animasyonu bulunamadı.');
+  if (!snapshot) throw new Error(i18n.t('pack_no_anim_assigned'));
   const active = findRobloxCursorSources();
   const kinds = new Set(Object.keys(snapshot.anim));
-  const saved = copySourcesToPack(name, (kind, file) => {
-    if (!kinds.has(kind)) return null;
-    const currentFile = path.join(configManager.CURRENT, file);
-    if (fs.existsSync(currentFile)) return currentFile;
-    if (active.files[kind] && fs.existsSync(active.files[kind])) return active.files[kind];
-    const bundled = path.join(configManager.BUNDLED_ORIGINALS, file);
-    return fs.existsSync(bundled) ? bundled : null;
-  });
-  writePackAnimData(path.join(configManager.PACKS, saved), snapshot);
-  return saved;
+  return copySourcesToPack(
+    name,
+    (kind, file) => (kinds.has(kind) ? resolveArtSource(kind, file, active) : null),
+    (tempDir) => writePackAnimData(tempDir, snapshot)
+  );
 }
 
-// Hızlı paket uygulama: CURRENT staging + çoklu SHA doğrulamasını atlar.
-// Kullanıcı paket değiştirirken asıl gecikme bu iki aşamalı kopyalama/doğrulamadan
-// geliyordu. Paket dosyaları zaten doğrulanmış PNG olduğundan doğrudan aktif
-// Roblox sürümüne yazıyoruz; kilit varsa kısa aralıklarla yeniden deniyoruz.
 const FAST_APPLY_DELAYS = [0, 20, 45, 80];
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function applyPackInstant(name) {
-  const dir = path.join(configManager.PACKS, name);
-  if (!fs.existsSync(dir)) throw new Error('Paket bulunamadı.');
+  const dir = resolvePackDir(name);
+  if (!fs.existsSync(dir)) throw new Error(i18n.t('pack_not_found'));
   const active = detector.currentRobloxDirInfo();
-  if (!active) throw new Error('Roblox imleç klasörü bulunamadı.');
+  if (!active) throw new Error(i18n.t('pack_roblox_cursor_folder_not_found'));
 
-  // İlk uygulamada orijinal yedeği oluştur; sonraki geçişlerde tekrar SHA
-  // hesaplayıp bekleme yapma.
   await backupIfNeeded();
 
   const pending = [];
@@ -213,50 +217,51 @@ async function applyPackInstant(name) {
     const src = path.join(dir, file);
     if (!fs.existsSync(src)) continue;
     if (!validateCursorFile(kind, src)) {
-      throw new Error(`${file} geçersiz veya ${CURSOR_CANVAS_SIZES[kind]}x${CURSOR_CANVAS_SIZES[kind]} PNG değil.`);
+      throw new Error(i18n.t('pack_file_invalid_png', { file, size: CURSOR_CANVAS_SIZES[kind] }));
     }
     pending.push({ kind, file, src, dst: detector.robloxCursorPath(active, kind) });
   }
-  if (!pending.length) throw new Error('Paketin içinde uygulanabilir cursor bulunamadı.');
+  if (!pending.length) throw new Error(i18n.t('pack_no_applicable_cursor'));
 
-  return withApplyLock(async () => {
+  const result = await withApplyLock(async () => {
     for (const item of pending) {
+
+      const isAnimated = animController && animController.isStateAnimated(item.kind);
       let lastError = null;
       for (let i = 0; i < FAST_APPLY_DELAYS.length; i++) {
         if (FAST_APPLY_DELAYS[i]) await sleep(FAST_APPLY_DELAYS[i]);
         try {
-          fs.copyFileSync(item.src, item.dst);
+          if (isAnimated) {
+            animController.stagePackImageForAnimatedState(item.kind, item.src);
+          } else {
+            fs.copyFileSync(item.src, item.dst);
+          }
           lastError = null;
           break;
         } catch (err) { lastError = err; }
       }
       if (lastError) throw lastError;
-      // ÖNEMLİ: CURRENT (staging) klasörünü de güncelle. Önceden burası
-      // atlanıyordu; bu yüzden kullanıcı editörden özel bir cursor kaydedip
-      // (CURRENT dolup) sonra Paketler ekranından başka bir paket uyguladığında,
-      // 5 saniyede bir çalışan otomatik onarım (maybeAutoReinstall) Roblox'taki
-      // dosyaların CURRENT ile uyuşmadığını görüp az önce uygulanan paketi
-      // sessizce eski CURRENT içeriğiyle (önceki özel cursor) eziyordu.
-      try { fs.copyFileSync(item.src, path.join(configManager.CURRENT, item.file)); } catch (_) { /* CURRENT güncellenemezse paket uygulaması yine de geçerli sayılır */ }
+
+      try { fs.copyFileSync(item.src, path.join(configManager.CURRENT, item.file)); } catch (_) {  }
     }
     const cfg = configManager.getConfig();
     cfg.lastPack = name;
     cfg.lastKnownVersion = active.version;
     configManager.saveConfig();
 
-    // Animasyonlu Paket ise, kayıtlı .ani atamalarını/ayarlarını da uygula.
-    const meta = readPackMeta(dir);
-    if (meta && meta.animated && animController) {
-      await animController.applyPackAnim(dir, meta);
-    }
-
     return { name, count: pending.length, version: active.version };
   });
+
+  const meta = readPackMeta(dir);
+  if (animController) {
+    await animController.applyPackAnim(dir, meta && meta.animated ? meta : { anim: {} });
+  }
+  return result;
 }
 
 function applyPackToCurrent(name) {
-  const dir = path.join(configManager.PACKS, name);
-  if (!fs.existsSync(dir)) throw new Error('Paket bulunamadı.');
+  const dir = resolvePackDir(name);
+  if (!fs.existsSync(dir)) throw new Error(i18n.t('pack_not_found'));
   let count = 0;
   for (const file of Object.values(TARGETS)) {
     const src = path.join(dir, file);
@@ -269,17 +274,12 @@ function applyPackToCurrent(name) {
 }
 
 function deletePack(name) {
-  const dir = path.join(configManager.PACKS, name);
+  const dir = resolvePackDir(name);
   if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
 }
 
-// ---------- Paket dışa/içe aktarma (.rbxcursor / .zip) ----------
 function uniquePackName(base) {
-  // Windows'ta sondaki nokta/boşluk atılır, '.' / '..' klasör olarak anlam taşır
-  // ve CON/NUL gibi adlar ayrılmıştır; hepsini güvenli bir ada çevir.
-  let safe = String(base).replace(/[\\/:*?"<>|\x00-\x1f]/g, '_').trim().replace(/[. ]+$/, '').slice(0, 100);
-  if (!safe || /^\.+$/.test(safe)) safe = 'Paket';
-  if (/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\..*)?$/i.test(safe)) safe = '_' + safe;
+  const safe = sanitizePackName(base) || 'Paket';
   let name = safe;
   let counter = 2;
   while (fs.existsSync(path.join(configManager.PACKS, name))) {
@@ -290,8 +290,8 @@ function uniquePackName(base) {
 }
 
 async function exportPack(name) {
-  const dir = path.join(configManager.PACKS, name);
-  if (!fs.existsSync(dir)) throw new Error('Paket bulunamadı.');
+  const dir = resolvePackDir(name);
+  if (!fs.existsSync(dir)) throw new Error(i18n.t('pack_not_found'));
 
   const cursorFiles = [];
   for (const file of Object.values(TARGETS)) {
@@ -304,8 +304,7 @@ async function exportPack(name) {
   if (meta && meta.animated) {
     const aniEntries = [];
     for (const entry of Object.values(meta.anim || {})) {
-      // pack-meta.json güvenilmez olabilir (eski sürümde içe aktarılmış paket):
-      // paket klasörü dışını gösteren yolları sessizce atla.
+
       let aniAbs;
       try { aniAbs = resolveInside(dir, ...String(entry.ani).split('/')); } catch (_) { continue; }
       if (fs.existsSync(aniAbs)) aniEntries.push({ relPath: entry.ani, data: fs.readFileSync(aniAbs) });
@@ -333,7 +332,7 @@ async function exportPack(name) {
 function importPackFromBuffer(buf, suggestedName) {
   const { manifestName, fileMap, metaRaw, animFiles } = deserializePack(buf, TARGETS);
   const kinds = Object.keys(fileMap);
-  if (!kinds.length) throw new Error('Dosyada geçerli bir imleç bulunamadı.');
+  if (!kinds.length) throw new Error(i18n.t('pack_no_valid_cursor_in_file'));
 
   const name = uniquePackName(manifestName || suggestedName || 'İçe Aktarılan Paket');
   const dir = resolveInside(configManager.PACKS, name);
@@ -346,7 +345,7 @@ function importPackFromBuffer(buf, suggestedName) {
   if (metaRaw && metaRaw.animated && metaRaw.anim && Object.keys(animFiles).length) {
     fs.mkdirSync(path.join(dir, 'anim'), { recursive: true });
     for (const [relName, data] of Object.entries(animFiles)) {
-      // animFiles anahtarları pack-format.js'te zaten doğrulandı; burası ikinci savunma hattı.
+
       fs.writeFileSync(resolveInside(dir, ...relName.split('/')), data);
     }
     fs.writeFileSync(packMetaPath(dir), JSON.stringify(metaRaw, null, 2), 'utf-8');
@@ -358,6 +357,7 @@ function importPackFromBuffer(buf, suggestedName) {
 
 module.exports = {
   setAnimController,
+  resolvePackDir,
   readPackMeta,
   packMetaPath,
   listPacks,

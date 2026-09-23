@@ -1,15 +1,4 @@
-// ================= RENK DÜZENLEYİCİ =================
-// Renklendirme çekirdeği (hslToRgb / colorizeImageData), düzenleyicideki renk
-// kontrolleri ve anasayfadaki "İmleç Rengi Değiştirici" penceresi.
-// Bağımlılıklar (global): editorState, drawEditor, renderCursorLayer -> cursor-editor.js,
-//                         TARGETS, cursorName, toast -> renderer.js
 
-// ---- renklendirme (siyah-beyazdan renk üretme) ----
-// Roblox imleçleri genelde siyah-beyaz/gri tonlamalı olduğu için basit bir
-// "hue-rotate" filtresinin hiçbir etkisi olmaz (gri pikselde renk doygunluğu
-// yoktur). Bunun yerine her pikselin PARLAKLIĞINI (luminance) koruyup, o
-// parlaklığı seçilen renk tonuyla (hue) yeniden boyuyoruz — böylece tek bir
-// siyah-beyaz taban görselden onlarca farklı renkli varyasyon üretilebilir.
 function hslToRgb(h, s, l) {
   let r, g, b;
   if (s === 0) {
@@ -37,7 +26,7 @@ function colorizeImageData(imageData, hueDeg, saturation = 0.6) {
   const data = imageData.data;
   const h = (((hueDeg % 360) + 360) % 360) / 360;
   for (let i = 0; i < data.length; i += 4) {
-    if (data[i + 3] === 0) continue; // saydam piksele dokunma
+    if (data[i + 3] === 0) continue;
     const lum = (0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]) / 255;
     const [nr, ng, nb] = hslToRgb(h, saturation, lum);
     data[i] = nr; data[i + 1] = ng; data[i + 2] = nb;
@@ -66,9 +55,6 @@ document.getElementById('editor-hue').oninput = (e) => {
   if (editorState.colorize) drawEditor();
 };
 
-// "Renk Varyasyonları Oluştur": mevcut görselden, farklı renk tonlarına
-// boyanmış onlarca küçük örnek üretir. Bir örneğe tıklamak o rengi anında
-// düzenleyiciye uygular (kaydetmek için hâlâ "Kaydet" gerekir).
 document.getElementById('editor-color-variations').onclick = () => {
   if (!editorState) return;
   const strip = document.getElementById('color-variation-strip');
@@ -96,13 +82,7 @@ document.getElementById('editor-color-variations').onclick = () => {
   }
 };
 
-// ================= İMLEÇ RENGİ DEĞİŞTİRİCİ =================
-// Düzenleyicideki "Renklendir" özelliği tek bir cursoru işlerken, burası
-// şu an Roblox'ta GERÇEKTEN aktif olan tüm cursorları (Normal/Tıklama/
-// Yazı/Shift Lock) tek bir renk tonuyla aynı anda boyar ve anında uygular.
-// Bilerek yeniden boyutlandırma/ortalama YAPMAZ — sadece piksellerin rengini
-// değiştirir; böylece cursorun mevcut boyutu/konumu asla bozulmaz.
-let colorChangerState = null; // { images: { kind: HTMLImageElement }, hue }
+let colorChangerState = null;
 
 function colorizedCanvasFor(img, hue) {
   const canvas = document.createElement('canvas');
@@ -140,8 +120,7 @@ function drawColorChangerPreviews() {
     ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, 64, 64);
     const colored = colorizedCanvasFor(img, colorChangerState.hue);
-    // görsel orantısını koruyarak 64x64 önizleme kutusuna sığdır (yalnızca
-    // önizleme amaçlı; kaydedilen dosyanın gerçek boyutu değişmez)
+
     const ratio = Math.min(64 / colored.width, 64 / colored.height);
     const w = colored.width * ratio, h = colored.height * ratio;
     ctx.drawImage(colored, (64 - w) / 2, (64 - h) / 2, w, h);
@@ -162,7 +141,7 @@ async function openColorChanger() {
     if (!state[kind]) continue;
     try {
       images[kind] = await imageFromPath(state[kind]);
-    } catch (_) { /* bu cursor okunamazsa listeden çıkar */ }
+    } catch (_) {  }
   }
 
   if (!Object.keys(images).length) {
@@ -192,8 +171,6 @@ document.getElementById('color-changer-hue').oninput = (e) => {
   drawColorChangerPreviews();
 };
 
-// Editördeki "Renk Varyasyonları" ile aynı fikir: hızlı seçim için
-// birkaç hazır renk tonu sunan bir şerit.
 (function buildColorChangerStrip() {
   const strip = document.getElementById('color-changer-strip');
   if (!strip) return;
