@@ -17,18 +17,7 @@ A lightweight Windows tool for customizing Roblox cursors.
 
 ## 🎬 Demo
 
-<p align="center">
-  <a href="https://www.youtube.com/watch?v=kKYbosdVFig">
-    <img src="https://img.youtube.com/vi/kKYbosdVFig/maxresdefault.jpg" alt="RBX Cursor Studio — Demo" width="720">
-  </a>
-</p>
-
-<p align="center">
-  <a href="https://www.youtube.com/watch?v=kKYbosdVFig"><strong>▶ Watch the demo on YouTube</strong></a>
-</p>
-
-A short walkthrough of the app: customizing cursors, animated (.ANI) cursors, packs, and settings — so you can see how it works before downloading.
-
+[![RBX Cursor Studio Live Preview](https://img.youtube.com/vi/kKYbosdVFig/0.jpg)](https://www.youtube.com/watch?v=kKYbosdVFig)
 
 ## 🆕 What's New in 4.5.0
 
