@@ -1,6 +1,6 @@
 {
   "name": "rbx-cursor-studio",
-  "version": "4.0.0",
+  "version": "4.5.0",
   "description": "RBX Cursor Studio - Roblox imleç düzenleyici (Electron sürümü)",
   "main": "main/main.js",
   "author": "Carl",
