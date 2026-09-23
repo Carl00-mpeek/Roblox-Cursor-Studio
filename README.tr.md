@@ -13,22 +13,9 @@ Roblox imleçlerini özelleştirmek için hafif bir Windows aracı.
 
 **Güncel sürüm: 4.5.0**
 
-![RBX Cursor Studio Ekran Görüntüsü]
-
 ## 🎬 Demo
 
-<p align="center">
-  <a href="https://www.youtube.com/watch?v=kKYbosdVFig">
-    <img src="https://img.youtube.com/vi/kKYbosdVFig/maxresdefault.jpg" alt="RBX Cursor Studio — Demo" width="720">
-  </a>
-</p>
-
-<p align="center">
-  <a href="https://www.youtube.com/watch?v=kKYbosdVFig"><strong>▶ YouTube’da demoyu izle</strong></a>
-</p>
-
-Uygulamanın kısa bir tanıtımı: imleç özelleştirme, animasyonlu (.ANI) imleçler, paketler ve ayarlar — indirmeden önce nasıl çalıştığını görebilirsin.
-
+[![RBX Cursor Studio Live Preview](https://img.youtube.com/vi/kKYbosdVFig/0.jpg)](https://www.youtube.com/watch?v=kKYbosdVFig)
 
 ## 🆕 4.5.0 ile Gelenler
 
