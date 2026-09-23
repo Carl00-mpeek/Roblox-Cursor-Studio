@@ -25,6 +25,12 @@ A lightweight Windows tool for customizing Roblox cursors.
 - 🕹️ *[Experimental] Auto-switch pack by game* — in Settings, you can map a Roblox game to a pack; later, opening that game will automatically apply the matching pack. This is still in development and not yet actively functional.
 - ⚡ *Performance improvement* — for users with a large number of packs (20+), adding/deleting/applying packs is now faster.
 
+## 🆕 What's New in 4.0.0
+
+- 🎨 **Brand-new design** — the whole interface has moved to a completely new look and layout
+- ✨ A soft glow effect now highlights any cursor card once you've assigned a custom image to it
+- 🖼️ Small polish pass on the In-Context Preview scene (Play button, chat box, Shift Lock)
+
 ## ✨ Features
 
 ### 🖱️ Cursor Customization

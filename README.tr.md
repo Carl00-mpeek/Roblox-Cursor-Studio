@@ -25,6 +25,12 @@ Roblox imleçlerini özelleştirmek için hafif bir Windows aracı.
 - 🕹️ *[Deneysel] Oyuna göre otomatik paket* — Ayarlar'dan bir Roblox oyununu bir pakete eşleyebiliyorsun; ileride o oyunu açtığında ilgili paket otomatik uygulanacak. Şu an geliştirme aşamasında, henüz aktif olarak çalışmıyor.
 - ⚡ *Performans iyileştirmesi* — çok sayıda paketin olduğu kullanıcılarda (20+) paket ekleme/silme/uygulama işlemleri artık daha hızlı.
 
+## 🆕 4.0.0 ile Gelenler
+
+- 🎨 **Bambaşka bir tasarım** — arayüzün tamamı yepyeni bir görünüm ve düzene geçti
+- ✨ Özel bir görsel atadığın imleç kartlarının etrafında artık yumuşak bir parıltı efekti var
+- 🖼️ Bağlamda Önizleme sahnesinde küçük bir cila (OYNA butonu, sohbet kutusu, Shift Lock)
+
 ## ✨ Özellikler
 
 ### 🖱️ İmleç Özelleştirme
