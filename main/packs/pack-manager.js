@@ -67,7 +67,7 @@ function writePackAnimData(dir, snapshot) {
 
 function listPacks() {
   return fs.readdirSync(configManager.PACKS, { withFileTypes: true })
-    .filter(d => d.isDirectory())
+    .filter(d => d.isDirectory() && !String(d.name).startsWith('__tmp_apply__'))
     .map(d => {
       const dir = path.join(configManager.PACKS, d.name);
       const thumbs = {};
@@ -198,7 +198,8 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-async function applyPackInstant(name) {
+async function applyPackInstant(name, options = {}) {
+  const keepAsLastPack = options.keepAsLastPack !== false;
   const dir = path.join(configManager.PACKS, name);
   if (!fs.existsSync(dir)) throw new Error('Paket bulunamadı.');
   const active = detector.currentRobloxDirInfo();
@@ -240,7 +241,7 @@ async function applyPackInstant(name) {
       try { fs.copyFileSync(item.src, path.join(configManager.CURRENT, item.file)); } catch (_) { /* CURRENT güncellenemezse paket uygulaması yine de geçerli sayılır */ }
     }
     const cfg = configManager.getConfig();
-    cfg.lastPack = name;
+    if (keepAsLastPack) cfg.lastPack = name;
     cfg.lastKnownVersion = active.version;
     configManager.saveConfig();
 
@@ -250,8 +251,29 @@ async function applyPackInstant(name) {
       await animController.applyPackAnim(dir, meta);
     }
 
-    return { name, count: pending.length, version: active.version };
+    return { name, count: pending.length, version: active.version, animated: !!(meta && meta.animated) };
   });
+}
+
+/**
+ * .rbxcursor içeriğini diske kalıcı paket olarak kaydetmeden Roblox'a uygular.
+ * Geçici klasör listede görünmez; iş bitince silinir.
+ */
+async function applyPackFromBuffer(buf, suggestedName) {
+  const tempBase = `__tmp_apply__${Date.now()}`;
+  const imported = importPackFromBuffer(buf, tempBase);
+  try {
+    const result = await applyPackInstant(imported.name, { keepAsLastPack: false });
+    return {
+      name: suggestedName || imported.name.replace(/^__tmp_apply__\d+/, '').replace(/^[\s_-]+/, '') || 'Paket',
+      count: result.count,
+      version: result.version,
+      animated: !!result.animated,
+      saved: false
+    };
+  } finally {
+    try { deletePack(imported.name); } catch (_) {}
+  }
 }
 
 function applyPackToCurrent(name) {
@@ -289,15 +311,16 @@ function uniquePackName(base) {
   return name;
 }
 
-async function exportPack(name) {
+function buildPackZipBuffer(name) {
   const dir = path.join(configManager.PACKS, name);
-  if (!fs.existsSync(dir)) throw new Error('Paket bulunamadı.');
+  if (!fs.existsSync(dir)) throw new Error('Paket bulunamadı: ' + name);
 
   const cursorFiles = [];
   for (const file of Object.values(TARGETS)) {
     const p = path.join(dir, file);
     if (fs.existsSync(p)) cursorFiles.push({ file, data: fs.readFileSync(p) });
   }
+  if (!cursorFiles.length) throw new Error('Paketin içinde dışa aktarılacak imleç yok: ' + name);
 
   const meta = readPackMeta(dir);
   let animMeta = null;
@@ -313,27 +336,114 @@ async function exportPack(name) {
     animMeta = { metaBuffer: fs.readFileSync(packMetaPath(dir)), aniEntries };
   }
 
-  const zipBuffer = serializePack({ name, cursorFiles, animMeta });
+  return serializePack({ name, cursorFiles, animMeta });
+}
 
-  const safeBase = name.replace(/[\\/:*?"<>|]/g, '_');
-  const res = await dialog.showSaveDialog({
-    title: 'Paketi Dışa Aktar',
-    defaultPath: `${safeBase}.rbxcursor`,
-    filters: [
-      { name: 'RBX Cursor Paketi', extensions: ['rbxcursor'] },
-      { name: 'ZIP Arşivi', extensions: ['zip'] }
-    ]
+async function exportPack(name, destPath) {
+  const zipBuffer = buildPackZipBuffer(name);
+  const safeBase = String(name).replace(/[\\/:*?"<>|]/g, '_');
+
+  let filePath = destPath;
+  if (!filePath) {
+    const res = await dialog.showSaveDialog({
+      title: 'Paketi Dışa Aktar',
+      defaultPath: `${safeBase}.rbxcursor`,
+      filters: [
+        { name: 'RBX Cursor Paketi', extensions: ['rbxcursor'] },
+        { name: 'ZIP Arşivi', extensions: ['zip'] }
+      ]
+    });
+    if (res.canceled || !res.filePath) return null;
+    filePath = res.filePath;
+  }
+
+  fs.writeFileSync(filePath, zipBuffer);
+  return { path: filePath, name };
+}
+
+/**
+ * Birden fazla paketi seçilen klasöre ayrı .rbxcursor dosyaları olarak yazar.
+ * @param {string[]} names
+ * @returns {Promise<{dir:string, exported:string[], failed:{name:string,error:string}[]}|null>}
+ */
+async function exportPacksBulk(names) {
+  const list = Array.isArray(names) ? names.filter((n) => typeof n === 'string' && n.trim()) : [];
+  if (!list.length) throw new Error('Dışa aktarılacak paket seçilmedi.');
+
+  const res = await dialog.showOpenDialog({
+    title: 'Paketlerin kaydedileceği klasörü seç',
+    properties: ['openDirectory', 'createDirectory']
   });
-  if (res.canceled || !res.filePath) return null;
+  if (res.canceled || !res.filePaths.length) return null;
 
-  fs.writeFileSync(res.filePath, zipBuffer);
-  return { path: res.filePath };
+  const outDir = res.filePaths[0];
+  const exported = [];
+  const failed = [];
+  const usedNames = new Set();
+
+  for (const name of list) {
+    try {
+      let safeBase = String(name).replace(/[\\/:*?"<>|]/g, '_').trim() || 'Paket';
+      let fileName = `${safeBase}.rbxcursor`;
+      let n = 2;
+      while (usedNames.has(fileName.toLowerCase()) || fs.existsSync(path.join(outDir, fileName))) {
+        fileName = `${safeBase} (${n}).rbxcursor`;
+        n++;
+      }
+      usedNames.add(fileName.toLowerCase());
+      const dest = path.join(outDir, fileName);
+      await exportPack(name, dest);
+      exported.push(name);
+    } catch (err) {
+      failed.push({ name, error: err && err.message ? err.message : String(err) });
+    }
+  }
+
+  return { dir: outDir, exported, failed };
+}
+
+/**
+ * Birden fazla .rbxcursor/.zip yolunu içe aktarır.
+ * @returns {{imported:{name:string,count:number,animated:boolean}[], failed:{path:string,error:string}[]}}
+ */
+function importPacksFromPaths(filePaths) {
+  const paths = Array.isArray(filePaths) ? filePaths : [];
+  const imported = [];
+  const failed = [];
+  for (const filePath of paths) {
+    try {
+      if (!filePath || !fs.existsSync(filePath)) {
+        failed.push({ path: filePath || '', error: 'Dosya bulunamadı.' });
+        continue;
+      }
+      const buf = fs.readFileSync(filePath);
+      const suggested = path.basename(filePath, path.extname(filePath));
+      imported.push(importPackFromBuffer(buf, suggested));
+    } catch (err) {
+      failed.push({
+        path: filePath || '',
+        error: err && err.message ? err.message : String(err)
+      });
+    }
+  }
+  return { imported, failed };
 }
 
 function importPackFromBuffer(buf, suggestedName) {
   const { manifestName, fileMap, metaRaw, animFiles } = deserializePack(buf, TARGETS);
   const kinds = Object.keys(fileMap);
-  if (!kinds.length) throw new Error('Dosyada geçerli bir imleç bulunamadı.');
+  if (!kinds.length) {
+    throw new Error('Dosyada geçerli bir imleç PNG\'si bulunamadı (yalnızca doğrulanmış PNG kabul edilir).');
+  }
+
+  // İkinci savunma: boyut/imza zaten deserialize'da; apply ile aynı kuralları da uygula
+  const { validateCursorPngBuffer } = require('../roblox/cursor-manager');
+  for (const kind of kinds) {
+    const check = validateCursorPngBuffer(kind, fileMap[kind]);
+    if (!check.ok) {
+      throw new Error(`Paketteki ${TARGETS[kind]} geçersiz: ${check.reason}`);
+    }
+  }
 
   const name = uniquePackName(manifestName || suggestedName || 'İçe Aktarılan Paket');
   const dir = resolveInside(configManager.PACKS, name);
@@ -346,7 +456,7 @@ function importPackFromBuffer(buf, suggestedName) {
   if (metaRaw && metaRaw.animated && metaRaw.anim && Object.keys(animFiles).length) {
     fs.mkdirSync(path.join(dir, 'anim'), { recursive: true });
     for (const [relName, data] of Object.entries(animFiles)) {
-      // animFiles anahtarları pack-format.js'te zaten doğrulandı; burası ikinci savunma hattı.
+      // path + RIFF/ACON doğrulaması pack-format.js'te yapıldı
       fs.writeFileSync(resolveInside(dir, ...relName.split('/')), data);
     }
     fs.writeFileSync(packMetaPath(dir), JSON.stringify(metaRaw, null, 2), 'utf-8');
@@ -365,8 +475,11 @@ module.exports = {
   saveActiveCursorsAsPack,
   saveAnimPackAs,
   applyPackInstant,
+  applyPackFromBuffer,
   applyPackToCurrent,
   deletePack,
   exportPack,
-  importPackFromBuffer
+  exportPacksBulk,
+  importPackFromBuffer,
+  importPacksFromPaths
 };

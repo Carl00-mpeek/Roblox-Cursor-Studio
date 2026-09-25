@@ -52,20 +52,21 @@ function findRbxCursorArg(argv) {
   return null;
 }
 
-// Dış kaynaktan (çift tık / "Birlikte Aç") gelen bir .rbxcursor dosyasını
-// içe aktarır, "Kayıtlı Paketler" listesine ekler ve sonucu renderer'a
-// bildirir ki panel kendini otomatik yenileyip Paketler sekmesini açsın.
-function importExternalPackFile(filePath) {
+// Dış kaynaktan (çift tık / "Birlikte Aç") gelen bir .rbxcursor dosyası için
+// renderer'a seçim penceresi açtırır: Pakete Kaydet veya Sadece Uygula.
+function offerExternalPackFile(filePath) {
   const send = (payload) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('pack:imported-external', payload);
+      mainWindow.webContents.send('pack:external-offer', payload);
     }
   };
   try {
-    const buf = fs.readFileSync(filePath);
+    if (!filePath || !fs.existsSync(filePath)) {
+      send({ error: 'Dosya bulunamadı.' });
+      return;
+    }
     const suggested = path.basename(filePath, path.extname(filePath));
-    const result = packManager.importPackFromBuffer(buf, suggested);
-    send(result);
+    send({ path: filePath, name: suggested });
   } catch (err) {
     logError(err);
     send({ error: err && err.message ? err.message : String(err) });
@@ -91,9 +92,9 @@ if (!gotSingleInstanceLock) {
     const filePath = findRbxCursorArg(argv);
     if (filePath) {
       if (mainWindow && !mainWindow.webContents.isLoading()) {
-        importExternalPackFile(filePath);
+        offerExternalPackFile(filePath);
       } else if (mainWindow) {
-        mainWindow.webContents.once('did-finish-load', () => importExternalPackFile(filePath));
+        mainWindow.webContents.once('did-finish-load', () => offerExternalPackFile(filePath));
       }
     }
   });
@@ -190,11 +191,10 @@ app.whenReady().then(() => {
     animCursor.initFromConfig().catch((err) => logError(err));
 
     // Uygulama doğrudan bir .rbxcursor dosyası çift tıklanarak açıldıysa
-    // (henüz başka bir örnek çalışmıyorken) o dosyayı sayfa yüklenir yüklenmez
-    // içe aktar ve "Kayıtlı Paketler"e ekle.
+    // (henüz başka bir örnek çalışmıyorken) seçim penceresini göster.
     const launchFilePath = findRbxCursorArg(process.argv);
     if (launchFilePath) {
-      win.webContents.once('did-finish-load', () => importExternalPackFile(launchFilePath));
+      win.webContents.once('did-finish-load', () => offerExternalPackFile(launchFilePath));
     }
 
     // Açılışta otomatik güncelleme kontrolü (CHECK_INTERVAL_MS'i geçmediyse

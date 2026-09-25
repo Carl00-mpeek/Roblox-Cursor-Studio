@@ -23,7 +23,9 @@ if (window.rbx.onAnimCursorState) {
 }
 
 // ---- Animasyonu aç/kapat düğmesi (sayfa başlığında, sağ tarafta) ----
-let animCursorEnabled = true;
+// Ana süreçte varsayılan kapalı (config.json __global.enabled); gerçek değer
+// panel açılışında / onAnimCursorEnabled ile güncellenir.
+let animCursorEnabled = false;
 function refreshAnimToggleButton() {
   const btn = document.getElementById('anim-toggle-now');
   if (!btn) return;

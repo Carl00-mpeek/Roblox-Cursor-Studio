@@ -56,11 +56,15 @@ contextBridge.exposeInMainWorld('rbx', {
 
   // paket dışa/içe aktarma (.rbxcursor / .zip)
   exportPack: (name) => ipcRenderer.invoke('pack:export', name),
+  exportPacksBulk: (names) => ipcRenderer.invoke('pack:export-bulk', names),
   importPackPick: () => ipcRenderer.invoke('pack:import-pick'),
   importPackFromPath: (filePath) => ipcRenderer.invoke('pack:import-from-path', filePath),
-  // Windows'ta bir .rbxcursor dosyasına çift tıklanıp uygulama bu şekilde
-  // açıldığında (varsayılan uygulama olarak ayarlıysa), ana süreç paketi
-  // otomatik içe aktarır ve sonucu bu kanaldan bildirir.
+  importPackFromPaths: (filePaths) => ipcRenderer.invoke('pack:import-from-paths', filePaths),
+  applyPackFromPath: (filePath) => ipcRenderer.invoke('pack:apply-from-path', filePath),
+  // Windows'ta bir .rbxcursor dosyasına çift tıklanınca ana süreç seçim
+  // penceresi için yolu bildirir (Pakete Kaydet / Sadece Uygula).
+  onPackExternalOffer: (cb) => ipcRenderer.on('pack:external-offer', (_e, data) => cb(data)),
+  // Eski kanal (geriye dönük); yeni akış onPackExternalOffer kullanır.
   onPackImportedExternal: (cb) => ipcRenderer.on('pack:imported-external', (_e, data) => cb(data)),
 
   // hızlı geçiş kısayolları (Ctrl+Alt+1/2/3)

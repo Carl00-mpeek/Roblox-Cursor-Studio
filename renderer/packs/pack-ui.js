@@ -311,12 +311,31 @@ document.getElementById('btn-save-anim-pack')?.addEventListener('click', () => {
 
 // ================= PAKET İÇE AKTARMA (dosya seçici + sürükle-bırak) =================
 
+function toastImportResult(res) {
+  if (!res) return;
+  // Toplu: { imported, failed }
+  if (Array.isArray(res.imported)) {
+    const n = res.imported.length;
+    const f = (res.failed && res.failed.length) || 0;
+    if (n) {
+      toast(t('packs_imported_bulk', { n }), 'success');
+      if (res.imported.some((x) => x.animated)) setPackTab('animated');
+    }
+    if (f) toast(t('packs_import_partial', { n: f }), 'error');
+    return;
+  }
+  // Tek paket
+  if (res.name) {
+    toast(t('pack_imported', { name: res.name }), 'success');
+    if (res.animated) setPackTab('animated');
+  }
+}
+
 document.getElementById('btn-import-pack').onclick = async () => {
   try {
     const res = await window.rbx.importPackPick();
     if (res) {
-      toast(t('pack_imported', { name: res.name }), 'success');
-      if (res.animated) setPackTab('animated');
+      toastImportResult(res);
       await renderPackGrid();
     }
   } catch (e) {
@@ -324,10 +343,126 @@ document.getElementById('btn-import-pack').onclick = async () => {
   }
 };
 
-// Windows'ta bu uygulama .rbxcursor dosyaları için varsayılan uygulama
-// olarak ayarlandıysa, bir pakete çift tıklandığında ana süreç dosyayı
-// otomatik olarak içe aktarır ve bunu buradan bildirir: paneli açıp
-// listeyi tazeliyoruz, tıpkı elle "İçe Aktar" seçilmiş gibi.
+// ---- Toplu dışa aktarma ----
+function closeBulkExportModal() {
+  document.getElementById('bulk-export-modal')?.classList.add('hidden');
+}
+
+async function openBulkExportModal() {
+  const listEl = document.getElementById('bulk-export-list');
+  const selectAll = document.getElementById('bulk-export-select-all');
+  if (!listEl) return;
+  let packs = [];
+  try {
+    packs = await window.rbx.listPacks();
+  } catch (e) {
+    toast(errMsg(e), 'error');
+    return;
+  }
+  if (!packs.length) {
+    toast(t('export_packs_empty'), 'error');
+    return;
+  }
+  listEl.innerHTML = packs.map((p) => `
+    <label class="pack-picker-item">
+      <input type="checkbox" class="bulk-export-item" value="${String(p.name).replace(/"/g, '&quot;')}" checked />
+      <span>${p.animated ? '🎞 ' : ''}${String(p.name).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))}</span>
+    </label>
+  `).join('');
+  if (selectAll) {
+    selectAll.checked = true;
+    selectAll.onchange = () => {
+      listEl.querySelectorAll('.bulk-export-item').forEach((cb) => { cb.checked = selectAll.checked; });
+    };
+  }
+  document.getElementById('bulk-export-modal')?.classList.remove('hidden');
+}
+
+document.getElementById('btn-export-packs-bulk')?.addEventListener('click', () => openBulkExportModal());
+document.getElementById('bulk-export-close')?.addEventListener('click', closeBulkExportModal);
+document.getElementById('bulk-export-cancel')?.addEventListener('click', closeBulkExportModal);
+
+document.getElementById('bulk-export-go')?.addEventListener('click', async () => {
+  const names = [...document.querySelectorAll('#bulk-export-list .bulk-export-item:checked')]
+    .map((cb) => cb.value)
+    .filter(Boolean);
+  if (!names.length) {
+    toast(t('export_packs_none'), 'error');
+    return;
+  }
+  closeBulkExportModal();
+  try {
+    const res = await window.rbx.exportPacksBulk(names);
+    if (!res) return;
+    const n = (res.exported && res.exported.length) || 0;
+    const f = (res.failed && res.failed.length) || 0;
+    if (n) toast(t('packs_exported_bulk', { n }), 'success');
+    if (f) toast(t('packs_export_partial', { n: f }), 'error');
+  } catch (e) {
+    toast(t('pack_export_error') + ' ' + errMsg(e), 'error');
+  }
+});
+
+// .rbxcursor çift tık / "Birlikte Aç": seçim penceresi
+let pendingExternalPackPath = null;
+
+function closeExternalPackModal() {
+  pendingExternalPackPath = null;
+  const modal = document.getElementById('external-pack-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function openExternalPackModal(filePath, displayName) {
+  pendingExternalPackPath = filePath;
+  const modal = document.getElementById('external-pack-modal');
+  const nameEl = document.getElementById('external-pack-name');
+  if (nameEl) nameEl.textContent = displayName || (filePath && filePath.split(/[\\/]/).pop()) || '';
+  if (modal) modal.classList.remove('hidden');
+}
+
+document.getElementById('external-pack-close')?.addEventListener('click', closeExternalPackModal);
+document.getElementById('external-pack-cancel')?.addEventListener('click', closeExternalPackModal);
+
+document.getElementById('external-pack-save')?.addEventListener('click', async () => {
+  const filePath = pendingExternalPackPath;
+  if (!filePath) return;
+  closeExternalPackModal();
+  try {
+    const res = await window.rbx.importPackFromPath(filePath);
+    closeAllOverlays();
+    setActiveNav('packs');
+    overlays.packs.classList.remove('hidden');
+    setPackTab(res.animated ? 'animated' : 'normal');
+    await renderPackGrid();
+    toast(t('pack_imported', { name: res.name }), 'success');
+  } catch (e) {
+    toast(t('pack_import_error') + ' ' + errMsg(e), 'error');
+  }
+});
+
+document.getElementById('external-pack-apply')?.addEventListener('click', async () => {
+  const filePath = pendingExternalPackPath;
+  if (!filePath) return;
+  closeExternalPackModal();
+  try {
+    const res = await window.rbx.applyPackFromPath(filePath);
+    toast(t('external_pack_applied', { name: res.name || '' }), 'success');
+    if (typeof renderActiveCursor === 'function') renderActiveCursor().catch(() => {});
+  } catch (e) {
+    toast((t('pack_apply_error') || t('pack_import_error')) + ' ' + errMsg(e), 'error');
+  }
+});
+
+window.rbx.onPackExternalOffer?.((data) => {
+  if (!data) return;
+  if (data.error) {
+    toast(t('pack_import_error') + ' ' + data.error, 'error');
+    return;
+  }
+  if (data.path) openExternalPackModal(data.path, data.name);
+});
+
+// Eski otomatik-içe-aktar kanalı (geriye dönük)
 window.rbx.onPackImportedExternal?.((res) => {
   if (!res) return;
   if (res.error) {
@@ -352,12 +487,19 @@ window.rbx.onPackImportedExternal?.((res) => {
   grid.addEventListener('drop', async (e) => {
     e.preventDefault();
     grid.classList.remove('drag-over');
-    const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-    if (!file || !file.path) return;
+    const files = e.dataTransfer && e.dataTransfer.files ? [...e.dataTransfer.files] : [];
+    const paths = files
+      .map((f) => f.path)
+      .filter((p) => p && /\.(rbxcursor|zip)$/i.test(p));
+    if (!paths.length) return;
     try {
-      const res = await window.rbx.importPackFromPath(file.path);
-      toast(t('pack_imported', { name: res.name }), 'success');
-      if (res.animated) setPackTab('animated');
+      if (paths.length === 1) {
+        const res = await window.rbx.importPackFromPath(paths[0]);
+        toastImportResult(res);
+      } else {
+        const res = await window.rbx.importPackFromPaths(paths);
+        toastImportResult(res);
+      }
       await renderPackGrid();
     } catch (err) {
       toast(t('pack_import_error') + ' ' + errMsg(err), 'error');

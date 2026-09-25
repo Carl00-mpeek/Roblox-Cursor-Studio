@@ -430,23 +430,39 @@ function registerIpcHandlers({ animCursor, getMainWindow, checkForUpdatesIfDue }
   // ---------- Paket dışa/içe aktarma ----------
   ipcMain.handle('pack:export', async (_e, name) => packManager.exportPack(name));
 
+  ipcMain.handle('pack:export-bulk', async (_e, names) => packManager.exportPacksBulk(names));
+
   ipcMain.handle('pack:import-from-path', (_e, filePath) => {
     const buf = fs.readFileSync(filePath);
     const suggested = path.basename(filePath, path.extname(filePath));
     return packManager.importPackFromBuffer(buf, suggested);
   });
 
+  ipcMain.handle('pack:import-from-paths', (_e, filePaths) => {
+    return packManager.importPacksFromPaths(filePaths);
+  });
+
+  // .rbxcursor çift tık → "Sadece Uygula": kalıcı kaydetmeden Roblox'a uygula
+  ipcMain.handle('pack:apply-from-path', async (_e, filePath) => {
+    const buf = fs.readFileSync(filePath);
+    const suggested = path.basename(filePath, path.extname(filePath));
+    return packManager.applyPackFromBuffer(buf, suggested);
+  });
+
   ipcMain.handle('pack:import-pick', async () => {
     const res = await dialog.showOpenDialog({
       title: 'Paket İçe Aktar',
       filters: [{ name: 'RBX Cursor Paketi / ZIP', extensions: ['rbxcursor', 'zip'] }],
-      properties: ['openFile']
+      properties: ['openFile', 'multiSelections']
     });
     if (res.canceled || !res.filePaths.length) return null;
-    const filePath = res.filePaths[0];
-    const buf = fs.readFileSync(filePath);
-    const suggested = path.basename(filePath, path.extname(filePath));
-    return packManager.importPackFromBuffer(buf, suggested);
+    if (res.filePaths.length === 1) {
+      const filePath = res.filePaths[0];
+      const buf = fs.readFileSync(filePath);
+      const suggested = path.basename(filePath, path.extname(filePath));
+      return packManager.importPackFromBuffer(buf, suggested);
+    }
+    return packManager.importPacksFromPaths(res.filePaths);
   });
 
   // ---------- Animasyonlu İmleç (Premium Animated Cursor) ----------

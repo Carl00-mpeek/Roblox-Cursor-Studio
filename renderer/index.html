@@ -105,6 +105,7 @@
       <h2 data-i18n="saved_packs">Kayıtlı Paketler</h2>
       <div class="view-overlay-actions">
         <button id="btn-import-pack" class="btn-ghost small" data-i18n="import_pack">📥 İçe Aktar</button>
+        <button id="btn-export-packs-bulk" class="btn-ghost small" data-i18n="export_packs_bulk">📤 Toplu Dışa Aktar</button>
         <button id="btn-save-pack" class="btn-primary small" data-i18n="new_pack">+ Yeni Paket</button>
         <button id="btn-save-anim-pack" class="btn-primary small pack-tab-only-animated hidden" data-i18n="new_anim_pack">+ Yeni Animasyonlu Paket</button>
         <button class="view-overlay-close" data-close-view data-i18n-title="close" title="Kapat">✕</button>
@@ -114,9 +115,52 @@
       <button type="button" class="pack-tab active" data-pack-tab="normal" data-i18n="packs_tab_normal">Paketler</button>
       <button type="button" class="pack-tab" data-pack-tab="animated" data-i18n="packs_tab_animated">🎞 Animasyonlu Paketler</button>
     </div>
-    <p class="muted small pack-dropzone-hint" data-i18n="pack_dropzone_hint">Bir arkadaşının paylaştığı .rbxcursor / .zip dosyasını buraya sürükleyip bırakabilirsin.</p>
+    <p class="muted small pack-dropzone-hint" data-i18n="pack_dropzone_hint">Bir veya birden fazla .rbxcursor / .zip dosyasını buraya sürükleyip bırakabilirsin.</p>
     <div class="pack-grid" id="pack-grid">
       <!-- JS ile dolduruluyor -->
+    </div>
+  </div>
+
+  <!-- Toplu dışa aktarma: paket seçimi -->
+  <div id="bulk-export-modal" class="modal-overlay hidden">
+    <div class="modal new-pack-modal">
+      <div class="modal-head">
+        <h3 data-i18n="export_packs_bulk_title">Toplu Dışa Aktar</h3>
+        <button id="bulk-export-close" class="modal-close" data-i18n-title="close" title="Kapat">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="muted small" data-i18n="export_packs_bulk_desc">Dışa aktarmak istediğin paketleri seç. Her biri ayrı .rbxcursor dosyası olarak bir klasöre kaydedilir.</p>
+        <div class="pack-cursor-picker" style="margin-top:12px">
+          <label class="pack-picker-item" style="font-weight:600">
+            <input type="checkbox" id="bulk-export-select-all" checked />
+            <span data-i18n="export_packs_select_all">Tümünü seç</span>
+          </label>
+          <div id="bulk-export-list"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="bulk-export-cancel" class="btn-ghost" data-i18n="cancel">İptal</button>
+        <button id="bulk-export-go" class="btn-primary" data-i18n="export_packs_go">Dışa Aktar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- .rbxcursor çift tık: Pakete Kaydet veya Sadece Uygula -->
+  <div id="external-pack-modal" class="modal-overlay hidden">
+    <div class="modal new-pack-modal">
+      <div class="modal-head">
+        <h3 data-i18n="external_pack_title">Paket dosyası açıldı</h3>
+        <button id="external-pack-close" class="modal-close" data-i18n-title="close" title="Kapat">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="muted small" id="external-pack-desc" data-i18n="external_pack_desc">Bu dosyayı ne yapmak istersin?</p>
+        <p class="muted small" id="external-pack-name" style="margin-top:8px;font-weight:600;color:inherit"></p>
+      </div>
+      <div class="modal-actions" style="flex-wrap:wrap;gap:8px">
+        <button id="external-pack-cancel" class="btn-ghost" data-i18n="cancel">İptal</button>
+        <button id="external-pack-apply" class="btn-ghost" data-i18n="external_pack_apply">Sadece Uygula</button>
+        <button id="external-pack-save" class="btn-primary" data-i18n="external_pack_save">Pakete Kaydet</button>
+      </div>
     </div>
   </div>
 
@@ -178,9 +222,9 @@
     <div class="view-page-scroll">
       <header class="main-header">
         <div class="hero">
-          <h1 data-i18n="animcursor_title">Animasyonlu İmleç (Beta)</h1>
+          <h1 data-i18n="animcursor_title">Animasyonlu İmleç</h1>
           <p class="muted" data-i18n="animcursor_desc">
-            🧪 Beta özellik: otomatik durum tespiti bazı oyunlarda ara sıra yanılabilir. Her durum için bir .ANI dosyası seç.
+            Otomatik durum tespiti bazı oyunlarda ara sıra yanılabilir. Her durum için bir .ANI dosyası seç.
             Animasyon atanan durumda Roblox’un sabit imleci gizlenir, yerine native animasyonlu imleç gösterilir.
             Kaldırılırsa statik imleç geri döner.
           </p>
