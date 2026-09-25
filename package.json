@@ -41,7 +41,6 @@
       "main/**/*",
       "renderer/**/*",
       "assets/**/*",
-      "update-checker.js",
       "package.json",
       "!**/*.map",
       "!native/*.cpp",

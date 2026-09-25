@@ -14,7 +14,7 @@ const detector = require('./roblox/detector');
 const cursorManager = require('./roblox/cursor-manager');
 const packManager = require('./packs/pack-manager');
 const { AnimCursorController } = require('./animation/anim-controller');
-const { fetchLatestRelease, CHECK_INTERVAL_MS } = require('../update-checker');
+const { fetchLatestRelease, CHECK_INTERVAL_MS } = require('./core/github-update');
 const ipcHandlers = require('./ipc/handlers');
 
 // ---------- Hata günlüğü / çökme koruması ----------
