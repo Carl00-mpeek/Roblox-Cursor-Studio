@@ -130,9 +130,20 @@ npm run dist     # yükleyici + taşınabilir exe
 
 En son sürüm VirusTotal ile taranmıştır:
 
-- [🔍 Kaynak](https://www.virustotal.com/gui/file/d6164ae95c241574d51e8ae521035cb12dbc00a99e30169d805f5ea60930262f?nocache=1)
-- [🔍 Setup](https://www.virustotal.com/gui/file/931ff40b0d11505572b12e221d5063987da2312b91bbf7bde741a47b1fd42131?nocache=1)
-- [🔍 Portable](https://virustotal.com/gui/file/0f88aa46f2d5400cc87f80cb897c2c1133e76265f2dbbc20ed9f7e9909974057?nocache=1)
+- [🔍 Kaynak](https://www.virustotal.com/gui/file/4fd0d51507ff8fd0d4e89e654aaf7ff092be8c01ff290dd2ff0eba44a08cc99a?nocache=1)
+- [🔍 Setup](https://www.virustotal.com/gui/file/011116e8dc7858e404fc3f0b38fdd036cdc5670139adeff256b6a127c0710fe7)
+- [🔍 Portable](https://www.virustotal.com/gui/file/5f57e0ea46a9c675d688da277fac457cdc62e496c7374ee6fcac2a1f0917119c?nocache=1)
+
+### 🇹🇷 Yanlış Pozitif Bildirimi
+
+> **Yanlış Pozitif Uyarısı**
+>
+> Bazı antivirüs programları Roblox Cursor Studio'yu yanlışlıkla malware veya Trojan olarak algılayabilir. Bu tespitlerin, uygulamanın Electron tabanlı yapısı, native bileşenleri ve otomatik güncelleme sistemi nedeniyle oluşan yanlış pozitifler olduğu düşünülmektedir.
+>
+> Roblox Cursor Studio kasıtlı olarak malware, spyware, şifre hırsızı, keylogger veya başka bir zararlı yazılım içermez.
+>
+> Antivirüs programınız uygulamayı algılarsa, programı **resmî GitHub deposundan** indirdiğinizden emin olun ve tespiti antivirüs sağlayıcınıza **false positive (yanlış pozitif)** olarak bildirmeyi düşünebilirsiniz.
+
 
 ---
 
