@@ -130,9 +130,21 @@ npm run dist     # installer + portable exe
 
 Latest release scanned on VirusTotal:
 
-- [🔍 Source](https://www.virustotal.com/gui/file/d6164ae95c241574d51e8ae521035cb12dbc00a99e30169d805f5ea60930262f?nocache=1)
-- [🔍 Setup](https://www.virustotal.com/gui/file/931ff40b0d11505572b12e221d5063987da2312b91bbf7bde741a47b1fd42131?nocache=1)
-- [🔍 Portable](https://virustotal.com/gui/file/0f88aa46f2d5400cc87f80cb897c2c1133e76265f2dbbc20ed9f7e9909974057?nocache=1)
+- [🔍 Source](https://www.virustotal.com/gui/file/4fd0d51507ff8fd0d4e89e654aaf7ff092be8c01ff290dd2ff0eba44a08cc99a?nocache=1)
+- [🔍 Setup](https://www.virustotal.com/gui/file/011116e8dc7858e404fc3f0b38fdd036cdc5670139adeff256b6a127c0710fe7)
+- [🔍 Portable](https://www.virustotal.com/gui/file/5f57e0ea46a9c675d688da277fac457cdc62e496c7374ee6fcac2a1f0917119c?nocache=1)
+
+
+### 🇬🇧 False Positive Notice
+
+> **False Positive Warning**
+>
+> Some antivirus programs may incorrectly detect Roblox Cursor Studio as malware or a Trojan. These detections are believed to be false positives caused by the application's Electron-based structure, native components, and automatic update system.
+>
+> Roblox Cursor Studio does not intentionally contain malware, spyware, password stealers, keyloggers, or other malicious software.
+>
+> If your antivirus detects the application, please verify that you downloaded it from the official GitHub repository and consider submitting the detection to your antivirus provider as a **false positive**.
+
 
 ---
 
