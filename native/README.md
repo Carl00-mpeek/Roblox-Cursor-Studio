@@ -51,7 +51,7 @@ BrechtSanders.WinLibs.POSIX.UCRT` ile MinGW'yi kurup tekrar dener. Hiçbiri
 işe yaramazsa betik hangi seçeneği kurman gerektiğini yazdırır (ör.
 `winget`i elle çalıştırmak ya da MSYS2/MinGW-w64 kurmak). Çıktı:
 `native\cursor_helper.exe` — Electron tarafı bu dosyayı otomatik bulup
-başlatır (bkz. `main/anim-cursor.js` → `_helperPath()`); paketlenmiş
+başlatır (bkz. `main/animation/anim-controller.js` → `_helperPath()`); paketlenmiş
 sürümde `package.json`'daki `asarUnpack` sayesinde asar dışında, doğrudan
 çalıştırılabilir halde kalır. Bir derleyici hiç bulunamazsa `npm install`
 yine de başarıyla tamamlanır — sadece Animasyonlu İmleç özelliği devre dışı
@@ -129,7 +129,7 @@ Roblox güncellemelerine karşı daha dayanıklıdır.
 
 ## Statik PNG ile ilişkisi
 
-Bir duruma ANI atandığında Electron tarafı (`anim-cursor.js`) o
+Bir duruma ANI atandığında Electron tarafı (`anim-controller.js`) o
 durumun Roblox PNG dosyasını **tamamen şeffaf** bir PNG ile değiştirip
 uygular (bkz. `main/png-lite.js`) — böylece Roblox'un kendi çizdiği
 statik görüntü görünmez olur ve native overlay tek görünen imleç

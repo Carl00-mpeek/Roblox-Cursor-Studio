@@ -316,11 +316,11 @@ async function exportPack(name) {
 
   const safeBase = name.replace(/[\\/:*?"<>|]/g, '_');
   const res = await dialog.showSaveDialog({
-    title: 'Paketi Dışa Aktar',
+    title: i18n.t('dialog_export_pack_title'),
     defaultPath: `${safeBase}.rbxcursor`,
     filters: [
-      { name: 'RBX Cursor Paketi', extensions: ['rbxcursor'] },
-      { name: 'ZIP Arşivi', extensions: ['zip'] }
+      { name: i18n.t('dialog_export_pack_filter'), extensions: ['rbxcursor'] },
+      { name: i18n.t('dialog_export_pack_zip_filter'), extensions: ['zip'] }
     ]
   });
   if (res.canceled || !res.filePath) return null;
@@ -334,7 +334,7 @@ function importPackFromBuffer(buf, suggestedName) {
   const kinds = Object.keys(fileMap);
   if (!kinds.length) throw new Error(i18n.t('pack_no_valid_cursor_in_file'));
 
-  const name = uniquePackName(manifestName || suggestedName || 'İçe Aktarılan Paket');
+  const name = uniquePackName(manifestName || suggestedName || i18n.t('pack_imported_default_name'));
   const dir = resolveInside(configManager.PACKS, name);
   fs.mkdirSync(dir, { recursive: true });
   for (const kind of kinds) {

@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' file: data:; font-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none';" />
 <title>RBX Cursor Studio</title>
 <link rel="stylesheet" href="style.css" />
 </head>
@@ -337,9 +338,10 @@
             <strong data-i18n="about">Hakkında</strong>
             <p class="muted small" data-i18n="about_text">
               RBX Cursor Studio — Yapımcı: <b>Carl</b><br />
-              © 2026 Carl. Tüm hakları saklıdır. Bu yazılımın yapımcının
-              yazılı izni olmadan kopyalanması, değiştirilip dağıtılması
-              veya paylaşılması yasaktır.
+              © 2026 Demhat Dayan. PolyForm Noncommercial 1.0.0 lisansı ile
+              lisanslanmıştır: ticari olmayan amaçlarla kullanmak, kopyalamak
+              ve değiştirmek serbesttir; ticari kullanım yasaktır. Ayrıntılar
+              için LICENSE dosyasına bakın.
             </p>
           </div>
         </div>
@@ -396,6 +398,14 @@
               <button id="editor-reset-size" class="editor-link-btn" data-i18n="reset_size">Boyutu Sıfırla</button>
             </div>
             <input type="range" id="editor-scale" class="editor-range" min="0.4" max="3" step="0.05" value="1" />
+            <div class="editor-toggle-row">
+              <label class="switch editor-switch" data-i18n-title="lossless" title="Kayıpsız Küçültme">
+                <input type="checkbox" id="editor-lossless-toggle" checked />
+                <span class="switch-track"><span class="switch-thumb"></span></span>
+              </label>
+              <span data-i18n="lossless">Kayıpsız Küçültme</span>
+            </div>
+            <p class="editor-note" data-i18n="lossless_hint">Yüksek çözünürlüklü bir görseli küçültürken detayı korur. Bilerek blok/piksel-art bir görsel yüklediysen kapat, aynen kalsın.</p>
           </section>
 
           <section class="editor-group">

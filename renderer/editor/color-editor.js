@@ -68,9 +68,8 @@ document.getElementById('editor-color-variations').onclick = () => {
     swatch.className = 'color-swatch';
     swatch.title = hue + '°';
     const sctx = swatch.getContext('2d');
-    sctx.imageSmoothingEnabled = false;
     const layer = renderCursorLayer({ ...editorState, colorize: true, hue });
-    sctx.drawImage(layer, 0, 0, EXPORT_SIZE, EXPORT_SIZE, 0, 0, 40, 40);
+    drawImageQuality(sctx, layer, 0, 0, 40, 40);
     swatch.onclick = () => {
       editorState.colorize = true;
       editorState.hue = hue;

@@ -75,7 +75,7 @@ async function copyFileVerified(src, dst) {
       if (attempt < COPY_RETRIES - 1) await sleep(COPY_RETRY_DELAYS[attempt] || 500);
     }
   }
-  throw lastError || new Error(`Dosya kopyalanamadı: ${dst}`);
+  throw lastError || new Error(i18n.t('cursor_copy_failed', { path: dst }));
 }
 
 let applyLock = Promise.resolve();
@@ -152,8 +152,11 @@ async function restoreDefaults() {
     const dirs = robloxDirs();
     if (!dirs.length) throw new Error(i18n.t('cursor_roblox_folder_not_found'));
 
-    let restored = 0;
+    // First pass: make sure every bundled original exists and is a valid PNG
+    // before touching anything in the Roblox folder, so a missing/corrupt
+    // file never leaves the cursor set half-restored.
     const missing = [];
+    const toRestore = [];
     for (const file of Object.values(TARGETS)) {
       const bundledFile = path.join(configManager.BUNDLED_ORIGINALS, file);
       if (!fs.existsSync(bundledFile)) {
@@ -164,14 +167,18 @@ async function restoreDefaults() {
       if (!validateCursorFile(validationKind, bundledFile)) {
         throw new Error(i18n.t('cursor_bundled_original_invalid', { file }));
       }
-
-      const activeDirInfo = dirs[0];
-      await copyFileVerified(bundledFile, robloxCursorPath(activeDirInfo, validationKind));
-      restored++;
+      toRestore.push({ file, bundledFile, validationKind });
     }
 
     if (missing.length) {
       throw new Error(i18n.t('cursor_original_files_missing', { files: missing.join(', ') }));
+    }
+
+    let restored = 0;
+    const activeDirInfo = dirs[0];
+    for (const { bundledFile, validationKind } of toRestore) {
+      await copyFileVerified(bundledFile, robloxCursorPath(activeDirInfo, validationKind));
+      restored++;
     }
 
     for (const file of Object.values(TARGETS)) {

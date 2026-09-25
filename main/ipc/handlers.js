@@ -173,9 +173,9 @@ function registerIpcHandlers({ animCursor, getMainWindow, refreshTray, onGameWat
 
   ipcMain.handle('cursor:pick-image', async () => {
     const res = await dialog.showOpenDialog({
-      title: 'İmleç görseli seç',
+      title: i18n.t('dialog_pick_cursor_image_title'),
       filters: [
-        { name: 'Görseller (png, jpg, webp, cur, ico)', extensions: ['png', 'jpg', 'jpeg', 'webp', 'cur', 'ico', 'bmp'] }
+        { name: i18n.t('dialog_pick_cursor_image_filter'), extensions: ['png', 'jpg', 'jpeg', 'webp', 'cur', 'ico', 'bmp'] }
       ],
       properties: ['openFile']
     });
@@ -348,8 +348,8 @@ function registerIpcHandlers({ animCursor, getMainWindow, refreshTray, onGameWat
 
   ipcMain.handle('bg:import', async () => {
     const res = await dialog.showOpenDialog({
-      title: 'Arkaplan görseli seç',
-      filters: [{ name: 'Görseller', extensions: ['png', 'jpg', 'jpeg', 'webp'] }],
+      title: i18n.t('dialog_pick_background_title'),
+      filters: [{ name: i18n.t('dialog_pick_background_filter'), extensions: ['png', 'jpg', 'jpeg', 'webp'] }],
       properties: ['openFile']
     });
     if (res.canceled || !res.filePaths.length) return null;
@@ -359,7 +359,7 @@ function registerIpcHandlers({ animCursor, getMainWindow, refreshTray, onGameWat
     const baseName = path.basename(src, ext)
       .replace(/[^a-zA-Z0-9ğüşöçıİĞÜŞÖÇ _-]/g, '')
       .trim()
-      .replace(/\\s+/g, '-')
+      .replace(/\s+/g, '-')
       .replace(/-+/g, '-')
       .slice(0, 80) || 'background';
 
@@ -376,7 +376,6 @@ function registerIpcHandlers({ animCursor, getMainWindow, refreshTray, onGameWat
     return { file: fileName, path: dst, source: 'user' };
   });
 
-  ipcMain.handle('shell:open-path', (_e, p) => shell.openPath(p));
   ipcMain.handle('app:open-donate', () => shell.openExternal(DONATE_URL));
 
   ipcMain.handle('quickswitch:get', () => configManager.getConfig().quickSwitch || { '1': '', '2': '', '3': '' });
@@ -394,9 +393,20 @@ function registerIpcHandlers({ animCursor, getMainWindow, refreshTray, onGameWat
     const key = String(accelerator || '').trim();
     if (!key) throw new Error(i18n.t('shortcut_empty'));
     const cfg = configManager.getConfig();
+    const previous = cfg.quickSwitchKeys && cfg.quickSwitchKeys[String(slot)];
     cfg.quickSwitchKeys = { ...(cfg.quickSwitchKeys || {}), [String(slot)]: key };
-    configManager.saveConfig();
     registerQuickSwitchShortcuts();
+
+    const packAssigned = !!(cfg.quickSwitch && cfg.quickSwitch[String(slot)]);
+    let registered = false;
+    try { registered = globalShortcut.isRegistered(key); } catch (_) { registered = false; }
+    if (packAssigned && !registered) {
+      cfg.quickSwitchKeys[String(slot)] = previous;
+      registerQuickSwitchShortcuts();
+      throw new Error(i18n.t('shortcut_register_failed', { key }));
+    }
+
+    configManager.saveConfig();
     return cfg.quickSwitchKeys;
   });
 
@@ -412,8 +422,8 @@ function registerIpcHandlers({ animCursor, getMainWindow, refreshTray, onGameWat
 
   ipcMain.handle('pack:import-pick', async () => {
     const res = await dialog.showOpenDialog({
-      title: 'Paket İçe Aktar',
-      filters: [{ name: 'RBX Cursor Paketi / ZIP', extensions: ['rbxcursor', 'zip'] }],
+      title: i18n.t('dialog_import_pack_title'),
+      filters: [{ name: i18n.t('dialog_import_pack_filter'), extensions: ['rbxcursor', 'zip'] }],
       properties: ['openFile']
     });
     if (res.canceled || !res.filePaths.length) return null;
@@ -429,8 +439,8 @@ function registerIpcHandlers({ animCursor, getMainWindow, refreshTray, onGameWat
 
   ipcMain.handle('animcursor:pick-ani', async () => {
     const res = await dialog.showOpenDialog({
-      title: 'ANI Dosyası Seç',
-      filters: [{ name: 'Animasyonlu İmleç (.ani)', extensions: ['ani'] }],
+      title: i18n.t('dialog_pick_ani_title'),
+      filters: [{ name: i18n.t('dialog_pick_ani_filter'), extensions: ['ani'] }],
       properties: ['openFile']
     });
     if (res.canceled || !res.filePaths.length) return null;
@@ -501,6 +511,7 @@ function registerIpcHandlers({ animCursor, getMainWindow, refreshTray, onGameWat
   ipcMain.handle('gamewatch:set-mapping', (_e, placeId, packName) => {
     const id = String(placeId || '').trim();
     if (!id) throw new Error(i18n.t('placeid_empty'));
+    if (!/^\d+$/.test(id)) throw new Error(i18n.t('placeid_invalid'));
     const cfg = configManager.getConfig();
     if (!cfg.gameWatch) cfg.gameWatch = { enabled: false, mapping: {} };
     if (!cfg.gameWatch.mapping) cfg.gameWatch.mapping = {};

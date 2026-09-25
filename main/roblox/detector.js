@@ -29,8 +29,16 @@ function robloxCursorPath(dirInfo, kind) {
 
 const ROBLOX_PROCESS = 'RobloxPlayerBeta.exe';
 
-function runningRobloxExecutables() {
-  if (process.platform !== 'win32') return [];
+// Bu, her çağrıda senkron olarak powershell.exe/tasklist.exe başlatır (en fazla ~1.5sn
+// engelleyebilir). robloxDirs() birden fazla akışta (durum sorgusu, paket uygulama,
+// yedekleme, geri yükleme) art arda çağrılabildiği için kısa süreli bir önbellek
+// kullanılır; böylece ana süreç aynı saniyeler içinde tekrar tekrar bloklanmaz.
+const RUNNING_CACHE_TTL_MS = 1200;
+let _runningCache = null;
+let _runningCacheAt = 0;
+
+function runningRobloxExecutablesUncached() {
+  if (process.platform !== 'win32') return { paths: [], running: false };
   const paths = new Set();
 
   try {
@@ -56,6 +64,14 @@ function runningRobloxExecutables() {
   }
 
   return { paths: Array.from(paths), running: paths.size > 0 };
+}
+
+function runningRobloxExecutables() {
+  const now = Date.now();
+  if (_runningCache && (now - _runningCacheAt) < RUNNING_CACHE_TTL_MS) return _runningCache;
+  _runningCache = runningRobloxExecutablesUncached();
+  _runningCacheAt = now;
+  return _runningCache;
 }
 
 function robloxDirs() {

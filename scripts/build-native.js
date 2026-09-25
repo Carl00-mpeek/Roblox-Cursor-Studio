@@ -23,8 +23,13 @@ if (!fs.existsSync(cppPath) || !fs.existsSync(buildScript)) {
 }
 
 if (fs.existsSync(exePath)) {
-  console.log('[native] cursor_helper.exe zaten derlenmiş, atlanıyor.');
-  process.exit(0);
+  const exeMtime = fs.statSync(exePath).mtimeMs;
+  const cppMtime = fs.statSync(cppPath).mtimeMs;
+  if (exeMtime >= cppMtime) {
+    console.log('[native] cursor_helper.exe zaten derlenmiş ve güncel, atlanıyor.');
+    process.exit(0);
+  }
+  console.log('[native] cursor_helper.cpp değişmiş, cursor_helper.exe yeniden derlenecek.');
 }
 
 function ensureCrlf(file) {

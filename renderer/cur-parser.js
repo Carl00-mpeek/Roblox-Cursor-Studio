@@ -7,7 +7,7 @@ function decodeCurOrIco(arrayBuffer) {
   const type = view.getUint16(2, true);
   const count = view.getUint16(4, true);
   if (reserved !== 0 || (type !== 1 && type !== 2) || count === 0) {
-    throw new Error('Geçersiz .cur/.ico dosyası');
+    throw new Error(t('cur_invalid_file'));
   }
 
   let best = null;
@@ -21,7 +21,7 @@ function decodeCurOrIco(arrayBuffer) {
     if (!best || entry.w * entry.h > best.w * best.h) best = entry;
   }
   if (!best || best.imageOffset + best.bytesInRes > arrayBuffer.byteLength) {
-    throw new Error('Görsel girişi okunamadı');
+    throw new Error(t('cur_image_entry_read_failed'));
   }
 
   const data = new Uint8Array(arrayBuffer, best.imageOffset, best.bytesInRes);
@@ -45,8 +45,8 @@ function decodeDibToCanvas(dibBuffer) {
   const bitCount = dv.getUint16(14, true);
   const compression = dv.getUint32(16, true);
 
-  if (!width || !height) throw new Error('Geçersiz görsel boyutu');
-  if (compression !== 0) throw new Error('Sıkıştırılmış .cur/.ico dosyaları desteklenmiyor');
+  if (!width || !height) throw new Error(t('cur_invalid_image_size'));
+  if (compression !== 0) throw new Error(t('cur_compressed_unsupported'));
 
   let palette = null;
   let paletteOffset = headerSize;

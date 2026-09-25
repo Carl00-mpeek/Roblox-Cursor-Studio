@@ -54,7 +54,7 @@ if errorlevel 1 (
 echo.
 echo ================================================
 echo   Tamamlandi! Kurulum dosyan "dist" klasorunde:
-echo   dist\RBX Cursor Studio Kurulum <surum>.exe
+echo   dist\RBX-Cursor-Studio-Kurulum-<surum>.exe
 echo ================================================
 start "" "%~dp0dist"
 pause

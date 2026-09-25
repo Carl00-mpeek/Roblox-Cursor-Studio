@@ -3,6 +3,45 @@ function isCurOrIco(pathOrUrl) {
   return /\.(cur|ico)(\?.*)?$/i.test(pathOrUrl);
 }
 
+// Draws `img` into `w`x`h` on `destCtx` at (x, y).
+// For a same-size or enlarging draw, uses nearest-neighbor so small/pixel-art
+// sources keep crisp, non-blurred edges. For a meaningful downscale (a
+// higher-resolution source shrunk into the fixed cursor canvas), a single
+// bilinear ctx.drawImage() call aliases badly at large ratios, so this steps
+// the image down in halves (a simple mipmap-style resize) with smoothing on
+// at each step, then draws the final step into place. Output pixel
+// dimensions never change — this only improves how much of the source
+// detail survives into those fixed dimensions.
+// `lossless` (default true) toggles this quality path. When false, the
+// image is always drawn nearest-neighbor with no mipmap smoothing, even on
+// a big downscale — for a source that's intentionally blocky/pixel-art at
+// high resolution and shouldn't be softened on the way down.
+function drawImageQuality(destCtx, img, x, y, w, h, lossless = true) {
+  const srcW = img.naturalWidth || img.width || 1;
+  const srcH = img.naturalHeight || img.height || 1;
+  if (!lossless || (srcW <= w * 1.5 && srcH <= h * 1.5)) {
+    destCtx.imageSmoothingEnabled = false;
+    destCtx.drawImage(img, x, y, w, h);
+    return;
+  }
+  let cw = srcW, ch = srcH, src = img, steps = 0;
+  while ((cw > w * 2 || ch > h * 2) && steps < 8) {
+    const nw = Math.max(1, Math.round(cw / 2));
+    const nh = Math.max(1, Math.round(ch / 2));
+    const step = document.createElement('canvas');
+    step.width = nw; step.height = nh;
+    const sctx = step.getContext('2d');
+    sctx.imageSmoothingEnabled = true;
+    if ('imageSmoothingQuality' in sctx) sctx.imageSmoothingQuality = 'high';
+    sctx.drawImage(src, 0, 0, nw, nh);
+    src = step; cw = nw; ch = nh;
+    steps++;
+  }
+  destCtx.imageSmoothingEnabled = true;
+  if ('imageSmoothingQuality' in destCtx) destCtx.imageSmoothingQuality = 'high';
+  destCtx.drawImage(src, x, y, w, h);
+}
+
 function getAlphaBounds(source, alphaThreshold = 8) {
   const w = Math.max(1, source.width || 1);
   const h = Math.max(1, source.height || 1);

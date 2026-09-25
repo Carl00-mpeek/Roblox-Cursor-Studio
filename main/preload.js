@@ -63,7 +63,6 @@ contextBridge.exposeInMainWorld('rbx', {
   deleteBackground: (fileName) => ipcRenderer.invoke('bg:delete', fileName),
   importBackground: () => ipcRenderer.invoke('bg:import'),
 
-  openPath: (p) => ipcRenderer.invoke('shell:open-path', p),
   openDonate: () => ipcRenderer.invoke('app:open-donate'),
 
   animCursorGetConfig: () => ipcRenderer.invoke('animcursor:get-config'),

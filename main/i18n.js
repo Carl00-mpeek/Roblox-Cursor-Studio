@@ -4,6 +4,7 @@ const MESSAGES = {
     zip_too_many_entries: 'Too many entries in the zip file.',
     zip_bad_central_entry: 'Invalid zip central directory entry.',
     zip_entry_invalid: 'Invalid or too large zip entry.',
+    zip_too_large: 'The zip file is too large once decompressed.',
     zip_entry_open_failed: 'Could not open zip entry (corrupt or too large): {msg}',
     zip_unsupported_method: 'Unsupported compression method: {method}',
 
@@ -34,6 +35,7 @@ const MESSAGES = {
     shortcut_empty: 'Shortcut cannot be empty.',
     shortcut_register_failed: 'This shortcut could not be registered (invalid, or already used by another app): {key}',
     placeid_empty: 'placeId cannot be empty.',
+    placeid_invalid: 'placeId must be numeric (digits only).',
 
     native_helper_timeout: 'The native helper did not respond in time (it may have crashed — check error.log).',
     native_helper_send_failed: 'Could not send the command to the native helper.',
@@ -65,13 +67,32 @@ const MESSAGES = {
     png_data_missing: 'PNG data is missing or corrupt.',
     png_invalid: 'The cursor file is not a valid PNG.',
     png_ihdr_missing: 'PNG IHDR chunk not found.',
-    png_wrong_size: '{target} must be {expected}x{expected}; got {actual}.'
+    png_wrong_size: '{target} must be {expected}x{expected}; got {actual}.',
+
+    dialog_pick_cursor_image_title: 'Select a cursor image',
+    dialog_pick_cursor_image_filter: 'Images (png, jpg, webp, cur, ico)',
+    dialog_pick_background_title: 'Select a background image',
+    dialog_pick_background_filter: 'Images',
+    dialog_import_pack_title: 'Import Pack',
+    dialog_import_pack_filter: 'RBX Cursor Pack / ZIP',
+    dialog_pick_ani_title: 'Select .ANI File',
+    dialog_pick_ani_filter: 'Animated Cursor (.ani)',
+    dialog_export_pack_title: 'Export Pack',
+    dialog_export_pack_filter: 'RBX Cursor Pack',
+    dialog_export_pack_zip_filter: 'ZIP Archive',
+    pack_imported_default_name: 'Imported Pack',
+    cursor_copy_failed: 'File could not be copied: {path}',
+
+    anim_helper_missing_log: "Animated cursor helper not found: {path}. native/build.bat needs to be run.",
+    anim_helper_load_failed: 'The native helper could not load the .ani file (see the ERR line in error.log — it may be a corrupt or unsupported .ani).',
+    anim_preview_none_loaded: 'No animation is loaded for this state.'
   },
   tr: {
     zip_bad_eocd: 'Geçersiz zip dosyası (EOCD kaydı bulunamadı).',
     zip_too_many_entries: 'Zip dosyasında çok fazla girdi var.',
     zip_bad_central_entry: 'Geçersiz zip merkezi dizin girdisi.',
     zip_entry_invalid: 'Zip girdisi geçersiz veya çok büyük.',
+    zip_too_large: 'Zip dosyası açıldığında çok büyük oluyor.',
     zip_entry_open_failed: 'Zip girdisi açılamadı (bozuk veya çok büyük): {msg}',
     zip_unsupported_method: 'Desteklenmeyen sıkıştırma yöntemi: {method}',
 
@@ -102,6 +123,7 @@ const MESSAGES = {
     shortcut_empty: 'Kısayol boş olamaz.',
     shortcut_register_failed: 'Bu kısayol kaydedilemedi (geçersiz ya da başka bir uygulama kullanıyor): {key}',
     placeid_empty: 'placeId boş olamaz.',
+    placeid_invalid: 'placeId yalnızca rakamlardan oluşmalı.',
 
     native_helper_timeout: 'Native yardımcı zamanında yanıt vermedi (helper çökmüş olabilir, error.log kontrol et).',
     native_helper_send_failed: 'Native yardımcıya komut gönderilemedi.',
@@ -132,7 +154,25 @@ const MESSAGES = {
     tray_quit: 'Çıkış',
     png_invalid: 'İmleç dosyası geçerli bir PNG değil.',
     png_ihdr_missing: 'PNG IHDR bölümü bulunamadı.',
-    png_wrong_size: '{target} {expected}x{expected} olmalı; alınan {actual}.'
+    png_wrong_size: '{target} {expected}x{expected} olmalı; alınan {actual}.',
+
+    dialog_pick_cursor_image_title: 'İmleç görseli seç',
+    dialog_pick_cursor_image_filter: 'Görseller (png, jpg, webp, cur, ico)',
+    dialog_pick_background_title: 'Arkaplan görseli seç',
+    dialog_pick_background_filter: 'Görseller',
+    dialog_import_pack_title: 'Paket İçe Aktar',
+    dialog_import_pack_filter: 'RBX Cursor Paketi / ZIP',
+    dialog_pick_ani_title: 'ANI Dosyası Seç',
+    dialog_pick_ani_filter: 'Animasyonlu İmleç (.ani)',
+    dialog_export_pack_title: 'Paketi Dışa Aktar',
+    dialog_export_pack_filter: 'RBX Cursor Paketi',
+    dialog_export_pack_zip_filter: 'ZIP Arşivi',
+    pack_imported_default_name: 'İçe Aktarılan Paket',
+    cursor_copy_failed: 'Dosya kopyalanamadı: {path}',
+
+    anim_helper_missing_log: "Animasyonlu imleç helper'ı bulunamadı: {path}. native/build.bat çalıştırılmalı.",
+    anim_helper_load_failed: 'Native yardımcı .ani dosyasını yükleyemedi (bkz. error.log içindeki ERR satırı — bozuk/desteklenmeyen .ani olabilir).',
+    anim_preview_none_loaded: 'Bu durum için yüklü bir animasyon yok.'
   }
 };
 

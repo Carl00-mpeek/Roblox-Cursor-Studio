@@ -1,7 +1,6 @@
 
 const TARGETS = { arrow: 'ArrowFarCursor.png', click: 'ArrowCursor.png', text: 'IBeamCursor.png', shiftlock: 'MouseLockedCursor.png' };
 const NAME_KEYS = { arrow: 'normal', click: 'click', text: 'text', shiftlock: 'shiftlock' };
-const NAMES = { arrow: 'Normal Durum', click: 'Tıklama', text: 'Yazı Modu', shiftlock: 'Shift Lock' };
 function cursorName(kind) { return t(NAME_KEYS[kind] || kind); }
 const TYPE_HINTS = { arrow: 'ArrowFarCursor.png', click: 'ArrowCursor.png', text: 'IBeamCursor.png', shiftlock: 'MouseLockedCursor.png' };
 const EXPORT_SIZE = 64;
@@ -470,7 +469,7 @@ async function renderGameWatchSettings() {
   };
 
   if (packSel) {
-    packSel.innerHTML = packs.map(p => `<option value="${String(p.name).replace(/"/g, '&quot;')}">${p.name}</option>`).join('');
+    packSel.innerHTML = packs.map(p => `<option value="${escapeHtml(p.name)}">${escapeHtml(p.name)}</option>`).join('');
   }
 
   function renderMappingList() {
@@ -480,11 +479,11 @@ async function renderGameWatchSettings() {
       return;
     }
     listEl.innerHTML = entries.map(([placeId, packName]) => `
-      <div class="gamewatch-mapping-row" data-placeid="${placeId}">
-        <span class="gamewatch-mapping-placeid">${placeId}</span>
+      <div class="gamewatch-mapping-row" data-placeid="${escapeHtml(placeId)}">
+        <span class="gamewatch-mapping-placeid">${escapeHtml(placeId)}</span>
         <span class="gamewatch-mapping-arrow">→</span>
-        <span class="gamewatch-mapping-pack">${String(packName)}</span>
-        <button type="button" class="btn-ghost small gamewatch-mapping-remove" data-placeid="${placeId}">${t('gamewatch_remove')}</button>
+        <span class="gamewatch-mapping-pack">${escapeHtml(packName)}</span>
+        <button type="button" class="btn-ghost small gamewatch-mapping-remove" data-placeid="${escapeHtml(placeId)}">${t('gamewatch_remove')}</button>
       </div>
     `).join('');
     listEl.querySelectorAll('.gamewatch-mapping-remove').forEach((btn) => {

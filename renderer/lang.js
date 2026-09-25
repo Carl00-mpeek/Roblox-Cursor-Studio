@@ -28,14 +28,16 @@ const LANG = {
     'gamewatch_mapping_added':'Eşleme eklendi','gamewatch_mapping_removed':'Eşleme kaldırıldı','gamewatch_need_placeid_and_pack':'placeId ve paket seç',
     'gamewatch_last_seen_none':'Henüz bir oyun tespit edilmedi (ayrıştırıcı tamamlanmadan bu normal — üstteki uyarıya bak). placeId\'yi elle yazabilirsin.',
     'gamewatch_remove':'Kaldır','gamewatch_applied_toast':'Oyuna göre \"{name}\" paketi otomatik uygulandı ✓',
-    'about':'Hakkında','about_text':'RBX Cursor Studio — Yapımcı: Carl<br>© 2026 Carl. Tüm hakları saklıdır. Bu yazılımın yapımcının yazılı izni olmadan kopyalanması, değiştirilip dağıtılması veya paylaşılması yasaktır.',
+    'about':'Hakkında','about_text':'RBX Cursor Studio — Yapımcı: Carl (Demhat Dayan)<br>© 2026 Demhat Dayan. PolyForm Noncommercial 1.0.0 lisansı ile lisanslanmıştır: ticari olmayan amaçlarla kullanmak, kopyalamak ve değiştirmek serbesttir; ticari kullanım yasaktır. Ayrıntılar için LICENSE dosyasına bakın.',
     'editor_title':'İmleci Düzenle','size':'Boyut (büyüt / küçült)','auto_fit':'Otomatik Boyutlandır + Ortala','center':'Sadece Ortala','reset_size':'Boyutu Sıfırla',
+    'lossless':'Kayıpsız Küçültme','lossless_hint':'Yüksek çözünürlüklü bir görseli küçültürken detayı korur. Bilerek blok/piksel-art bir görsel yüklediysen kapat, aynen kalsın.',
     'manual_center':'Manuel Ortala (Tam Merkez)','manual_center_help':'Otomatik ortalama, görselin şeffaf olmayan kısmını algılayıp ona göre konumlandırır — bazı görsellerde bu algılama beklediğin sonucu vermeyebilir. Böyle durumlarda "Manuel Ortala" görseli algılama yapmadan doğrudan 64×64 alanın tam merkezine yerleştirir; X/Y kutularından ya da sürükleyerek de pikseli piksele ince ayar yapabilirsin.',
     'offset_x':'X Konumu','offset_y':'Y Konumu','manual_center_done':'Görsel tam merkeze yerleştirildi ✓',
     'editor_help':'Yeni görseller, Roblox’un varsayılan cursor ölçü ve konumları referans alınarak otomatik boyutlandırılır ve ortalanır. İstersen sürükleyerek konumu değiştirebilir, boyut çubuğuyla büyütüp küçültebilirsin. Piksel netliğini korumak için yumuşatma kapalıdır.',
     'cancel':'İptal','create':'Oluştur','normal':'Normal Durum','click':'Tıklama','text':'Yazı Modu','shiftlock':'Shift Lock','choose_image':'Görsel seç','roblox_file':'Roblox dosyası',
     'not_registered':'Kayıtlı bir pakete ait değil (özgün/özel)','pack_applied':'paketinde uygulandı ✓','pack_apply':'Uygula','pack_remove':'Kaldır','applied':'Uygulandı ✓',
     'no_packs':'Henüz kayıtlı paket yok.','packs_load_error':'Paketler yüklenemedi.','no_history':'Henüz geçmiş kayıt yok.','history_load_error':'Geçmiş yüklenemedi.',
+    'cur_invalid_file':'Geçersiz .cur/.ico dosyası','cur_image_entry_read_failed':'Görsel girişi okunamadı','cur_invalid_image_size':'Geçersiz görsel boyutu','cur_compressed_unsupported':'Sıkıştırılmış .cur/.ico dosyaları desteklenmiyor','png_export_failed':'PNG oluşturulamadı',
     'use':'Kullan','delete':'Sil','backgrounds_load_error':'Arkaplanlar yüklenemedi:','background_imported':'Arkaplan içe aktarıldı ✓','background_delete':'Arkaplanı sil','background_delete_confirm':'"{name}" arkaplanını silmek istediğine emin misin? Bu dosya uygulama klasörlerinden tamamen silinecek.','background_deleted':'Arkaplan silindi ✓',
     'default_bg_missing':'Varsayılan arkaplan bulunamadı','default_bg_restored':'Varsayılan arkaplana dönüldü ✓','settings_read_error':'Ayarlar okunamadı:',
     'settings_load_error':'Ayarlar yüklenemedi, varsayılanlar kullanılıyor','status_unavailable':'Durum alınamadı',
@@ -118,14 +120,16 @@ const LANG = {
     'gamewatch_mapping_added':'Mapping added','gamewatch_mapping_removed':'Mapping removed','gamewatch_need_placeid_and_pack':'Pick a placeId and a pack',
     'gamewatch_last_seen_none':'No game detected yet (expected until the parser is finished — see the warning above). You can type the placeId manually.',
     'gamewatch_remove':'Remove','gamewatch_applied_toast':'Auto-applied pack \"{name}\" for this game ✓',
-    'about':'About','about_text':'RBX Cursor Studio — Created by: <b>Carl</b><br>© 2026 Carl. All rights reserved. Copying, modifying, distributing, or sharing this software without the creator’s written permission is prohibited.',
+    'about':'About','about_text':'RBX Cursor Studio — Created by: <b>Carl</b> (Demhat Dayan)<br>© 2026 Demhat Dayan. Licensed under PolyForm Noncommercial 1.0.0: noncommercial use, copying, and modification are permitted; commercial use is not. See LICENSE for details.',
     'editor_title':'Edit Cursor','size':'Size (increase / decrease)','auto_fit':'Auto Fit + Center','center':'Center Only','reset_size':'Reset Size',
+    'lossless':'Lossless Downscale','lossless_hint':'Preserves detail when shrinking a high-resolution image. Turn it off if you intentionally uploaded a blocky/pixel-art image and want it kept exactly as-is.',
     'manual_center':'Manual Center (Exact Middle)','manual_center_help':'Auto-centering detects the non-transparent part of the image and positions it based on that — for some images this detection may not give the result you expect. In that case, "Manual Center" places the image directly in the exact middle of the 64×64 canvas with no detection involved; you can also fine-tune it pixel by pixel using the X/Y fields or by dragging.',
     'offset_x':'X Position','offset_y':'Y Position','manual_center_done':'Image placed in the exact center ✓',
     'editor_help':'New images are automatically fitted and centered using Roblox’s default cursor size and placement as the reference. You can drag to change the position and use the size control to scale the cursor. Smoothing is disabled to preserve pixel sharpness.',
     'cancel':'Cancel','create':'Create','normal':'Normal','click':'Click','text':'Text Mode','shiftlock':'Shift Lock','choose_image':'Choose image','roblox_file':'Roblox file',
     'not_registered':'Not part of a saved pack (original/custom)','pack_applied':'applied in pack ✓','pack_apply':'Apply','pack_remove':'Remove','applied':'Applied ✓',
     'no_packs':'No saved packs yet.','packs_load_error':'Unable to load packs.','no_history':'No history yet.','history_load_error':'Unable to load history.',
+    'cur_invalid_file':'Invalid .cur/.ico file','cur_image_entry_read_failed':'Could not read the image entry','cur_invalid_image_size':'Invalid image size','cur_compressed_unsupported':'Compressed .cur/.ico files are not supported','png_export_failed':'Could not create PNG',
     'use':'Use','delete':'Delete','backgrounds_load_error':'Unable to load backgrounds:','background_imported':'Background imported ✓','background_delete':'Delete background','background_delete_confirm':'Are you sure you want to delete "{name}"? This file will be permanently removed from the app data folder.','background_deleted':'Background deleted ✓',
     'default_bg_missing':'Default background not found','default_bg_restored':'Default background restored ✓','settings_read_error':'Unable to read settings:',
     'settings_load_error':'Unable to load settings; using defaults','status_unavailable':'Status unavailable',
@@ -188,6 +192,12 @@ function t(key, vars = {}) {
   let s = dict[key] ?? LANG.tr[key] ?? key;
   return Object.keys(vars).reduce((out, k) => out.replaceAll(`{${k}}`, String(vars[k])), s);
 }
+function escapeHtml(str) {
+  return String(str == null ? '' : str).replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+}
+
 function applyLanguage() {
   document.documentElement.lang = currentLang;
   document.querySelectorAll('[data-i18n]').forEach(el => { el.innerHTML = t(el.dataset.i18n); });

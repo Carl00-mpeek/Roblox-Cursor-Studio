@@ -20,8 +20,10 @@ function openEditorWith(kind, imgOrCanvas, opts = {}) {
     toast(t('image_invalid'));
     return;
   }
-  editorState = { kind, img: imgOrCanvas, scale: 1, offsetX: 0, offsetY: 0, colorize: false, hue: 0, autoConfidence: 0 };
+  editorState = { kind, img: imgOrCanvas, scale: 1, offsetX: 0, offsetY: 0, colorize: false, hue: 0, autoConfidence: 0, lossless: true };
   resetColorControls();
+  const losslessToggle = document.getElementById('editor-lossless-toggle');
+  if (losslessToggle) losslessToggle.checked = true;
   showEditor();
 
   if (opts.autoFit === false) drawEditor();
@@ -32,7 +34,6 @@ function renderCursorLayer(state, outSize = EXPORT_SIZE) {
   const layer = document.createElement('canvas');
   layer.width = outSize; layer.height = outSize;
   const lctx = layer.getContext('2d');
-  lctx.imageSmoothingEnabled = false;
   const { img, scale, offsetX, offsetY } = state;
   const outScale = outSize / EXPORT_SIZE;
   const baseRatio = Math.min(EXPORT_SIZE / img.width, EXPORT_SIZE / img.height);
@@ -41,7 +42,7 @@ function renderCursorLayer(state, outSize = EXPORT_SIZE) {
   const h = img.height * ratio;
   const x = (outSize - w) / 2 + offsetX * outScale;
   const y = (outSize - h) / 2 + offsetY * outScale;
-  lctx.drawImage(img, x, y, w, h);
+  drawImageQuality(lctx, img, x, y, w, h, state.lossless !== false);
   if (state.colorize) {
     const data = lctx.getImageData(0, 0, outSize, outSize);
     colorizeImageData(data, state.hue || 0);
@@ -160,6 +161,12 @@ document.getElementById('editor-cancel').onclick = hideEditor;
 document.getElementById('editor-scale').oninput = (e) => {
   if (!editorState) return;
   editorState.scale = parseFloat(e.target.value) || 1;
+  drawEditor();
+};
+
+document.getElementById('editor-lossless-toggle').onchange = (e) => {
+  if (!editorState) return;
+  editorState.lossless = e.target.checked;
   drawEditor();
 };
 

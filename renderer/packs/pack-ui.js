@@ -98,7 +98,6 @@ async function createPackFromDialog(useActiveOnly = false) {
 }
 
 document.getElementById('btn-save-active-pack-home')?.addEventListener('click', () => createPackFromDialog(true));
-document.getElementById('btn-save-pack-home')?.addEventListener('click', () => createPackFromDialog(false));
 
 let currentPackTab = 'normal';
 
@@ -152,7 +151,7 @@ async function renderPackGrid() {
           ${p.animated ? `<span class="pack-anim-badge" title="${t('pack_anim_badge')}">🎞</span>` : ''}
           <div class="thumb-previews" aria-hidden="true">${previewCells}</div>
         </div>
-        <div class="pname" title="${p.name}">${p.name}</div>
+        <div class="pname" title="${escapeHtml(p.name)}">${escapeHtml(p.name)}</div>
         <div class="pack-actions pack-actions-3">
           <button type="button" class="btn-ghost small pack-apply${isActive ? ' applied' : ''}">${isActive ? t('applied') : t('pack_apply')}</button>
           <button type="button" class="btn-ghost small pack-export">${t('pack_export')}</button>

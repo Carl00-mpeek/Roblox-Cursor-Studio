@@ -4,6 +4,7 @@ const i18n = require('./i18n');
 
 const MAX_ZIP_ENTRIES = 256;
 const MAX_ENTRY_BYTES = 32 * 1024 * 1024;
+const MAX_TOTAL_BYTES = 128 * 1024 * 1024;
 
 const CRC_TABLE = (() => {
   const table = new Uint32Array(256);
@@ -115,6 +116,7 @@ function parseZip(buf) {
   const centralOffset = buf.readUInt32LE(eocdOffset + 16);
 
   const entries = [];
+  let totalOut = 0;
   let ptr = centralOffset;
   for (let i = 0; i < totalEntries; i++) {
     const sig = buf.readUInt32LE(ptr);
@@ -144,6 +146,8 @@ function parseZip(buf) {
     } else if (method !== 0) {
       throw new Error(i18n.t('zip_unsupported_method', { method }));
     }
+    totalOut += data.length;
+    if (totalOut > MAX_TOTAL_BYTES) throw new Error(i18n.t('zip_too_large'));
     entries.push({ name, data });
   }
   return entries;

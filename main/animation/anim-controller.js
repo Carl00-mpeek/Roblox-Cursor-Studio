@@ -127,9 +127,7 @@ class AnimCursorController {
     if (!fs.existsSync(exePath)) {
       if (!this.helperMissingWarned) {
         this.helperMissingWarned = true;
-        this.deps.logError(new Error(
-          `Animasyonlu imleç helper'ı bulunamadı: ${exePath}. native/build.bat çalıştırılmalı.`
-        ));
+        this.deps.logError(new Error(i18n.t('anim_helper_missing_log', { path: exePath })));
       }
       return false;
     }
@@ -185,15 +183,13 @@ class AnimCursorController {
       if (m) this._settlePending(`SETANI:${m[1]}`, null, Number(m[2]));
     } else if (line.startsWith('SETANIFAILED|')) {
       const m = /state=([a-z]+)/.exec(line);
-      if (m) this._settlePending(`SETANI:${m[1]}`, new Error(
-        'Native yardımcı .ani dosyasını yükleyemedi (bkz. error.log içindeki ERR satırı — bozuk/desteklenmeyen .ani olabilir).'
-      ));
+      if (m) this._settlePending(`SETANI:${m[1]}`, new Error(i18n.t('anim_helper_load_failed')));
     } else if (line.startsWith('PREVIEWING|')) {
       const m = /state=([a-z]+)/.exec(line);
       if (m) this._settlePending(`PREVIEW:${m[1]}`, null, true);
     } else if (line.startsWith('PREVIEWFAILED|')) {
       const m = /state=([a-z]+)/.exec(line);
-      if (m) this._settlePending(`PREVIEW:${m[1]}`, new Error('Bu durum için yüklü bir animasyon yok.'));
+      if (m) this._settlePending(`PREVIEW:${m[1]}`, new Error(i18n.t('anim_preview_none_loaded')));
     }
 
   }

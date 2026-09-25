@@ -17,7 +17,7 @@
 //   0                      = tam seffaf (isaretsiz) imlec, ornegin bosaltilmis ok
 //   kMarkerHover      ( 3) = ArrowCursor.png  -> tiklanabilir seyin ustu (el)
 //   kMarkerText       ( 5) = IBeamCursor.png  -> metin imleci
-// (3 ve 5, package'daki main/anim-cursor.js MARKERS ile ayni olmali.)
+// (3 ve 5, package'daki main/animation/anim-controller.js MARKERS ile ayni olmali.)
 
 #pragma once
 #include <cstddef>
