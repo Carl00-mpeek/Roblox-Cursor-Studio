@@ -11,38 +11,22 @@ RBX Cursor Studio is an independent, community-made tool, **not affiliated with 
 
 A lightweight Windows tool for customizing Roblox cursors.
 
-**Current version: 4.5.5**
+**Current version: 4.6.0**
 
-## 🎬 Demo
+![RBX Cursor Studio Screenshot]
 
-[![RBX Cursor Studio Live Preview](https://img.youtube.com/vi/kKYbosdVFig/0.jpg)](https://www.youtube.com/watch?v=kKYbosdVFig)
+## 🆕 What's New in 4.6.0
 
-## 🆕 What's New in 4.5.5
-
-This update makes the app more stable, secure, and capable while keeping the overall experience familiar:
-
-* 📜 Fixed the license/copyright text shown in the app so it no longer contradicts itself.
-* ⚡ Fixed short freezes that could happen while the app checked Roblox's status — smoother overall experience.
-* 🔒 Added extra safety checks around imported packs and game-matching, protecting against bad or malicious input.
-* 🛡️ Restoring default cursors is now safer: if anything goes wrong, nothing is left half-done.
-* ⌨️ Quick Switch shortcuts now properly confirm they registered instead of silently failing.
-* 🧹 Cleaned up unused files and code, and the error log file no longer grows without limit.
-* 🛠️ Fixed an incorrect message in the installer-building scripts.
-
-### 🧪 BETA — 1024×1024 High-Resolution Support
-
-New **high-resolution support** allows cursor packs to be used at resolutions of up to **1024×1024 pixels**.
-
-> ⚠️ **This feature is currently in Beta.** Some older or incompatible cursor packs may produce unexpected results.
-
-This update mainly focuses on improving reliability and security. The new high-resolution feature is currently available as a **Beta feature**.
+- 🎨 **Brand-new design** — the whole interface has moved to a completely new look and layout
+- ✨ A soft glow effect now highlights any cursor card once you've assigned a custom image to it
+- 🖼️ Small polish pass on the In-Context Preview scene (Play button, chat box, Shift Lock)
 
 ## ✨ Features
 
 ### 🖱️ Cursor Customization
 Customize every Roblox cursor type (arrow, far arrow, I-beam, mouse-locked...) and apply your selection instantly. Cursors are auto-fitted and centered on a 64×64 canvas, with smoothing off to keep pixel edges crisp.
 
-### ✨ Animated Cursors (.ANI)
+### ✨ Animated Cursors (.ANI) — 🧪 Beta
 > Automatic state detection relies on heuristics and may occasionally misjudge in some games. [Open an issue](../../issues) if you hit a problem.
 
 - Assign a `.ani` file per state — **Normal, Click, Text, Shift Lock**
@@ -60,9 +44,6 @@ Auto-Fit + Center, Center Only, and Reset Size shortcuts; a manual zoom slider (
 ### 📦 Cursor Packs
 Create, save and manage as many packs as you like. Export as `.rbxcursor` / `.zip` to share, or import one via drag-and-drop. **Quick Pack Switching** jumps between saved packs with `Ctrl+Alt+1/2/3`, even while Roblox is running.
 
-### 🕹️ Automatic Pack by Game — 🧪 Experimental, opt-in (off by default)
-Map a Roblox game to one of your packs, and the app switches to it automatically when you open that game. This works by **reading Roblox's own local log files** (`%LOCALAPPDATA%\Roblox\logs`), **read-only** — nothing else. The app never reads Roblox's memory, never injects into its process, and makes no network requests for this feature. If you ever pick a pack yourself (menu, hotkey, or tray), automatic switching stays out of the way for the rest of that session.
-
 ### 🕓 History
 Every cursor you've selected is saved in a History tab you can reapply anytime.
 
@@ -77,11 +58,6 @@ Recolor every currently active cursor with a single hue, without touching size o
 
 ### 🎬 Personalization & ⚙️ Settings
 Swap the app's background image, switch between English and Turkish instantly, launch on Windows startup, and check the detected Roblox version — all from Settings.
-
-### 🔔 Updates
-On launch it sends **one** version query to GitHub's public "latest release" endpoint (no identifying/account data); if a newer version exists it tells you in Settings and on the version tag at the top left.
-When an update is available, the app opens the [Releases](../../releases) page so you can download the latest Setup or Portable build yourself.
-The launch check can be turned off in Settings > Updates.
 
 ### 💻 Platform & Distribution
 Available as a portable executable or an NSIS installer. Built on Electron; animated cursors run in a small native helper (`cursor_helper.exe`) that only starts when needed. Source is public under a noncommercial license, with releases scanned on VirusTotal.
@@ -119,12 +95,10 @@ npm run dist     # build the installer and portable exe
 ## 🛡️ VirusTotal
 
 The latest release has been scanned with VirusTotal:
-> **About antivirus warnings:** Some engines (especially heuristic ones like ESET) may flag the Setup build as suspicious. This is a **false positive**. The app does not inject into Roblox, does not read process memory, and does not download or run hidden executables — updates simply open the GitHub Releases page. Full source is public; you can build it yourself. If your antivirus quarantines the file, add an exclusion or use the Portable build.
 
-
-- [🔍 Source](https://www.virustotal.com/gui/file/18de35dfb09f294ccacd16675df801a962db85983a5aa07a1f9fde2e8dbd9807?nocache=1)
-- [🔍 Setup](https://www.virustotal.com/gui/file/1ce2f2fb6961dc0990ace7980c012f69425d5c6be598801760cb8ed79ff75552?nocache=1)
-- [🔍 Portable](https://www.virustotal.com/gui/file/d4ef7e022d26cbb8ed8044d3bd458b4cb40c52043b7580c226bfd8de9a2981e3?nocache=1)
+- [🔍 Source](https://www.virustotal.com/gui/file/d6164ae95c241574d51e8ae521035cb12dbc00a99e30169d805f5ea60930262f?nocache=1)
+- [🔍 Setup](https://www.virustotal.com/gui/file/931ff40b0d11505572b12e221d5063987da2312b91bbf7bde741a47b1fd42131?nocache=1)
+- [🔍 Portable](https://virustotal.com/gui/file/0f88aa46f2d5400cc87f80cb897c2c1133e76265f2dbbc20ed9f7e9909974057?nocache=1)
 
 ## ☕ Support the Project
 

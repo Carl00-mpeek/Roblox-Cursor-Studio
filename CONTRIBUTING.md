@@ -50,7 +50,7 @@ The animated cursor feature is powered by a small C++ program, `native/cursor_he
 - If no compiler is found, `build.bat` tries to install MinGW-w64 via `winget`. If that also fails, `npm install` still succeeds — only the animated cursor feature is disabled, the rest of the app works normally.
 - To build it manually: `cd native && build.bat`
 - `npm run dist` refuses to package without `cursor_helper.exe`, so a release can't ship without animated cursor support by accident. In the packaged app the helper is copied to `resources/native/` (see `extraResources` in `package.json`).
-- If you change the marker values, keep `native/marker.h` and `MARKERS` in `main/animation/anim-controller.js` in sync.
+- If you change the marker values, keep `native/marker.h` and `MARKERS` in `main/anim-cursor.js` in sync.
 - `.bat` files must keep Windows (CRLF) line endings. `.gitattributes` takes care of this, just don't override it.
 
 ## 📝 Pull Requests

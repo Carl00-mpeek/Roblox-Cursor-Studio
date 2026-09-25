@@ -11,40 +11,22 @@ RBX Cursor Studio, bağımsız ve topluluk tarafından geliştirilmiş bir araç
 
 Roblox imleçlerini özelleştirmek için hafif bir Windows aracı.
 
-**Güncel sürüm: 4.5.5**
+**Güncel sürüm: 4.6.0**
 
-## 🎬 Demo
+![RBX Cursor Studio Ekran Görüntüsü]
 
-[![RBX Cursor Studio Live Preview](https://img.youtube.com/vi/kKYbosdVFig/0.jpg)](https://www.youtube.com/watch?v=kKYbosdVFig)
+## 🆕 4.6.0 ile Gelenler
 
-## 🆕 4.5.5 ile Gelenler
-
-**RBX Cursor Studio Güncellemesi**
-
-Bu güncellemeyle programda daha stabil, güvenli ve gelişmiş bir deneyim sunuyoruz:
-
-* 📜 Uygulama içindeki lisans/telif metni düzeltildi, artık kendi içinde çelişmiyor.
-* ⚡ Roblox durumu kontrol edilirken oluşan kısa donmalar giderildi, program daha akıcı çalışıyor.
-* 🔒 Paket ve oyun eşleştirme kısımlarında ek güvenlik önlemleri alındı; hatalı/kötü niyetli veri girişine karşı koruma güçlendirildi.
-* 🛡️ Varsayılan imleçlere geri dönme işlemi artık daha güvenli: bir sorun varsa hiçbir şey yarım kalmadan işlem baştan durduruluyor.
-* ⌨️ Hızlı geçiş (Quick Switch) kısayolları artık gerçekten çalışıp çalışmadığını kontrol ediyor, sessizce başarısız olmuyor.
-* 🧹 Kullanılmayan dosyalar ve kod temizlendi, hata kayıt dosyasının sınırsız büyümesi engellendi.
-* 🛠️ Kurulum dosyası oluşturma araçlarındaki yanlış mesaj düzeltildi.
-
-### 🧪 BETA — 1024×1024 Yüksek Çözünürlük Desteği
-
-Yeni **yüksek çözünürlük desteği** ile imleç paketleri artık **1024×1024 piksele kadar** kullanılabiliyor.
-
-> ⚠️ **Bu özellik şu anda Beta aşamasındadır.** Bazı eski veya uyumsuz imleç paketlerinde beklenmeyen sonuçlar oluşabilir.
-
-Bu güncelleme genel olarak programı daha sağlam ve güvenli hale getirmeye odaklanıyor. Yeni yüksek çözünürlük özelliği ise şimdilik **Beta olarak** sunuluyor.
+- 🎨 **Bambaşka bir tasarım** — arayüzün tamamı yepyeni bir görünüm ve düzene geçti
+- ✨ Özel bir görsel atadığın imleç kartlarının etrafında artık yumuşak bir parıltı efekti var
+- 🖼️ Bağlamda Önizleme sahnesinde küçük bir cila (OYNA butonu, sohbet kutusu, Shift Lock)
 
 ## ✨ Özellikler
 
 ### 🖱️ İmleç Özelleştirme
 Roblox'un tüm imleç türlerini (ok, uzak ok, I-beam, kilitli fare...) tek tek özelleştir ve seçtiğin görseli anında uygula. İmleçler 64×64 alana otomatik sığdırılır ve ortalanır; piksel netliği için yumuşatma kapalıdır.
 
-### ✨ Animasyonlu İmleçler (.ANI)
+### ✨ Animasyonlu İmleçler (.ANI) — 🧪 Beta
 > Otomatik durum tespiti sezgisel yöntemlere dayanır ve bazı oyunlarda ara sıra yanılabilir. Bir sorunla karşılaşırsan [issue aç](../../issues).
 
 - Her durum için bir `.ani` dosyası ata — **Normal, Tıklama, Yazı, Shift Lock**
@@ -62,9 +44,6 @@ Otomatik Boyutlandır + Ortala, Sadece Ortala ve Boyutu Sıfırla kısayolları;
 ### 📦 Paket Sistemi
 İstediğin kadar paket oluştur, kaydet ve yönet. `.rbxcursor` / `.zip` olarak dışa aktarıp paylaş, ya da sürükle-bırak ile içe aktar. **Hızlı Paket Geçişi**, `Ctrl+Alt+1/2/3` ile Roblox içindeyken bile paketler arasında anında geçiş yapar.
 
-### 🕹️ Oyuna Göre Otomatik Paket — 🧪 Deneysel, opt-in (varsayılan kapalı)
-Bir Roblox oyununu kayıtlı paketlerinden birine eşle; o oyunu açtığında uygulama otomatik olarak o pakete geçsin. Bu, Roblox'un kendi yerel log dosyalarını (`%LOCALAPPDATA%\Roblox\logs`) **salt okunur** okuyarak çalışır — başka hiçbir şey yapmaz. Uygulama bu özellik için Roblox'un belleğini okumaz, sürecine enjekte olmaz ve ağ isteği atmaz. Bir paketi elle seçersen (menü, kısayol ya da tepsi simgesi), otomatik geçiş o oturum boyunca araya girmez.
-
 ### 🕓 Geçmiş
 Daha önce seçtiğin her imleç, istediğin zaman tekrar uygulayabileceğin bir Geçmiş sekmesinde saklanır.
 
@@ -79,11 +58,6 @@ Boyut ve konuma dokunmadan, şu an aktif tüm imleçleri tek bir renk tonuyla bo
 
 ### 🎬 Kişiselleştirme & ⚙️ Ayarlar
 Uygulamanın arkaplanını değiştir, Türkçe/İngilizce arasında anında geçiş yap, Windows başlangıcında otomatik aç ve algılanan Roblox sürümünü Ayarlar'dan gör.
-
-### 🔔 Güncellemeler
-Açılışta GitHub'ın herkese açık "latest release" adresine **tek bir** sürüm sorusu gönderilir (kimlik/hesap verisi gönderilmez); yeni sürüm varsa Ayarlar'da ve sol üstteki sürüm etiketinde haber verilir.
-Güncelleme varsa uygulama [Releases](../../releases) sayfasını açar; en son Kurulum veya Portable sürümünü kendin indirebilirsin.
-Açılış kontrolü Ayarlar > Güncellemeler'den kapatılabilir.
 
 ### 💻 Platform ve Dağıtım
 Taşınabilir exe ya da NSIS kurulum dosyası olarak dağıtılır. Electron tabanlı; animasyonlu imleçler yalnızca gerektiğinde başlayan küçük bir native yardımcıda (`cursor_helper.exe`) çalışır. Kaynak kodu açık ve ticari olmayan bir lisansla paylaşılır, sürümler VirusTotal ile taranmıştır.
@@ -121,12 +95,10 @@ npm run dist     # yükleyici ve taşınabilir exe oluştur
 ## 🛡️ VirusTotal
 
 En son sürüm VirusTotal ile taranmıştır:
-> **Antivirüs uyarıları hakkında:** Bazı motorlar (özellikle ESET gibi sezgisel tarayıcılar) Setup sürümünü şüpheli olarak işaretleyebilir. Bu bir **yanlış pozitif (false positive)**. Uygulama Roblox’a enjekte olmaz, bellek okumaz ve gizli exe indirip çalıştırmaz — güncellemeler yalnızca GitHub Releases sayfasını açar. Kaynak kodu açıktır; istersen kendin derleyebilirsin. Antivirüs dosyayı karantinaya alırsa istisna ekle veya Portable sürümü kullan.
 
-
-- [🔍 Kaynak](https://www.virustotal.com/gui/file/18de35dfb09f294ccacd16675df801a962db85983a5aa07a1f9fde2e8dbd9807?nocache=1)
-- [🔍 Setup](https://www.virustotal.com/gui/file/1ce2f2fb6961dc0990ace7980c012f69425d5c6be598801760cb8ed79ff75552?nocache=1)
-- [🔍 Portable](https://www.virustotal.com/gui/file/d4ef7e022d26cbb8ed8044d3bd458b4cb40c52043b7580c226bfd8de9a2981e3?nocache=1)
+- [🔍 Kaynak](https://www.virustotal.com/gui/file/d6164ae95c241574d51e8ae521035cb12dbc00a99e30169d805f5ea60930262f?nocache=1)
+- [🔍 Setup](https://www.virustotal.com/gui/file/931ff40b0d11505572b12e221d5063987da2312b91bbf7bde741a47b1fd42131?nocache=1)
+- [🔍 Portable](https://virustotal.com/gui/file/0f88aa46f2d5400cc87f80cb897c2c1133e76265f2dbbc20ed9f7e9909974057?nocache=1)
 
 ## ☕ Projeyi Destekle
 
