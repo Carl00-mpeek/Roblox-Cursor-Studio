@@ -122,9 +122,9 @@ The latest release has been scanned with VirusTotal:
 > **About antivirus warnings:** Some engines (especially heuristic ones like ESET) may flag the Setup build as suspicious. This is a **false positive**. The app does not inject into Roblox, does not read process memory, and does not download or run hidden executables — updates simply open the GitHub Releases page. Full source is public; you can build it yourself. If your antivirus quarantines the file, add an exclusion or use the Portable build.
 
 
-- [🔍 Source](https://www.virustotal.com/gui/file/549cf7cdcdfce502611a5059f7b9e5c795d22839280d975ce15f8202ff8f6e84?nocache=1)
-- [🔍 Setup](https://www.virustotal.com/gui/file/b58c19a78d8b8aef6455347c2782c9b2f70231db8c9d31f9a051a97684666132)
-- [🔍 Portable](https://www.virustotal.com/gui/file/384b845d747200897a83684684ba31298dfdc3f5d52a6a16b6a059126782fa0c)
+- [🔍 Source](https://www.virustotal.com/gui/file/18de35dfb09f294ccacd16675df801a962db85983a5aa07a1f9fde2e8dbd9807?nocache=1)
+- [🔍 Setup](https://www.virustotal.com/gui/file/1ce2f2fb6961dc0990ace7980c012f69425d5c6be598801760cb8ed79ff75552?nocache=1)
+- [🔍 Portable](https://www.virustotal.com/gui/file/d4ef7e022d26cbb8ed8044d3bd458b4cb40c52043b7580c226bfd8de9a2981e3?nocache=1)
 
 ## ☕ Support the Project
 
