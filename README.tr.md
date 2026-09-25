@@ -11,21 +11,33 @@ RBX Cursor Studio, bağımsız ve topluluk tarafından geliştirilmiş bir araç
 
 Roblox imleçlerini özelleştirmek için hafif bir Windows aracı.
 
-**Güncel sürüm: 4.5.0**
+**Güncel sürüm: 4.5.5**
 
 ## 🎬 Demo
 
 [![RBX Cursor Studio Live Preview](https://img.youtube.com/vi/kKYbosdVFig/0.jpg)](https://www.youtube.com/watch?v=kKYbosdVFig)
 
-## 🆕 4.5.0 ile Gelenler
+## 🆕 4.5.5 ile Gelenler
 
-- 🐛 *Animasyonlu imleç artık paket silinse bile kaybolmuyor* — bir paketi sildiğinde, o pakette aktif olan animasyon artık bozulmuyor.
-- 🐛 *"Orijinale Dön" artık animasyonu da düzgün temizliyor* — önceden bir durumu orijinaline döndürünce animasyon ataması arkada kalabiliyor, bir sonraki açılışta boş imleç görünebiliyordu; artık düzeldi.
-- 🐛 *Animasyon açık/kapalı durumu artık hatırlanıyor* — uygulamayı kapatıp açtığında animasyonu nasıl bıraktıysan öyle karşılıyor.
-- 🖥️ *Sistem tepsisi eklendi* — uygulama artık görev çubuğunun tepsisine (saat yanına) küçülebiliyor. Tepsi simgesinden paketler arasında geçiş yapabilir, animasyonu aç/kapatabilir ve uygulamayı buradan tamamen kapatabilirsin.
-- ⚙️ *Yeni ayar: "Kapatınca Tepsiye Küçül"* — Ayarlar'dan açarsan, pencereyi kapatman uygulamayı kapatmaz, arka planda tepsiden çalışmaya devam eder (varsayılan kapalı, istersen açabilirsin).
-- 🕹️ *[Deneysel] Oyuna göre otomatik paket* — Ayarlar'dan bir Roblox oyununu bir pakete eşleyebiliyorsun; ileride o oyunu açtığında ilgili paket otomatik uygulanacak. Şu an geliştirme aşamasında, henüz aktif olarak çalışmıyor.
-- ⚡ *Performans iyileştirmesi* — çok sayıda paketin olduğu kullanıcılarda (20+) paket ekleme/silme/uygulama işlemleri artık daha hızlı.
+**RBX Cursor Studio Güncellemesi**
+
+Bu güncellemeyle programda daha stabil, güvenli ve gelişmiş bir deneyim sunuyoruz:
+
+* 📜 Uygulama içindeki lisans/telif metni düzeltildi, artık kendi içinde çelişmiyor.
+* ⚡ Roblox durumu kontrol edilirken oluşan kısa donmalar giderildi, program daha akıcı çalışıyor.
+* 🔒 Paket ve oyun eşleştirme kısımlarında ek güvenlik önlemleri alındı; hatalı/kötü niyetli veri girişine karşı koruma güçlendirildi.
+* 🛡️ Varsayılan imleçlere geri dönme işlemi artık daha güvenli: bir sorun varsa hiçbir şey yarım kalmadan işlem baştan durduruluyor.
+* ⌨️ Hızlı geçiş (Quick Switch) kısayolları artık gerçekten çalışıp çalışmadığını kontrol ediyor, sessizce başarısız olmuyor.
+* 🧹 Kullanılmayan dosyalar ve kod temizlendi, hata kayıt dosyasının sınırsız büyümesi engellendi.
+* 🛠️ Kurulum dosyası oluşturma araçlarındaki yanlış mesaj düzeltildi.
+
+### 🧪 BETA — 1024×1024 Yüksek Çözünürlük Desteği
+
+Yeni **yüksek çözünürlük desteği** ile imleç paketleri artık **1024×1024 piksele kadar** kullanılabiliyor.
+
+> ⚠️ **Bu özellik şu anda Beta aşamasındadır.** Bazı eski veya uyumsuz imleç paketlerinde beklenmeyen sonuçlar oluşabilir.
+
+Bu güncelleme genel olarak programı daha sağlam ve güvenli hale getirmeye odaklanıyor. Yeni yüksek çözünürlük özelliği ise şimdilik **Beta olarak** sunuluyor.
 
 ## ✨ Özellikler
 
