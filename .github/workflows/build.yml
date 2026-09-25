@@ -1,34 +1,29 @@
 name: Windows Setup.exe Oluştur
-
 # Bu iş akışı GitHub'ın kendi Windows sunucusunda (senin bilgisayarında değil)
 # çalışır; electron-builder ile Setup (kurulum) + Portable exe üretir.
 # Animasyonlu İmleç için native/cursor_helper.exe de burada derlenir.
 #
 # Çalıştırma şekilleri:
-#  1) "v" ile başlayan bir tag push'ladığında (örn. v3.3.5) otomatik çalışır
+#  1) "v" ile başlayan bir tag push'ladığında (örn. v4.6.0) otomatik çalışır
 #     ve çıktıları doğrudan bir GitHub Release'e ekler.
 #     ÖNEMLİ: tag, package.json'daki "version" ile başlamalı
-#     (v3.3.5  <->  "version": "3.3.5"). Sürümün arkasına _hotfix, -beta gibi
-#     ek gelebilir (v3.3.5_hotfix, v3.3.5-beta.1 kabul edilir);
-#     ama v3.3.6 ile package.json 3.3.5 ise iş akışı bilerek hata verir.
-#     Örnek:  git tag v3.3.5 && git push origin v3.3.5
+#     (v4.6.0  <->  "version": "4.6.0"). Sürümün arkasına _hotfix, -beta gibi
+#     ek gelebilir (v4.6.0_hotfix, v4.6.0-beta.1 kabul edilir);
+#     ama v4.6.1 ile package.json 4.6.0 ise iş akışı bilerek hata verir.
+#     Örnek:  git tag v4.6.0 && git push origin v4.6.0
 #  2) Actions sekmesinden elle "Run workflow" ile de tetiklenebilir
 #     (workflow_dispatch) — bu durumda çıktı sadece "Artifacts" olarak,
 #     Release oluşturmadan indirilebilir.
-
 on:
   push:
     tags:
       - 'v*'
   workflow_dispatch: {}
-
 permissions:
   contents: write
-
 concurrency:
   group: build-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
   build:
     runs-on: windows-latest
@@ -36,13 +31,11 @@ jobs:
     steps:
       - name: Kodu indir
         uses: actions/checkout@v6
-
       - name: Node.js kur
         uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
-
       - name: package.json geçerliliğini ve sürüm/tag uyumunu kontrol et
         shell: pwsh
         run: |
@@ -50,13 +43,12 @@ jobs:
           Write-Host "package.json geçerli. Sürüm: $($pkg.version)"
           if ($env:GITHUB_REF -like 'refs/tags/v*') {
             $tag = $env:GITHUB_REF_NAME
-            # Kabul: v3.3.5 | v3.3.5_hotfix | v3.3.5-beta.1   Red: v3.3.50 | v3.3.6
+            # Kabul: v4.6.0 | v4.6.0_hotfix | v4.6.0-beta.1   Red: v4.6.00 | v4.6.1
             $pattern = '^v' + [regex]::Escape($pkg.version) + '($|[_+-])'
             if ($tag -notmatch $pattern) {
               throw "Tag ($tag) package.json sürümüyle ($($pkg.version)) uyuşmuyor. Tag 'v$($pkg.version)' ile başlamalı (sonuna _hotfix gibi ek olabilir)."
             }
           }
-
       # Animasyonlu İmleç yardımcısı MinGW g++ ile derlenir (-static ile,
       # yani son kullanıcıda ekstra DLL/VC++ runtime gerekmez).
       # cursor_helper.cpp std::thread/std::mutex kullanır; bu yüzden g++'ın
@@ -69,7 +61,6 @@ jobs:
           # Depoya yanlışlıkla elle derlenmiş bir exe girdiyse CI onu kullanmasın;
           # her zaman kaynak koddan sıfırdan derlesin.
           Remove-Item native/cursor_helper.exe -Force -ErrorAction SilentlyContinue
-
           function Test-Gxx {
             if (-not (Get-Command g++ -ErrorAction SilentlyContinue)) { return $false }
             $src = Join-Path $env:RUNNER_TEMP 'gxx_probe.cpp'
@@ -93,7 +84,6 @@ jobs:
               $ErrorActionPreference = $prev
             }
           }
-
           if (Test-Gxx) {
             Write-Host 'Runner üzerindeki g++ uygun (std::thread + static çalışıyor).'
           } else {
@@ -109,12 +99,10 @@ jobs:
             if (-not (Test-Gxx)) { throw 'Kurulan MinGW ile de std::thread + static deneme programı derlenip çalışmadı.' }
           }
           g++ --version
-
       # "npm ci": package-lock.json'a birebir uyar (tekrarlanabilir derleme).
       # postinstall adımı native/cursor_helper.exe'yi burada derler.
       - name: Bağımlılıkları kur (ve cursor_helper.exe'yi derle)
         run: npm ci
-
       - name: cursor_helper.exe derlendi mi ve bağımsız çalışır mı kontrol et
         shell: pwsh
         run: |
@@ -131,41 +119,46 @@ jobs:
           } else {
             Write-Host 'objdump bulunamadı, DLL bağımlılık kontrolü atlandı.'
           }
-
       - name: setup.exe / portable.exe oluştur
         run: npm run dist -- --publish=never
-
+      # package.json nsis artifactName: "${productName} Setup ${version}.${ext}"
+      # Eski sürümler "Kurulum" kullanıyordu; hem Setup hem Kurulum kabul edilir.
       - name: Çıktıları doğrula (Setup, Portable ve cursor_helper.exe paketin içinde olmalı)
         shell: pwsh
         run: |
           Get-ChildItem dist -Filter *.exe | ForEach-Object { Write-Host "$($_.Name)  ($([math]::Round($_.Length/1MB,1)) MB)" }
-          $setup    = Get-ChildItem dist -Filter '*Kurulum*.exe'
-          $portable = Get-ChildItem dist -Filter '*Portable*.exe'
-          if (-not $setup)    { throw 'Setup (Kurulum) exe üretilemedi.' }
-          if (-not $portable) { throw 'Portable exe üretilemedi.' }
+          $setup    = @(Get-ChildItem dist -Filter '*Setup*.exe' -ErrorAction SilentlyContinue)
+          if (-not $setup.Count) {
+            $setup = @(Get-ChildItem dist -Filter '*Kurulum*.exe' -ErrorAction SilentlyContinue)
+          }
+          $portable = @(Get-ChildItem dist -Filter '*Portable*.exe' -ErrorAction SilentlyContinue)
+          if (-not $setup.Count)    { throw 'Setup exe üretilemedi (dist/*Setup*.exe veya *Kurulum*.exe yok).' }
+          if (-not $portable.Count) { throw 'Portable exe üretilemedi (dist/*Portable*.exe yok).' }
           # Uygulama, helper'ı paketlenmiş halde resources/native/ altında arar
-          # (main/anim-cursor.js -> _helperPath). package.json "extraResources" bunu sağlar.
+          # (main/animation/anim-controller.js -> _helperPath). package.json "extraResources" bunu sağlar.
           $helper = 'dist/win-unpacked/resources/native/cursor_helper.exe'
           if (-not (Test-Path $helper)) {
             throw "$helper pakete girmemiş. Animasyonlu İmleç paketlenmiş uygulamada çalışmaz. package.json 'extraResources' ayarını kontrol et."
           }
           Write-Host "Helper pakette: $helper"
-
+          Write-Host "Setup: $($setup[0].Name)"
+          Write-Host "Portable: $($portable[0].Name)"
       - name: Çıktıları Artifact olarak yükle
         uses: actions/upload-artifact@v7
         with:
           name: RBX-Cursor-Studio-Windows
           path: |
+            dist/*Setup*.exe
             dist/*Kurulum*.exe
             dist/*Portable*.exe
           if-no-files-found: error
-
       - name: Tag push edildiyse GitHub Release oluştur
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v3
         with:
           files: |
+            dist/*Setup*.exe
             dist/*Kurulum*.exe
             dist/*Portable*.exe
-          fail_on_unmatched_files: true
+          fail_on_unmatched_files: false
           generate_release_notes: true
