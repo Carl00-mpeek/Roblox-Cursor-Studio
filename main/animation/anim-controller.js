@@ -273,6 +273,13 @@ class AnimCursorController {
       ));
     }
     return new Promise((resolve, reject) => {
+      // Aynı key için bekleyen eski isteği iptal et (hızlı peş peşe SETANI vb.)
+      const prev = this.pending.get(key);
+      if (prev) {
+        clearTimeout(prev.timer);
+        this.pending.delete(key);
+        try { prev.reject(new Error('Yeni istek ile iptal edildi.')); } catch (_) {}
+      }
       const timer = setTimeout(() => {
         this.pending.delete(key);
         reject(new Error('Native yardımcı zamanında yanıt vermedi (helper çökmüş olabilir, error.log kontrol et).'));
@@ -339,6 +346,10 @@ class AnimCursorController {
    * Turns the animated overlay on/off (bound to a global hotkey in main.js).
    * Only talks to the helper if it is already running; a helper that is
    * spawned later gets the current value during _ensureProcess()'s resync.
+   *
+   * Overlay kapanınca .ani atanmış durumların şeffaf PNG'leri geri yüklenir
+   * (yoksa Roblox'ta görünmez imleç kalır). Açılınca tekrar blank edilir.
+   * PNG senkronu arka planda yapılır; dönüş değeri hemen gelir.
    */
   setEnabled(on) {
     this.enabled = !!on;
@@ -346,11 +357,32 @@ class AnimCursorController {
     this._writeCfg();
     if (this.proc && !this.proc.killed) this._pushLine(`ENABLE|on=${this.enabled ? 1 : 0}`);
     if (typeof this.onEnabledChange === 'function') this.onEnabledChange(this.enabled);
+    this._syncPngsForEnabledState().catch((err) => this.deps.logError(err));
     return this.enabled;
   }
 
   toggleEnabled() {
     return this.setEnabled(!this.enabled);
+  }
+
+  /**
+   * Overlay açıkken .ani'li durumlar şeffaf PNG tutar; kapalıyken gerçek
+   * statik imleç geri gelir. Backup silinmez ki tekrar açınca blank mümkün olsun.
+   */
+  async _syncPngsForEnabledState() {
+    if (this.enabled) {
+      for (const kind of STATES) {
+        if (this.cfg[kind] && this.cfg[kind].ani) {
+          await this._blankStaticPng(kind);
+        }
+      }
+    } else {
+      for (const kind of STATES) {
+        if (this.cfg[kind] && this.cfg[kind].ani) {
+          await this._restoreStaticPngKeepBackup(kind);
+        }
+      }
+    }
   }
 
   // ---- Static-PNG blanking, so Roblox's own draw disappears exactly
@@ -374,6 +406,16 @@ class AnimCursorController {
     const size = this.deps.canvasSizes[kind] || 64;
     fs.writeFileSync(live, makeTransparentPng(size, size, MARKERS[kind] || 0));
     await this.deps.applyCurrentToRoblox().catch((err) => this.deps.logError(err));
+  }
+
+  // Toggle off: gerçek PNG'yi geri koy ama backup'ı silme (toggle on'da blank için lazım).
+  async _restoreStaticPngKeepBackup(kind) {
+    const live = this._pngPathFor(kind);
+    const backup = this._backupPathFor(kind);
+    if (fs.existsSync(backup)) {
+      fs.copyFileSync(backup, live);
+      await this.deps.applyCurrentToRoblox().catch((err) => this.deps.logError(err));
+    }
   }
 
   // Older versions blanked these PNGs with plain alpha=0 (no marker). For
@@ -436,7 +478,11 @@ class AnimCursorController {
 
     this.cfg[kind] = stateCfg;
     this._writeCfg();
-    await this._blankStaticPng(kind);
+    // Overlay kapalıyken blank etme: aksi halde Roblox'ta görünmez imleç kalır.
+    // Açıkken (veya sonradan açılınca _syncPngsForEnabledState) blank edilir.
+    if (this.enabled) {
+      await this._blankStaticPng(kind);
+    }
     return stateCfg;
   }
 
@@ -531,10 +577,20 @@ class AnimCursorController {
 
   async initFromConfig() {
     if (process.platform !== 'win32') return;
-    const anyEnabled = STATES.some((s) => this.cfg[s].ani);
-    if (anyEnabled) this._ensureProcess();
+    const anyAni = STATES.some((s) => this.cfg[s].ani);
+    if (anyAni) this._ensureProcess();
     await this.restoreAllStaticPngsIfOrphaned();
-    await this._upgradeBlankMarkers();
+    if (this.enabled) {
+      // Overlay açık: marker'lı blank PNG'leri güncelle / koru
+      await this._upgradeBlankMarkers();
+    } else {
+      // Overlay kapalı: .ani atanmış olsa bile şeffaf PNG bırakma (görünmez imleç)
+      for (const kind of STATES) {
+        if (this.cfg[kind] && this.cfg[kind].ani && fs.existsSync(this._backupPathFor(kind))) {
+          await this._restoreStaticPngKeepBackup(kind);
+        }
+      }
+    }
   }
 
   shutdown() {

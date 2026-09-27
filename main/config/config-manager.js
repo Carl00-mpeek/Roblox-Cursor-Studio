@@ -31,7 +31,7 @@ ensureDirs();
 const DEFAULT_CFG = {
   theme: 'dark',
   accent: '#7c9cff',
-  background: 'background.jpg',
+  background: 'background.png',
   lastPack: '',
   windowBounds: { width: 1200, height: 760 },
   // Roblox güncellenince (sürüm klasörü değişince) kayıtlı imleçleri
