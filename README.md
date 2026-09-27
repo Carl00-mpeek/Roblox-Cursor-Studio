@@ -5,165 +5,140 @@
 
 ## ⚠️ Disclaimer
 
-RBX Cursor Studio is an independent, community-made tool — **not affiliated with or endorsed by Roblox Corporation**. It doesn't read Roblox's memory or inject into its code. It simply replaces cursor image files in your local Roblox folder, and (for animated cursors) draws a separate overlay with standard Windows APIs. Roblox doesn't officially support modifying game files, so **use it at your own risk**.
-
----
+RBX Cursor Studio is an independent, community-made tool, **not affiliated with or endorsed by Roblox Corporation**. It doesn't read Roblox's memory or inject into its code — it replaces cursor image files in your local Roblox folder, and (for the Animated Cursor feature) draws a separate overlay window using standard Windows APIs. Roblox doesn't officially support modifying game files, so **use it at your own risk**.
 
 # 🎨 RBX Cursor Studio
 
-A lightweight Windows app for customizing Roblox cursors — make them yours, share them with friends, and switch packs in a second.
+A lightweight Windows tool for customizing Roblox cursors.
 
-**Current version: 4.6.0**
+**Current version: 5.0.0**
 
-![RBX Cursor Studio Screenshot]
+## 🎬 Demo
 
----
+> Short walkthrough of the app (UI, packs, animated cursor).
 
-## 🆕 What's New in 4.6.0
+<!-- Replace the URL below with your demo video (YouTube, GitHub, etc.) -->
+**[▶ Watch the demo video](https://github.com/Carl00-mpeek/Roblox-Cursor-Studio/releases)**
 
-This release is more than a small patch — updates, packs, and animated cursors got a real polish pass.
+<!-- Optional embed when you have a YouTube ID:
+https://www.youtube.com/watch?v=YOUR_VIDEO_ID
+-->
 
-### 🔄 Smarter updates
-- Installers are clearly named **Setup**
-- After an update, old download files are **cleaned up automatically** — no leftover clutter
-- Hit **Check Now** → if an update exists, **Download & Install** shows up right away
-- The update section sits **above History** in Settings so you never miss it
+## 🆕 What's New in 5.0.0
 
-### 🎬 Animated cursors — no longer Beta
-- The **Beta** label is gone; the feature is ready for everyday use
-- Fixed the bug where turning animation **off** could make the cursor vanish
-- Toggle on/off is more reliable; your cursor stays visible in Roblox
+Performance and UI cleanup focused on **idle resource use**, startup speed, and a calmer interface.
 
-### 📦 Packs — sharing, upgraded
-- **Double-click a `.rbxcursor` file** and choose: **Save to Packs** or **Apply Only**
-- **Import multiple** packs at once · **Bulk export** selected packs to a folder
-- Drag & drop supports **multiple files**
-- Stronger safety checks: only real **PNG** cursors and valid **`.ani`** animations are accepted
+### Performance
+- **No continuous Roblox status polling** — refreshes on startup, focus, becoming visible, or manual refresh; a light safety check at most every 5 minutes while the window is visible
+- **Cheaper Roblox detection** — `tasklist` first; PowerShell/CIM only when executable paths are needed
+- **Cached Roblox folder scans** (~12s) to avoid repeated disk and process work
+- **All `backdrop-filter` blurs removed** — solid glass-style panels instead of GPU-heavy blur
+- **Decorative card animations removed** (orbit / float / ring / sweep / ping) — selected cards use a simple static border
+- **Animations paused** when the window is hidden or minimized; `prefers-reduced-motion` respected
+- **Background image** compressed (~3.4 MB PNG → ~240 KB JPEG); logo reduced in size
+- **Faster startup** — critical path (status + active cursors) in parallel; reference profiles load in the background; background image is decoded before paint
+- Window resize config saves are debounced; spellcheck disabled in the renderer
 
-### 🎨 Look & feel
-- Update controls are easier to find in Settings
-- Packs screen is more practical (import, bulk export, multi drag-and-drop)
-- Animation page feels finished — less “experimental”, more polished product
-- Cursor cards still get that soft **glow** when you’ve assigned a custom image
-- In-Context Preview stays cozy: Play button, chat box, Shift Lock — test cursors at true size
+### UX & reliability
+- **Settings → Last error** — shows the most recent log entry and an **Open error.log** button
+- **Apply pack / Restore originals** show a busy state (“Applying…” / “Restoring…”) and disable buttons to prevent double-clicks
+- Calmer hover styles (less lift and heavy shadows)
 
----
+### Security / integrity (for releases)
+- Publish a **SHA-256** checksum with each release so downloads can be verified
+
 
 ## ✨ Features
 
-### 🖱️ Cursor customization
-Customize every Roblox cursor type (arrow, far arrow, I-beam, mouse-locked…) and apply instantly. Images are auto-fitted and centered on a 64×64 canvas, with smoothing off so pixel edges stay crisp.
+### 🖱️ Cursor Customization
+Customize every Roblox cursor type (arrow, far arrow, I-beam, mouse-locked...) and apply your selection instantly. Cursors are auto-fitted and centered on a 64×64 canvas, with smoothing off to keep pixel edges crisp.
 
-### ✨ Animated cursors (.ANI)
-> Automatic state detection uses heuristics and may occasionally misjudge in some games. [Open an issue](../../issues) if something feels off.
+### ✨ Animated Cursors (.ANI) — 🧪 Beta
+> Automatic state detection relies on heuristics and may occasionally misjudge in some games. [Open an issue](../../issues) if you hit a problem.
 
-- Assign a `.ani` per state — **Normal, Click, Text, Shift Lock**
-- Drawn by a small native helper: click-through, always-on-top, real per-pixel alpha
-- Size, speed, and FPS (up to 240), auto-center or manual hotspot
-- Adjustable mouse-follow interval · live status badges when a state is active
-- **Preview** any animation on your desktop for 6 seconds — even without Roblox
-- Toggle everything with a hotkey (`Ctrl+Alt+0` by default)
+- Assign a `.ani` file per state — **Normal, Click, Text, Shift Lock**
+- Drawn by a native helper as a click-through, always-on-top overlay with true per-pixel alpha
+- Per-state size, speed and FPS controls (up to 240 FPS), auto-center or a manual hotspot
+- Adjustable mouse-follow interval; automatic state switching with a live status badge
+- **Preview** any animation on your desktop for 6 seconds, even without Roblox running
+- Toggle the whole feature on/off with a hotkey (`Ctrl+Alt+0` by default)
 
 > Restart Roblox after assigning your first animation so it picks up the updated cursor files.
 
-### 🎯 Built-in cursor editor
-Auto-Fit + Center, Center Only, Reset Size · zoom 0.4x–3x · drag to position · Colorize with a hue slider · one-click Color Variations. Built for quick experiments without leaving the app.
+### 🎯 Built-in Cursor Editor
+Auto-Fit + Center, Center Only, and Reset Size shortcuts; a manual zoom slider (0.4x–3x); drag-and-drop positioning; Colorize with a hue slider; and one-click Color Variations.
 
-### 📦 Cursor packs
-Create and manage as many packs as you like. Export as `.rbxcursor` / `.zip`, import via button or drag-and-drop (one file or many). **Quick Pack Switching** (`Ctrl+Alt+1/2/3`) works even while Roblox is running.
+### 📦 Cursor Packs
+Create, save and manage as many packs as you like. Export as `.rbxcursor` / `.zip` to share, or import one via drag-and-drop. **Quick Pack Switching** jumps between saved packs with `Ctrl+Alt+1/2/3`, even while Roblox is running.
 
 ### 🕓 History
-Cursors you’ve saved stick around in History — reapply anytime with one click.
+Every cursor you've selected is saved in a History tab you can reapply anytime.
 
 ### 🖼️ In-Context Preview
-Try cursors at true size on a mock Roblox-style scene: HUD, Play button, chat box, and Shift Lock included.
+Test your cursors at true size on a mock Roblox screen — HUD, Play button, chat box, and a Shift Lock toggle included.
 
-### 🔄 Roblox update handling
-Detects the newest Roblox client folder. With Auto-Reinstall on, your saved cursors come back after Roblox updates. Back up and restore originals in one click.
+### 🔄 Automatic Update Handling
+Detects the newest Roblox client folder automatically. With Auto-Reinstall on, your saved cursors are reapplied every time Roblox updates. Back up and restore your original cursors with one click.
 
-### 🌈 Bulk color changer
-Recolor every active cursor with a single hue — size and position stay put.
+### 🌈 Bulk Color Changer
+Recolor every currently active cursor with a single hue, without touching size or position.
 
 ### 🎬 Personalization & ⚙️ Settings
-Swap the app background, switch English / Turkish instantly, launch on Windows startup, and see the detected Roblox version — all from Settings.
+Swap the app's background image, switch between English and Turkish instantly, launch on Windows startup, and check the detected Roblox version — all from Settings.
 
-### 💻 Platform
-Portable exe or NSIS **Setup** installer. Built on Electron; animated cursors use a tiny native helper (`cursor_helper.exe`) that only starts when needed. Source is public under a noncommercial license; releases are scanned on VirusTotal.
+### 💻 Platform & Distribution
+Distributed as a one-click NSIS installer (Program Files) or a portable exe. All user data lives only in `%AppData%\RBXCursorStudio` (settings, packs, history, logs, Electron cache) — no hidden system files and no random folders elsewhere. Built on Electron; animated cursors run in a small native helper (`cursor_helper.exe`) that only starts when needed. Source is public under a noncommercial license, with releases scanned on VirusTotal.
 
----
+## 📥 Download & install
 
-## 📥 Download
+1. Open the [Releases](../../releases) page and download **RBX Cursor Studio Kurulum 5.0.0.exe** (the installer).
+2. Run the installer (admin may be required).
+3. The app installs to **`C:\Program Files\RBX Cursor Studio`**, creates Start Menu and Desktop shortcuts, then can launch itself.
 
-- **Setup** — download the installer and go  
-- **Portable** — extract the ZIP and run `RBX Cursor Studio.exe` — no install needed  
+**Portable (optional):** download the Portable build, extract the ZIP, and run `RBX Cursor Studio.exe` — no install, no Program Files.
 
-> Always grab the latest build from the [Releases](../../releases) page — only download from this repository.
+> Only download from this repository’s Releases.
 
-### ❓ Windows says it “protected your PC”
-The app isn’t code-signed yet, so SmartScreen may warn until enough people have run it — that alone doesn’t mean malware. Click **More info → Run anyway**. Full source and VirusTotal links are below.
+### ❓ Windows shows a "protected your PC" warning
+The app isn't code-signed yet, so SmartScreen may warn until enough people have downloaded it — this alone isn't a sign of malware. Click **More info → Run anyway**. Full source and VirusTotal scans are linked below.
 
-### ❓ Animated cursor doesn’t show up
-- Exclusive fullscreen blocks overlays (same as Discord/Steam) — use windowed or borderless  
-- Restart Roblox after your first animation assignment  
-- Use **Preview** on the Animated tab to confirm rendering works  
-- Make sure animation isn’t toggled off (`Ctrl+Alt+0` by default)
+### ❓ The animated cursor doesn't show up
+- Exclusive fullscreen blocks all overlays (same as Discord/Steam) — switch Roblox to windowed or borderless.
+- Restart Roblox after assigning your first animation.
+- Try **Preview** in the Animated tab to confirm rendering works.
+- Check the animation hasn't been turned off via its hotkey (`Ctrl+Alt+0` by default).
 
----
+## 🔧 Building from Source
 
-## 🔧 Building from source
+**Windows users: the ready-made scripts are enough — no terminal needed** (`install.bat` / `start.bat` / `exe_maker.bat`). The steps below are for manual setup or non-Windows systems.
 
-**Windows users:** ready-made scripts are enough — no terminal required (`install.bat` / `start.bat` / `exe_maker.bat`). Steps below are for manual setup or non-Windows systems.
-
-**Requirements:** Node.js 18+ and npm. Animated cursors need a C++ compiler (MinGW `g++` or MSVC `cl.exe`). If missing, `install.bat` can download MinGW-w64 once (~260 MB). Without a compiler the app still runs; only animated cursors are disabled. Official Setup/Portable builds already include the helper.
+Requirements: Node.js 18+ and npm. Animated cursors additionally need a C++ compiler (MinGW `g++` or MSVC `cl.exe`) to build the native helper — if missing, `install.bat` downloads MinGW-w64 automatically (~260 MB, once). Without a compiler the app still works; only animated cursors are disabled. The Setup and Portable downloads already include the compiled helper, so this only matters when building from source.
 
 ```bash
 git clone https://github.com/Carl00-mpeek/Roblox-Cursor-Studio.git
 cd Roblox-Cursor-Studio
 npm install
-npm start        # development
-npm run dist     # installer + portable exe
+npm start        # run in development
+npm run dist     # build the installer and portable exe
 ```
-
----
 
 ## 🛡️ VirusTotal
 
-Latest release scanned on VirusTotal:
+The latest release has been scanned with VirusTotal:
 
-- [🔍 Source](https://www.virustotal.com/gui/file/4fd0d51507ff8fd0d4e89e654aaf7ff092be8c01ff290dd2ff0eba44a08cc99a?nocache=1)
-- [🔍 Setup](https://www.virustotal.com/gui/file/011116e8dc7858e404fc3f0b38fdd036cdc5670139adeff256b6a127c0710fe7)
-- [🔍 Portable](https://www.virustotal.com/gui/file/5f57e0ea46a9c675d688da277fac457cdc62e496c7374ee6fcac2a1f0917119c?nocache=1)
+- [🔍 Source](https://www.virustotal.com/gui/file/d6164ae95c241574d51e8ae521035cb12dbc00a99e30169d805f5ea60930262f?nocache=1)
+- [🔍 Setup](https://www.virustotal.com/gui/file/931ff40b0d11505572b12e221d5063987da2312b91bbf7bde741a47b1fd42131?nocache=1)
+- [🔍 Portable](https://virustotal.com/gui/file/0f88aa46f2d5400cc87f80cb897c2c1133e76265f2dbbc20ed9f7e9909974057?nocache=1)
 
+## ☕ Support the Project
 
-### 🇬🇧 False Positive Notice
-
-> **False Positive Warning**
->
-> Some antivirus programs may incorrectly detect Roblox Cursor Studio as malware or a Trojan. These detections are believed to be false positives caused by the application's Electron-based structure, native components, and automatic update system.
->
-> Roblox Cursor Studio does not intentionally contain malware, spyware, password stealers, keyloggers, or other malicious software.
->
-> If your antivirus detects the application, please verify that you downloaded it from the official GitHub repository and consider submitting the detection to your antivirus provider as a **false positive**.
-
-
----
-
-## ☕ Support the project
-
-RBX Cursor Studio is free. Your support helps keep updates and new features coming.
+RBX Cursor Studio is free — your support keeps updates and new features coming.
 
 [☕ Buy me a coffee](https://buymeacoffee.com/rbxcursor)
 
----
-
 ## 📄 License
 
-Licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE).  
+Licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE).
 Required Notice: Copyright (c) 2026 Demhat Dayan
 
 Free for personal, educational, and noncommercial use. **Commercial use, resale, or redistribution for profit is not permitted** without written permission.
-
----
-
-💬 Liked it? A star helps a lot. Bugs or ideas → open an issue.  
-Have fun, and make those cursors yours! 🖱️✨

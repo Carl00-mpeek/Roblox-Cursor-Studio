@@ -5,164 +5,140 @@
 
 ## ⚠️ Uyarı
 
-RBX Cursor Studio bağımsız, topluluk yapımı bir araçtır — **Roblox Corporation ile bağlantısı yoktur**. Roblox’un belleğini okumaz, koduna enjekte olmaz. Yerel Roblox klasöründeki imleç görsellerini değiştirir; animasyonlu imleçlerde ise standart Windows API’leriyle ayrı bir overlay çizer. Roblox oyun dosyalarının değiştirilmesini resmi olarak desteklemez, bu yüzden **kullanım riski sana aittir**.
-
----
+RBX Cursor Studio, bağımsız ve topluluk tarafından geliştirilmiş bir araçtır; **Roblox Corporation ile hiçbir bağlantısı yoktur**. Roblox'un belleğini okumaz, koduna müdahale etmez — yerel Roblox klasöründeki imleç görsellerini değiştirir ve (Animasyonlu İmleç özelliğinde) standart Windows API'leriyle ayrı bir overlay penceresi çizer. Roblox, oyun dosyalarının değiştirilmesini resmi olarak desteklemez, bu yüzden **kullanım riski size aittir**.
 
 # 🎨 RBX Cursor Studio
 
-Roblox imleçlerini özelleştirmek için hafif bir Windows uygulaması — kendi stilin, arkadaşlarınla paylaşım, paketler arası anında geçiş.
+Roblox imleçlerini özelleştirmek için hafif bir Windows aracı.
 
-**Güncel sürüm: 4.6.0**
+**Güncel sürüm: 5.0.0**
 
-![RBX Cursor Studio Ekran Görüntüsü]
+## 🎬 Demo
 
----
+> Uygulamanın kısa tanıtımı (arayüz, paketler, animasyonlu imleç).
 
-## 🆕 4.6.0 ile gelenler
+<!-- Aşağıdaki bağlantıyı demo videonla değiştir (YouTube, GitHub vb.) -->
+**[▶ Demo videosunu izle](https://github.com/Carl00-mpeek/Roblox-Cursor-Studio/releases)**
 
-Bu sürüm “birkaç küçük düzeltme”den ibaret değil — güncelleme, paket paylaşımı ve animasyon tarafı ciddi şekilde toparlandı.
+<!-- YouTube ID'n olunca örnek:
+https://www.youtube.com/watch?v=VIDEO_ID
+-->
 
-### 🔄 Daha akıllı güncelleme
-- Kurulum dosyası artık net: **Setup** adıyla geliyor  
-- Güncelleme indikten sonra eski indirme dosyaları **otomatik silinir** — bilgisayarda çöp birikmez  
-- **Şimdi Kontrol Et** → güncelleme varsa **İndir ve Kur** hemen çıkar  
-- Ayarlarda güncelleme bölümü **geçmişin hemen üstünde**; kaçırılmaz
+## 🆕 5.0.0 ile Gelenler
 
-### 🎬 Animasyonlu imleçler — artık Beta değil
-- **Beta** yazısı kalktı; özellik günlük kullanıma hazır  
-- Animasyonu **kapatınca imlecin kaybolması** sorunu giderildi  
-- Aç/kapa daha stabil; Roblox’ta imleç görünürlüğü korunur
+Odak: **boşta kaynak kullanımı**, açılış hızı ve daha sakin bir arayüz.
 
-### 📦 Paketler — paylaşımın yeni hali
-- **`.rbxcursor` dosyasına çift tıkla** → **Pakete Kaydet** veya **Sadece Uygula**  
-- **Toplu içe aktar** · seçtiklerini **toplu dışa aktar** (klasöre ayrı dosyalar)  
-- Sürükle-bırak ile **birden fazla dosya** desteklenir  
-- Güvenlik sıkılaştı: yalnızca gerçek **PNG** imleçler ve geçerli **`.ani`** animasyonlar kabul edilir
+### Performans
+- **Sürekli Roblox durum taraması yok** — durum açılışta, odaklanınca, pencere yeniden görünür olunca veya Yenile ile güncellenir; pencere açıkken en fazla 5 dakikada bir hafif güvenlik kontrolü yapılır
+- **Daha ucuz Roblox algılama** — önce `tasklist`; PowerShell/CIM yalnızca gerçekten exe yolu gerektiğinde
+- **Roblox klasör taraması önbelleği** (~12 sn) — tekrarlayan disk ve process işi azalır
+- **Tüm `backdrop-filter` blur’lar kaldırıldı** — GPU’yu yoran cam bulanıklığı yerine opak cam tarzı paneller
+- **Süs kart animasyonları kaldırıldı** (dönen ışık / yüzme / halka / süpürme / ping) — seçili kartlar sade statik çerçeve kullanır
+- Pencere gizli veya küçültülüyken animasyonlar durur; `prefers-reduced-motion` desteklenir
+- **Arka plan görseli** sıkıştırıldı (~3,4 MB PNG → ~240 KB JPEG); logo küçültüldü
+- **Daha hızlı açılış** — kritik yol (durum + aktif imleçler) paralel; referans profiller arka planda; arka plan önce decode edilip sonra çizilir
+- Pencere boyutu kaydı debounce’lu; renderer’da yazım denetimi kapalı
 
-### 🎨 Görünüm ve his
-- Güncelleme ayarları daha kolay bulunur  
-- Paket ekranı daha pratik (içe aktar, toplu dışa aktar, çoklu sürükle-bırak)  
-- Animasyon sayfası “deneme” değil, **bitmiş ürün** gibi durur  
-- Özel görsel atadığın imleç kartlarında yumuşak **parıltı** hâlâ yerinde  
-- Bağlamda Önizleme sıcak duruyor: OYNA, sohbet kutusu, Shift Lock — gerçek boyutta dene
+### Kullanım ve güvenilirlik
+- **Ayarlar → Son hata** — en son log kaydı ve **error.log aç** düğmesi
+- **Paket uygula / Orijinale dön** sırasında meşgul durumu (“Uygulanıyor…” / “Geri alınıyor…”) ve çift tıklamayı engelleyen disabled düğmeler
+- Daha sakin hover stilleri (abartılı kaldırma ve ağır gölgeler azaltıldı)
 
----
+### Güvenlik / bütünlük (sürümler için)
+- Her sürümle birlikte **SHA-256** özeti yayınlanabilir; indirme doğrulaması için
+
 
 ## ✨ Özellikler
 
-### 🖱️ İmleç özelleştirme
-Roblox’un tüm imleç türlerini (ok, uzak ok, I-beam, kilitli fare…) tek tek özelleştir, anında uygula. Görseller 64×64 alana sığdırılır ve ortalanır; piksel kenarları keskin kalsın diye yumuşatma kapalıdır.
+### 🖱️ İmleç Özelleştirme
+Roblox'un tüm imleç türlerini (ok, uzak ok, I-beam, kilitli fare...) tek tek özelleştir ve seçtiğin görseli anında uygula. İmleçler 64×64 alana otomatik sığdırılır ve ortalanır; piksel netliği için yumuşatma kapalıdır.
 
-### ✨ Animasyonlu imleçler (.ANI)
-> Otomatik durum tespiti sezgisel yöntemlere dayanır; bazı oyunlarda ara sıra yanılabilir. Tuhaf bir şey görürsen [issue aç](../../issues).
+### ✨ Animasyonlu İmleçler (.ANI) — 🧪 Beta
+> Otomatik durum tespiti sezgisel yöntemlere dayanır ve bazı oyunlarda ara sıra yanılabilir. Bir sorunla karşılaşırsan [issue aç](../../issues).
 
-- Her durum için bir `.ani` ata — **Normal, Tıklama, Yazı, Shift Lock**  
-- Küçük bir native yardımcı çizer: tıklama geçer, her zaman üstte, gerçek piksel alfa  
-- Boyut, hız, FPS (240’a kadar), otomatik ortalama veya elle hotspot  
-- Fare takip aralığı ayarlanabilir · durum aktifken canlı rozet  
-- Roblox kapalıyken bile masaüstünde 6 saniye **önizle**  
-- Kısayolla aç/kapat (varsayılan `Ctrl+Alt+0`)
+- Her durum için bir `.ani` dosyası ata — **Normal, Tıklama, Yazı, Shift Lock**
+- Küçük bir native yardımcı tarafından, tıklamayı geçiren, her zaman üstte duran ve gerçek piksel bazlı alfaya sahip bir overlay olarak çizilir
+- Durum başına boyut, hız ve FPS ayarı (240 FPS'e kadar), otomatik ortalama veya elle hotspot
+- Ayarlanabilir fare takip aralığı; canlı bir rozetle otomatik durum geçişi
+- Roblox açık olmasa bile herhangi bir animasyonu masaüstünde 6 saniye **önizle**
+- Kısayolla (varsayılan `Ctrl+Alt+0`) tüm özelliği aç/kapat
 
-> İlk animasyonu atadıktan sonra Roblox’u yeniden başlat ki yeni imleç dosyalarını alsın.
+> İlk animasyonu atadıktan sonra Roblox'u yeniden başlat, böylece güncellenmiş imleç dosyalarını yükler.
 
-### 🎯 Dahili imleç düzenleyici
-Otomatik Boyutlandır + Ortala, Sadece Ortala, Boyutu Sıfırla · yakınlaştırma 0.4x–3x · sürükle konumlandır · ton kaydırıcılı Renklendir · tek tıkla Renk Varyasyonları. Uygulamadan çıkmadan hızlı deneme için.
+### 🎯 Gelişmiş İmleç Düzenleyici
+Otomatik Boyutlandır + Ortala, Sadece Ortala ve Boyutu Sıfırla kısayolları; manuel yakınlaştırma kaydırıcısı (0.4x–3x); sürükle-bırak konumlandırma; ton kaydırıcılı Renklendir; ve tek tıkla Renk Varyasyonları.
 
-### 📦 Paket sistemi
-İstediğin kadar paket oluştur ve yönet. `.rbxcursor` / `.zip` dışa aktar; buton veya sürükle-bırak ile içe aktar (tek veya çok dosya). **Hızlı Paket Geçişi** (`Ctrl+Alt+1/2/3`) Roblox açıkken de çalışır.
+### 📦 Paket Sistemi
+İstediğin kadar paket oluştur, kaydet ve yönet. `.rbxcursor` / `.zip` olarak dışa aktarıp paylaş, ya da sürükle-bırak ile içe aktar. **Hızlı Paket Geçişi**, `Ctrl+Alt+1/2/3` ile Roblox içindeyken bile paketler arasında anında geçiş yapar.
 
 ### 🕓 Geçmiş
-Kaydettiğin imleçler Geçmiş’te durur — istediğin zaman tek tıkla geri uygula.
+Daha önce seçtiğin her imleç, istediğin zaman tekrar uygulayabileceğin bir Geçmiş sekmesinde saklanır.
 
-### 🖼️ Bağlamda önizleme
-Sahte bir Roblox tarzı sahnede gerçek boyutta dene: HUD, OYNA butonu, sohbet kutusu, Shift Lock.
+### 🖼️ Bağlamda Önizleme
+Sahte bir Roblox ekranı üzerinde — HUD, OYNA butonu, sohbet kutusu ve Shift Lock dahil — imleçlerini gerçek boyutunda dene.
 
-### 🔄 Roblox güncelleme desteği
-En yeni istemci klasörünü otomatik bulur. Otomatik Düzeltme açıkken Roblox güncellenince kayıtlı imleçlerin geri gelir. Orijinalleri tek tıkla yedekle / geri yükle.
+### 🔄 Otomatik Güncelleme Desteği
+En yeni Roblox istemci klasörünü otomatik algılar. Otomatik Düzeltme açıkken, Roblox her güncellendiğinde kayıtlı imleçlerin yeniden kurulur. Orijinal imleçlerini tek tıkla yedekle ve geri yükle.
 
-### 🌈 Toplu renk değiştirici
-Aktif tüm imleçleri tek bir tonla boya — boyut ve konum yerinde kalır.
+### 🌈 Toplu Renk Değiştirici
+Boyut ve konuma dokunmadan, şu an aktif tüm imleçleri tek bir renk tonuyla boya.
 
-### 🎬 Kişiselleştirme ve ⚙️ ayarlar
-Arkaplanı değiştir, Türkçe / İngilizce anında geç, Windows başlangıcında aç, algılanan Roblox sürümünü gör — hepsi Ayarlar’da.
+### 🎬 Kişiselleştirme & ⚙️ Ayarlar
+Uygulamanın arkaplanını değiştir, Türkçe/İngilizce arasında anında geçiş yap, Windows başlangıcında otomatik aç ve algılanan Roblox sürümünü Ayarlar'dan gör.
 
-### 💻 Platform
-Taşınabilir exe veya NSIS **Setup** yükleyici. Electron tabanlı; animasyonlu imleçler yalnızca gerektiğinde açılan küçük `cursor_helper.exe` ile çalışır. Kaynak açık, ticari olmayan lisans; sürümler VirusTotal ile taranır.
+### 💻 Platform ve Dağıtım
+Tek tıklamalı NSIS kurulum (Program Files) veya taşınabilir exe olarak dağıtılır. Tüm kullanıcı verisi yalnızca `%AppData%\RBXCursorStudio` altındadır (ayarlar, paketler, geçmiş, log, Electron önbelleği) — gizli sistem dosyası ve rastgele klasör yok. Electron tabanlı; animasyonlu imleçler yalnızca gerektiğinde başlayan küçük bir native yardımcıda (`cursor_helper.exe`) çalışır. Kaynak kodu açık ve ticari olmayan bir lisansla paylaşılır, sürümler VirusTotal ile taranmıştır.
 
----
+## 📥 İndir ve kur
 
-## 📥 İndir
+1. [Releases](../../releases) sayfasından **RBX Cursor Studio Kurulum 5.0.0.exe** dosyasını indir.
+2. Kurulum dosyasını çalıştır (yönetici izni istenebilir).
+3. Uygulama **`C:\Program Files\RBX Cursor Studio`** klasörüne kurulur; Başlat menüsü ve masaüstü kısayolları oluşur, kurulum bitince açılabilir.
 
-- **Setup** — yükleyiciyi indir, kur, bitir  
-- **Taşınabilir** — ZIP’i aç, `RBX Cursor Studio.exe` çalıştır — kurulum yok  
+**Taşınabilir (isteğe bağlı):** Portable sürümü indir, ZIP’i aç, `RBX Cursor Studio.exe` dosyasını çalıştır — kurulum yok, Program Files’a yazılmaz.
 
-> En güncel sürümü her zaman [Releases](../../releases) sayfasından al — yalnızca bu depodan indir.
+> Yalnızca bu deponun Releases sayfasından indir.
 
-### ❓ Windows “bilgisayarınızı korudu” diyor
-Uygulama henüz kod imzalı değil; yeterince kişi çalıştırana kadar SmartScreen uyarı verebilir — bu tek başına zararlı yazılım demek değildir. **Diğer bilgiler → Yine de çalıştır**. Kaynak ve VirusTotal aşağıda.
+### ❓ Windows "bilgisayarınızı korudu" uyarısı gösteriyor
+Uygulama henüz kod imzalı değil, bu yüzden yeterince kişi indirene kadar SmartScreen uyarı verebilir — bu tek başına kötü amaçlı yazılım anlamına gelmez. **Diğer bilgiler → Yine de çalıştır** ile devam edebilirsin. Kaynak kod ve VirusTotal taramaları aşağıda.
 
 ### ❓ Animasyonlu imleç görünmüyor
-- Exclusive tam ekran overlay’leri engeller (Discord/Steam gibi) — pencereli veya borderless dene  
-- İlk animasyondan sonra Roblox’u yeniden başlat  
-- Animasyon sekmesindeki **Önizle** ile çizimin çalıştığını kontrol et  
-- Kısayolla kapatılmadığından emin ol (varsayılan `Ctrl+Alt+0`)
+- Exclusive tam ekran tüm overlay'leri engeller (Discord/Steam'de de aynı) — Roblox'u pencereli ya da borderless tam ekrana al.
+- İlk animasyonu atadıktan sonra Roblox'u yeniden başlat.
+- Çizimin çalıştığını doğrulamak için Animasyonlu sekmesindeki **Önizle**'yi dene.
+- Animasyonun kısayolla (varsayılan `Ctrl+Alt+0`) kapatılmadığından emin ol.
 
----
+## 🔧 Kaynak Koddan Derleme
 
-## 🔧 Kaynak koddan derleme
+**Windows kullanıcıları için hazır script'ler yeterli — terminale gerek yok** (`kur.bat` / `baslat.bat` / `exe_yap.bat`). Aşağıdaki adımlar manuel kurulum veya Windows dışı sistemler içindir.
 
-**Windows:** hazır script’ler yeterli — terminale gerek yok (`kur.bat` / `baslat.bat` / `exe_yap.bat`). Aşağısı manuel kurulum veya Windows dışı sistemler için.
-
-**Gereksinimler:** Node.js 18+ ve npm. Animasyon için C++ derleyicisi (MinGW `g++` veya MSVC `cl.exe`). Yoksa `kur.bat` bir kez MinGW-w64 indirebilir (~260 MB). Derleyici olmasa da uygulama çalışır; yalnızca animasyon kapalı kalır. Resmi Setup/Portable sürümlerde yardımcı zaten gömülü.
+Gereksinimler: Node.js 18+ ve npm. Animasyonlu imleçler için ayrıca bir C++ derleyicisi (MinGW `g++` ya da MSVC `cl.exe`) gerekir — yoksa `kur.bat` MinGW-w64'ü otomatik indirir (~260 MB, tek seferlik). Derleyici olmadan da uygulama çalışır, yalnızca animasyonlu imleçler devre dışı kalır. Kurulum ve Taşınabilir sürümler derlenmiş yardımcıyı zaten içerir, bu yalnızca kaynaktan derlerken geçerlidir.
 
 ```bash
 git clone https://github.com/Carl00-mpeek/Roblox-Cursor-Studio.git
 cd Roblox-Cursor-Studio
 npm install
-npm start        # geliştirme
-npm run dist     # yükleyici + taşınabilir exe
+npm start        # geliştirme modunda çalıştır
+npm run dist     # yükleyici ve taşınabilir exe oluştur
 ```
-
----
 
 ## 🛡️ VirusTotal
 
 En son sürüm VirusTotal ile taranmıştır:
 
-- [🔍 Kaynak](https://www.virustotal.com/gui/file/4fd0d51507ff8fd0d4e89e654aaf7ff092be8c01ff290dd2ff0eba44a08cc99a?nocache=1)
-- [🔍 Setup](https://www.virustotal.com/gui/file/011116e8dc7858e404fc3f0b38fdd036cdc5670139adeff256b6a127c0710fe7)
-- [🔍 Portable](https://www.virustotal.com/gui/file/5f57e0ea46a9c675d688da277fac457cdc62e496c7374ee6fcac2a1f0917119c?nocache=1)
+- [🔍 Kaynak](https://www.virustotal.com/gui/file/d6164ae95c241574d51e8ae521035cb12dbc00a99e30169d805f5ea60930262f?nocache=1)
+- [🔍 Setup](https://www.virustotal.com/gui/file/931ff40b0d11505572b12e221d5063987da2312b91bbf7bde741a47b1fd42131?nocache=1)
+- [🔍 Portable](https://virustotal.com/gui/file/0f88aa46f2d5400cc87f80cb897c2c1133e76265f2dbbc20ed9f7e9909974057?nocache=1)
 
-### 🇹🇷 Yanlış Pozitif Bildirimi
+## ☕ Projeyi Destekle
 
-> **Yanlış Pozitif Uyarısı**
->
-> Bazı antivirüs programları Roblox Cursor Studio'yu yanlışlıkla malware veya Trojan olarak algılayabilir. Bu tespitlerin, uygulamanın Electron tabanlı yapısı, native bileşenleri ve otomatik güncelleme sistemi nedeniyle oluşan yanlış pozitifler olduğu düşünülmektedir.
->
-> Roblox Cursor Studio kasıtlı olarak malware, spyware, şifre hırsızı, keylogger veya başka bir zararlı yazılım içermez.
->
-> Antivirüs programınız uygulamayı algılarsa, programı **resmî GitHub deposundan** indirdiğinizden emin olun ve tespiti antivirüs sağlayıcınıza **false positive (yanlış pozitif)** olarak bildirmeyi düşünebilirsiniz.
-
-
----
-
-## ☕ Projeyi destekle
-
-RBX Cursor Studio ücretsiz. Desteğin güncellemelerin ve yeni özelliklerin devam etmesine yardım eder.
+RBX Cursor Studio ücretsizdir — desteğin, güncellemelerin ve yeni özelliklerin devam etmesini sağlar.
 
 [☕ Bana bir kahve ısmarla](https://buymeacoffee.com/rbxcursor)
 
----
-
 ## 📄 Lisans
 
-[PolyForm Noncommercial License 1.0.0](LICENSE) ile lisanslanmıştır.  
+[PolyForm Noncommercial License 1.0.0](LICENSE) ile lisanslanmıştır.
 Gerekli Bildirim: Telif Hakkı (c) 2026 Demhat Dayan
 
-Kişisel, eğitim ve ticari olmayan kullanım ücretsizdir. **Ticari kullanım, yeniden satış veya kâr amaçlı dağıtım** yazılı izin olmadan yapılamaz.
-
----
-
-💬 Beğendiysen bir yıldız çok şey ifade eder. Hata veya fikir → issue aç.  
-İyi oyunlar, güzel imleçler! 🖱️✨
+Kişisel, eğitim amaçlı ve ticari olmayan kullanım için ücretsizdir. **Ticari kullanım, yeniden satış veya kâr amaçlı dağıtım**, yazılı izin olmadan yapılamaz.

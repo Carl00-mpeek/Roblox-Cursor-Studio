@@ -13,9 +13,6 @@ contextBridge.exposeInMainWorld('rbx', {
   checkForUpdates: (force) => ipcRenderer.invoke('app:check-for-updates', force),
   openUpdateUrl: (url) => ipcRenderer.invoke('app:open-update-url', url),
   onUpdateAvailable: (cb) => ipcRenderer.on('update:available', (_e, data) => cb(data)),
-  downloadAndInstall: (info) => ipcRenderer.invoke('app:download-and-install', info),
-  isPortable: () => ipcRenderer.invoke('app:is-portable'),
-  onUpdateDownloadProgress: (cb) => ipcRenderer.on('update:download-progress', (_e, data) => cb(data)),
 
   // config
   getConfig: () => ipcRenderer.invoke('cfg:get'),
@@ -56,15 +53,11 @@ contextBridge.exposeInMainWorld('rbx', {
 
   // paket dışa/içe aktarma (.rbxcursor / .zip)
   exportPack: (name) => ipcRenderer.invoke('pack:export', name),
-  exportPacksBulk: (names) => ipcRenderer.invoke('pack:export-bulk', names),
   importPackPick: () => ipcRenderer.invoke('pack:import-pick'),
   importPackFromPath: (filePath) => ipcRenderer.invoke('pack:import-from-path', filePath),
-  importPackFromPaths: (filePaths) => ipcRenderer.invoke('pack:import-from-paths', filePaths),
-  applyPackFromPath: (filePath) => ipcRenderer.invoke('pack:apply-from-path', filePath),
-  // Windows'ta bir .rbxcursor dosyasına çift tıklanınca ana süreç seçim
-  // penceresi için yolu bildirir (Pakete Kaydet / Sadece Uygula).
-  onPackExternalOffer: (cb) => ipcRenderer.on('pack:external-offer', (_e, data) => cb(data)),
-  // Eski kanal (geriye dönük); yeni akış onPackExternalOffer kullanır.
+  // Windows'ta bir .rbxcursor dosyasına çift tıklanıp uygulama bu şekilde
+  // açıldığında (varsayılan uygulama olarak ayarlıysa), ana süreç paketi
+  // otomatik içe aktarır ve sonucu bu kanaldan bildirir.
   onPackImportedExternal: (cb) => ipcRenderer.on('pack:imported-external', (_e, data) => cb(data)),
 
   // hızlı geçiş kısayolları (Ctrl+Alt+1/2/3)
@@ -94,5 +87,11 @@ contextBridge.exposeInMainWorld('rbx', {
   animCursorSetToggleKey: (accelerator) => ipcRenderer.invoke('animcursor:set-toggle-key', accelerator),
   animCursorToggle: () => ipcRenderer.invoke('animcursor:toggle'),
   onAnimCursorState: (cb) => ipcRenderer.on('animcursor:state', (_e, state) => cb(state)),
-  onAnimCursorEnabled: (cb) => ipcRenderer.on('animcursor:enabled', (_e, enabled) => cb(enabled))
+  onAnimCursorEnabled: (cb) => ipcRenderer.on('animcursor:enabled', (_e, enabled) => cb(enabled)),
+  onAppVisibility: (cb) => ipcRenderer.on('app:visibility', (_e, data) => cb(data)),
+
+  getRecentErrors: (limit) => ipcRenderer.invoke('log:recent', limit),
+  getErrorLogTail: (maxChars) => ipcRenderer.invoke('log:tail', maxChars),
+  getErrorLogPath: () => ipcRenderer.invoke('log:path'),
+  openErrorLog: () => ipcRenderer.invoke('log:open')
 });

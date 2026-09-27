@@ -1,6 +1,6 @@
 {
   "name": "rbx-cursor-studio",
-  "version": "4.6.0",
+  "version": "5.0.0",
   "description": "RBX Cursor Studio - Roblox imleç düzenleyici (Electron sürümü)",
   "main": "main/main.js",
   "author": "Carl",
@@ -63,9 +63,21 @@
       ]
     },
     "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "artifactName": "${productName} Setup ${version}.${ext}"
+      "oneClick": true,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": false,
+      "allowElevation": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "RBX Cursor Studio",
+      "uninstallDisplayName": "RBX Cursor Studio",
+      "installerLanguages": [
+        "tr",
+        "en"
+      ],
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "${productName} Kurulum ${version}.${ext}"
     },
     "portable": {
       "artifactName": "${productName} Portable ${version}.${ext}"

@@ -88,63 +88,24 @@ function serializePack({ name, cursorFiles, animMeta }) {
   return buildZip(entries);
 }
 
-// .ani yalnızca RIFF/ACON imleç animasyonu olabilir — exe/dll/script reddedilir.
-const MAX_ANI_BYTES = 8 * 1024 * 1024; // 8 MB (gerçek .ani dosyaları genelde çok daha küçük)
-const MAX_PNG_BYTES = 4 * 1024 * 1024;
-const MAX_PACK_TOTAL_BYTES = 24 * 1024 * 1024;
-
-function isValidAniBuffer(buf) {
-  if (!Buffer.isBuffer(buf) || buf.length < 12 || buf.length > MAX_ANI_BYTES) return false;
-  // RIFF....ACON
-  if (buf.toString('ascii', 0, 4) !== 'RIFF') return false;
-  if (buf.toString('ascii', 8, 12) !== 'ACON') return false;
-  return true;
-}
-
-function isPngSignature(buf) {
-  if (!Buffer.isBuffer(buf) || buf.length < 8) return false;
-  const sig = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
-  return buf.subarray(0, 8).equals(sig);
-}
-
 // targets: TARGETS map (kind -> roblox dosya adı)
 // Döner: { manifestName, fileMap (kind -> Buffer), metaRaw (TEMİZLENMİŞ meta veya null),
 //          animFiles (sadece güvenli 'anim/x.ani' adları -> Buffer) }
 function deserializePack(buf, targets) {
-  if (!Buffer.isBuffer(buf) || buf.length < 22) {
-    throw new Error('Geçersiz veya boş paket dosyası.');
-  }
-  if (buf.length > MAX_PACK_TOTAL_BYTES) {
-    throw new Error('Paket dosyası çok büyük (maks. 24 MB).');
-  }
-
   const entries = parseZip(buf);
   let manifestName = null;
   const fileMap = {};
   let metaRaw = null;
   const animFiles = {};
-  let totalPayload = 0;
 
   for (const entry of entries) {
     const normName = String(entry.name).replace(/\\/g, '/');
-    // Zip slip: mutlak yol / .. / boş ad reddi (beyaz liste zaten daraltıyor)
-    if (!normName || normName.startsWith('/') || normName.includes('..') || /^[A-Za-z]:/.test(normName)) {
-      continue;
-    }
     const base = path.basename(normName);
-    const data = entry.data;
-    if (Buffer.isBuffer(data)) totalPayload += data.length;
-    if (totalPayload > MAX_PACK_TOTAL_BYTES) {
-      throw new Error('Paket içeriği çok büyük (zip bombası şüphesi).');
-    }
 
     if (base.toLowerCase() === 'manifest.json') {
       try {
         const manifest = JSON.parse(entry.data.toString('utf-8'));
-        if (manifest && typeof manifest.name === 'string') {
-          // İsim sadece gösterim için; tehlikeli karakterler sonra temizlenir
-          manifestName = String(manifest.name).slice(0, 100);
-        }
+        if (manifest && manifest.name) manifestName = manifest.name;
       } catch (_) { /* manifest bozuksa yoksay */ }
       continue;
     }
@@ -154,16 +115,12 @@ function deserializePack(buf, targets) {
     }
     if (/^anim\//i.test(normName)) {
       const safeName = safeAnimEntryName(normName);
-      // Güvenli olmayan yollar ve geçerli RIFF/ACON olmayan "ani" içerikler atılır
-      if (safeName && isValidAniBuffer(data)) animFiles[safeName] = data;
+      if (safeName) animFiles[safeName] = entry.data; // güvenli olmayan yollar sessizce atlanır
       continue;
     }
     for (const [kind, target] of Object.entries(targets)) {
       if (base.toLowerCase() === target.toLowerCase()) {
-        // Sadece gerçek PNG imzası; exe/dll/script veya sahte uzantı reddedilir
-        if (isPngSignature(data) && data.length <= MAX_PNG_BYTES) {
-          fileMap[kind] = data;
-        }
+        fileMap[kind] = entry.data;
       }
     }
   }
@@ -176,11 +133,4 @@ function deserializePack(buf, targets) {
   };
 }
 
-module.exports = {
-  serializePack,
-  deserializePack,
-  safeAnimEntryName,
-  sanitizePackMeta,
-  isValidAniBuffer,
-  isPngSignature
-};
+module.exports = { serializePack, deserializePack, safeAnimEntryName, sanitizePackMeta };

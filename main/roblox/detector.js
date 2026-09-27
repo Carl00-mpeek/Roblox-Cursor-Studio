@@ -43,12 +43,33 @@ function robloxCursorPath(dirInfo, kind) {
 // ---------- Roblox sürüm/imleç klasörlerini bul ----------
 const ROBLOX_PROCESS = 'RobloxPlayerBeta.exe';
 
-function runningRobloxExecutables() {
-  if (process.platform !== 'win32') return [];
-  const paths = new Set();
+function isRobloxProcessListed() {
+  if (process.platform !== 'win32') return false;
+  try {
+    const out = execFileSync('tasklist.exe', ['/FI', `IMAGENAME eq ${ROBLOX_PROCESS}`, '/FO', 'CSV', '/NH'], {
+      encoding: 'utf8', windowsHide: true, timeout: 800
+    });
+    return !/No tasks are running/i.test(String(out)) && new RegExp(ROBLOX_PROCESS, 'i').test(String(out));
+  } catch (_) {
+    return false;
+  }
+}
 
-  // Önce CIM/PowerShell. Roblox güncellendiğinde mtime yerine gerçekten
-  // çalışan RobloxPlayerBeta.exe'nin bulunduğu version klasörünü seçeriz.
+/**
+ * Çalışan Roblox exe yolları.
+ * Ucuz yol: önce tasklist (sadece "çalışıyor mu?").
+ * Path lazımsa ve process varsa o zaman PowerShell CIM — aksi halde CIM hiç spawn edilmez.
+ * opts.needPaths=false ise sadece { paths:[], running:bool } döner (en ucuz).
+ */
+function runningRobloxExecutables(opts) {
+  if (process.platform !== 'win32') return { paths: [], running: false };
+  const needPaths = !opts || opts.needPaths !== false;
+
+  const listed = isRobloxProcessListed();
+  if (!listed) return { paths: [], running: false };
+  if (!needPaths) return { paths: [], running: true };
+
+  const paths = new Set();
   try {
     const ps = [
       '-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command',
@@ -56,30 +77,33 @@ function runningRobloxExecutables() {
     ];
     const out = execFileSync('powershell.exe', ps, { encoding: 'utf8', windowsHide: true, timeout: 1500 });
     for (const line of String(out).split(/\r?\n/).map(x => x.trim()).filter(Boolean)) {
-      if (path.basename(line).toLowerCase() === ROBLOX_PROCESS.toLowerCase() && fs.existsSync(line)) paths.add(path.normalize(line));
-    }
-  } catch (_) { /* fallback aşağıda */ }
-
-  // Eski Windows kurulumlarında PowerShell/CIM erişilemezse tasklist ile
-  // sadece sürecin çalıştığını doğrularız; version seçimi yine dosya yapısına
-  // göre yapılır.
-  if (!paths.size) {
-    try {
-      const out = execFileSync('tasklist.exe', ['/FI', `IMAGENAME eq ${ROBLOX_PROCESS}`, '/FO', 'CSV', '/NH'], {
-        encoding: 'utf8', windowsHide: true, timeout: 1000
-      });
-      if (!/No tasks are running/i.test(String(out)) && new RegExp(ROBLOX_PROCESS, 'i').test(String(out))) {
-        return { paths: [], running: true };
+      if (path.basename(line).toLowerCase() === ROBLOX_PROCESS.toLowerCase() && fs.existsSync(line)) {
+        paths.add(path.normalize(line));
       }
-    } catch (_) {}
-  }
+    }
+  } catch (_) { /* path bilinmiyor; running true kalır, sıralama mtime'a düşer */ }
 
-  return { paths: Array.from(paths), running: paths.size > 0 };
+  return { paths: Array.from(paths), running: true };
 }
 
-function robloxDirs() {
+// robloxDirs sonuçları kısa süre önbelleğe alınır: her 5 sn'de PowerShell
+// (Get-CimInstance) spawn etmek boşta ~%5-15 CPU yakıyordu. Cache TTL
+// içinde tekrarlayan çağrılar disk + process taramasını atlar.
+let _dirsCache = { at: 0, value: null };
+const DIRS_CACHE_TTL_MS = 12000;
+
+function robloxDirs(opts) {
+  const force = opts && opts.force;
+  const now = Date.now();
+  if (!force && _dirsCache.value && (now - _dirsCache.at) < DIRS_CACHE_TTL_MS) {
+    return _dirsCache.value;
+  }
+
   const root = path.join(process.env.LOCALAPPDATA || '', 'Roblox', 'Versions');
-  if (!fs.existsSync(root)) return [];
+  if (!fs.existsSync(root)) {
+    _dirsCache = { at: now, value: [] };
+    return [];
+  }
 
   const running = runningRobloxExecutables();
   const runningVersionDirs = new Set(
@@ -115,7 +139,13 @@ function robloxDirs() {
     if (a.hasExecutable !== b.hasExecutable) return a.hasExecutable ? -1 : 1;
     return b.mtime - a.mtime;
   });
+  _dirsCache = { at: now, value: out };
   return out;
+}
+
+/** Önbellegi temizle (paket uygulama / manuel yenileme sonrası). */
+function invalidateRobloxDirsCache() {
+  _dirsCache = { at: 0, value: null };
 }
 
 function currentCursorDir() {
@@ -136,6 +166,7 @@ module.exports = {
   robloxCursorPath,
   runningRobloxExecutables,
   robloxDirs,
+  invalidateRobloxDirsCache,
   currentCursorDir,
   currentRobloxDirInfo
 };

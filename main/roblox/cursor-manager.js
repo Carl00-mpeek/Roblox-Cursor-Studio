@@ -69,7 +69,7 @@ async function copyFileVerified(src, dst) {
       // Önce aynı klasörde geçici dosyaya yaz. Böylece yarım PNG'nin hedefte
       // kalma ihtimalini azaltırız. Hedef kilitliyse sadece son kopyalama
       // adımı retry edilir.
-      const tmp = `${dst}.rbxcs-tmp-${process.pid}-${Date.now()}-${attempt}`;
+      const tmp = `${dst}.tmp-write-${process.pid}-${Date.now()}-${attempt}`;
       fs.copyFileSync(src, tmp);
       try {
         fs.copyFileSync(tmp, dst);

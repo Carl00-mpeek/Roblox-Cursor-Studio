@@ -126,13 +126,8 @@ if (donateBtn) {
 
 // ---- güncelleme kontrolü ----
 let latestUpdateInfo = null;
-let updateDownloading = false;
 
-/**
- * @param {object} info
- * @param {{ showDownload?: boolean }} opts - showDownload: true sadece "Şimdi Kontrol Et" sonrası
- */
-function showUpdateAvailable(info, opts = {}) {
+function showUpdateAvailable(info) {
   if (!info || !info.available) return;
   latestUpdateInfo = info;
   const badge = document.getElementById('update-badge');
@@ -142,71 +137,16 @@ function showUpdateAvailable(info, opts = {}) {
     statusEl.textContent = t('update_available_status', { version: info.version });
     statusEl.classList.remove('hidden');
   }
-  // "İndir ve Kur" sadece kullanıcı Kontrol Et'e bastıktan sonra gösterilir
-  if (opts.showDownload) {
-    const area = document.getElementById('update-download-area');
-    if (area) area.classList.remove('hidden');
-  }
 }
 
 function openLatestUpdate() {
-  // Badge tıklanınca da indir-kur akışını başlat (buton yoksa eski davranış)
-  const btn = document.getElementById('btn-download-update');
-  if (btn && latestUpdateInfo) {
-    btn.click();
-    return;
-  }
   if (!latestUpdateInfo) return;
   const url = latestUpdateInfo.setupUrl || latestUpdateInfo.url;
   if (url && window.rbx.openUpdateUrl) window.rbx.openUpdateUrl(url).catch(() => {});
 }
 
-async function startDownloadAndInstall() {
-  if (!latestUpdateInfo || updateDownloading) return;
-  if (!window.rbx.downloadAndInstall) {
-    // Eski preload fallback
-    openLatestUpdate();
-    return;
-  }
-  updateDownloading = true;
-  const btn = document.getElementById('btn-download-update');
-  const progressWrap = document.getElementById('update-progress-wrap');
-  const progressBar = document.getElementById('update-progress-bar');
-  const progressText = document.getElementById('update-progress-text');
-  if (btn) btn.disabled = true;
-  if (progressWrap) progressWrap.classList.remove('hidden');
-  if (progressBar) progressBar.style.width = '0%';
-  if (progressText) progressText.textContent = t('update_downloading', { percent: 0 });
-
-  try {
-    const result = await window.rbx.downloadAndInstall(latestUpdateInfo);
-    if (result && result.ok) {
-      if (progressText) progressText.textContent = t('update_download_done');
-      toast(t('update_download_done'), 'success');
-      // Uygulama kısa süre sonra kapanacak
-    } else {
-      const err = (result && result.error) || 'unknown';
-      if (progressText) progressText.textContent = t('update_download_error', { error: err });
-      toast(t('update_download_error', { error: err }), 'error');
-      if (btn) btn.disabled = false;
-      updateDownloading = false;
-    }
-  } catch (e) {
-    const err = errMsg(e);
-    if (progressText) progressText.textContent = t('update_download_error', { error: err });
-    toast(t('update_download_error', { error: err }), 'error');
-    if (btn) btn.disabled = false;
-    updateDownloading = false;
-  }
-}
-
 const updateBadge = document.getElementById('update-badge');
 if (updateBadge) updateBadge.onclick = openLatestUpdate;
-
-const downloadUpdateBtn = document.getElementById('btn-download-update');
-if (downloadUpdateBtn) {
-  downloadUpdateBtn.onclick = () => startDownloadAndInstall();
-}
 
 const checkUpdatesBtn = document.getElementById('btn-check-updates');
 if (checkUpdatesBtn) {
@@ -219,13 +159,10 @@ if (checkUpdatesBtn) {
         if (statusEl) { statusEl.textContent = t('update_check_error'); statusEl.classList.remove('hidden'); }
         toast(t('update_check_error'), 'error');
       } else if (info && info.available) {
-        showUpdateAvailable(info, { showDownload: true });
+        showUpdateAvailable(info);
         toast(t('update_available_status', { version: info.version }), 'success');
       } else {
         if (statusEl) { statusEl.textContent = t('update_up_to_date'); statusEl.classList.remove('hidden'); }
-        const area = document.getElementById('update-download-area');
-        if (area) area.classList.add('hidden');
-        latestUpdateInfo = null;
         toast(t('update_up_to_date'), 'success');
       }
     } catch (e) {
@@ -238,21 +175,6 @@ if (checkUpdatesBtn) {
 
 if (window.rbx.onUpdateAvailable) {
   window.rbx.onUpdateAvailable((info) => showUpdateAvailable(info));
-}
-
-if (window.rbx.onUpdateDownloadProgress) {
-  window.rbx.onUpdateDownloadProgress((data) => {
-    if (!data) return;
-    const progressBar = document.getElementById('update-progress-bar');
-    const progressText = document.getElementById('update-progress-text');
-    if (data.error) {
-      if (progressText) progressText.textContent = t('update_download_error', { error: data.error });
-      return;
-    }
-    const pct = typeof data.percent === 'number' ? data.percent : 0;
-    if (progressBar) progressBar.style.width = pct + '%';
-    if (progressText) progressText.textContent = t('update_downloading', { percent: pct });
-  });
 }
 
 document.querySelectorAll('[data-close-view]').forEach(btn => {
@@ -437,13 +359,20 @@ async function removeActiveCursor(kind) {
 
 // manuel geri alma / orijinale dönme seçeneği
 document.getElementById('btn-restore').onclick = async () => {
+  const btn = document.getElementById('btn-restore');
+  const prev = btn ? btn.textContent : '';
   try {
+    if (btn) { btn.disabled = true; btn.textContent = t('restoring'); btn.classList.add('busy'); }
+    document.body.classList.add('ops-busy');
     const res = await window.rbx.restoreCursors();
     toast(res && res.count ? t('restore_done_count', {count: res.count}) : t('no_backup'), res && res.count ? 'success' : 'normal');
     await refreshRobloxStatus();
     await renderActiveCursor();
   } catch (e) {
     toast(t('error') + ' ' + errMsg(e));
+  } finally {
+    document.body.classList.remove('ops-busy');
+    if (btn) { btn.disabled = false; btn.textContent = prev || t('restore'); btn.classList.remove('busy'); }
   }
 };
 
@@ -480,7 +409,32 @@ async function renderSettings() {
   await renderQuickSwitchSettings();
   await renderHistoryGrid(); // Geçmiş artık Genel ayarların içinde
   await renderSettingsTabContent();
+  await renderLastErrorRow();
 }
+
+async function renderLastErrorRow() {
+  const el = document.getElementById('settings-last-error');
+  if (!el || !window.rbx.getRecentErrors) return;
+  try {
+    const list = await window.rbx.getRecentErrors(1);
+    if (list && list.length) {
+      const e = list[0];
+      el.textContent = (e.at ? e.at.replace('T', ' ').slice(0, 19) + ' — ' : '') + (e.message || '');
+    } else {
+      el.textContent = t('error_log_empty');
+    }
+  } catch (_) {
+    el.textContent = t('error_log_empty');
+  }
+}
+
+document.getElementById('btn-open-error-log')?.addEventListener('click', async () => {
+  try {
+    await window.rbx.openErrorLog();
+  } catch (e) {
+    toast(t('error') + ' ' + errMsg(e), 'error');
+  }
+});
 
 // ---- Ayarlar alt sekmeleri: Genel / Arkaplan ----
 let currentSettingsTab = 'general';
@@ -818,16 +772,21 @@ async function init() {
     toast(t('settings_load_error'));
   }
 
-  await loadCursorReferenceProfiles();
+  // Açılış: önce durum + aktif cursor (kritik yol), referans profilleri arka planda.
   try {
     const v = window.rbx.appVersion ? await window.rbx.appVersion() : '';
     const verEl = document.getElementById('brand-version');
     if (verEl && v) verEl.textContent = 'v' + v;
   } catch (_) { /* sürüm okunamazsa etiket boş kalır */ }
-  await refreshRobloxStatus();
-  await renderActiveCursor();
+  await Promise.all([refreshRobloxStatus(), renderActiveCursor()]);
   moveDockIndicator();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(moveDockIndicator);
+  // Ağır olmayan ama ilk boyamayı geciktirmesin
+  const defer = (fn) => {
+    if (typeof requestIdleCallback === 'function') requestIdleCallback(() => { fn().catch(() => {}); }, { timeout: 2000 });
+    else setTimeout(() => { fn().catch(() => {}); }, 0);
+  };
+  defer(loadCursorReferenceProfiles);
 
   // Global kısayol (Ctrl+Alt+1/2/3) ana süreçte tetiklendiğinde arayüzü
   // güncelle — pencere odakta olmasa bile bu olaylar gelir.
@@ -847,8 +806,8 @@ async function init() {
 
   try {
     const bgs = await window.rbx.listBackgrounds();
-    // Varsayılan açılış arka planı her zaman bundled background.png'dir.
-    const chosen = bgs.find(b => b.file === 'background.png') || bgs.find(b => b.file === cfg.background) || bgs[0];
+    // Varsayılan açılış arka planı bundled background.jpg (eski config'de .png olabilir).
+    const chosen = bgs.find(b => b.file === 'background.jpg') || bgs.find(b => b.file === 'background.png') || bgs.find(b => b.file === cfg.background) || bgs[0];
     if (chosen) {
       if (cfg.background !== chosen.file) {
         cfg = await window.rbx.setConfig({ background: chosen.file });
@@ -857,9 +816,45 @@ async function init() {
     }
   } catch (_) { /* arkaplan yoksa sorun değil */ }
 
-  // Roblox her an açılıp kapanabileceği (veya güncellenebileceği) için
-  // durumu düzenli tazele; otomatik düzeltme kontrolü de bu tazeleme
-  // sırasında ana süreçte (main.js) yapılır.
-  setInterval(refreshRobloxStatus, 5000);
+  // Roblox durumu: sürekli interval YOK.
+  // Sadece: açılış, pencere tekrar görünür olunca, odaklanınca, manuel yenile.
+  // Otomatik onarım için seyrek güvenlik taraması (5 dk, sadece görünürken).
+  const SAFETY_POLL_MS = 5 * 60 * 1000;
+  let safetyTimer = null;
+  const armSafetyPoll = () => {
+    if (safetyTimer) clearInterval(safetyTimer);
+    safetyTimer = setInterval(() => {
+      if (document.hidden) return;
+      refreshRobloxStatus();
+    }, SAFETY_POLL_MS);
+  };
+  document.addEventListener('visibilitychange', () => {
+    document.documentElement.classList.toggle('app-hidden', document.hidden);
+    if (!document.hidden) {
+      refreshRobloxStatus();
+      armSafetyPoll();
+    } else if (safetyTimer) {
+      clearInterval(safetyTimer);
+      safetyTimer = null;
+    }
+  });
+  window.addEventListener('focus', () => {
+    if (!document.hidden) refreshRobloxStatus();
+  });
+  // Electron minimize/hide (document.hidden her zaman tetiklenmeyebilir)
+  if (window.rbx && window.rbx.onAppVisibility) {
+    window.rbx.onAppVisibility((data) => {
+      const hidden = !!(data && data.hidden);
+      document.documentElement.classList.toggle('app-hidden', hidden);
+      if (!hidden) {
+        refreshRobloxStatus();
+        armSafetyPoll();
+      } else if (safetyTimer) {
+        clearInterval(safetyTimer);
+        safetyTimer = null;
+      }
+    });
+  }
+  armSafetyPoll();
 }
 init();

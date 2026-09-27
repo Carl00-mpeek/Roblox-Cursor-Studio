@@ -47,7 +47,7 @@ async function renderBackgrounds() {
           // Silinen arkaplan aktifse güvenli şekilde varsayılana dön.
           if (cfg.background === bg.file) {
             const freshList = await window.rbx.listBackgrounds();
-            const def = freshList.find(x => x.file === 'background.png') || freshList.find(x => x.source === 'bundled');
+            const def = freshList.find(x => x.file === 'background.jpg') || freshList.find(x => x.file === 'background.png') || freshList.find(x => x.source === 'bundled');
             if (def) {
               cfg = await window.rbx.setConfig({ background: def.file });
               applyBackground(def.path);
@@ -77,8 +77,19 @@ async function renderBackgrounds() {
 }
 
 function applyBackground(fullPath) {
-  const url = fullPath.replace(/\\/g, '/');
-  document.getElementById('bg-layer').style.backgroundImage = `url('file://${url}')`;
+  if (!fullPath) return;
+  const url = 'file://' + fullPath.replace(/\\/g, '/');
+  const layer = document.getElementById('bg-layer');
+  if (!layer) return;
+  // Önce decode et, sonra uygula — açılışta decode jank'ini azaltır
+  const img = new Image();
+  img.onload = () => {
+    layer.style.backgroundImage = `url('${url}')`;
+  };
+  img.onerror = () => {
+    layer.style.backgroundImage = `url('${url}')`;
+  };
+  img.src = url;
 }
 
 document.getElementById('btn-import-bg').onclick = async () => {
@@ -101,7 +112,7 @@ document.getElementById('btn-import-bg').onclick = async () => {
 document.getElementById('btn-bg-default').onclick = async () => {
   try {
     const list = await window.rbx.listBackgrounds();
-    const def = list.find(b => b.file === 'background.png') || list[0];
+    const def = list.find(b => b.file === 'background.jpg') || list.find(b => b.file === 'background.png') || list[0];
     if (!def) {
       toast(t('default_bg_missing'));
       return;

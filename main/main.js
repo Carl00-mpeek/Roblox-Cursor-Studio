@@ -8,13 +8,18 @@ const { app, BrowserWindow, dialog, globalShortcut } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
+// Tüm uygulama verisi tek, görünür klasörde:
+// %AppData%\RBXCursorStudio  (gizli öznitelik yok, rastgele konum yok)
+// Electron önbelleği (Cache, GPUCache vb.) de aynı yere alınır — başka yere dağılmaz.
+app.setPath('userData', path.join(app.getPath('appData'), 'RBXCursorStudio'));
+
 const configManager = require('./config/config-manager');
 const { logError } = require('./logger');
 const detector = require('./roblox/detector');
 const cursorManager = require('./roblox/cursor-manager');
 const packManager = require('./packs/pack-manager');
 const { AnimCursorController } = require('./animation/anim-controller');
-const { fetchLatestRelease, CHECK_INTERVAL_MS } = require('./core/github-update');
+const { fetchLatestRelease, CHECK_INTERVAL_MS } = require('../update-checker');
 const ipcHandlers = require('./ipc/handlers');
 
 // ---------- Hata günlüğü / çökme koruması ----------
@@ -52,21 +57,20 @@ function findRbxCursorArg(argv) {
   return null;
 }
 
-// Dış kaynaktan (çift tık / "Birlikte Aç") gelen bir .rbxcursor dosyası için
-// renderer'a seçim penceresi açtırır: Pakete Kaydet veya Sadece Uygula.
-function offerExternalPackFile(filePath) {
+// Dış kaynaktan (çift tık / "Birlikte Aç") gelen bir .rbxcursor dosyasını
+// içe aktarır, "Kayıtlı Paketler" listesine ekler ve sonucu renderer'a
+// bildirir ki panel kendini otomatik yenileyip Paketler sekmesini açsın.
+function importExternalPackFile(filePath) {
   const send = (payload) => {
     if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.webContents.send('pack:external-offer', payload);
+      mainWindow.webContents.send('pack:imported-external', payload);
     }
   };
   try {
-    if (!filePath || !fs.existsSync(filePath)) {
-      send({ error: 'Dosya bulunamadı.' });
-      return;
-    }
+    const buf = fs.readFileSync(filePath);
     const suggested = path.basename(filePath, path.extname(filePath));
-    send({ path: filePath, name: suggested });
+    const result = packManager.importPackFromBuffer(buf, suggested);
+    send(result);
   } catch (err) {
     logError(err);
     send({ error: err && err.message ? err.message : String(err) });
@@ -92,9 +96,9 @@ if (!gotSingleInstanceLock) {
     const filePath = findRbxCursorArg(argv);
     if (filePath) {
       if (mainWindow && !mainWindow.webContents.isLoading()) {
-        offerExternalPackFile(filePath);
+        importExternalPackFile(filePath);
       } else if (mainWindow) {
-        mainWindow.webContents.once('did-finish-load', () => offerExternalPackFile(filePath));
+        mainWindow.webContents.once('did-finish-load', () => importExternalPackFile(filePath));
       }
     }
   });
@@ -159,21 +163,51 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      backgroundThrottling: true,
+      // DevTools / gereksiz özellikler kapalı — bellek ayak izi küçülür
+      spellcheck: false
     }
   });
 
   win.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
 
+  // Resize sırasında her piksel değişiminde config yazmak disk/CPU yükü;
+  // 400ms debounce ile sadece son boyutu kaydet.
+  let resizeSaveTimer = null;
   win.on('resize', () => {
-    const [w, h] = win.getSize();
-    const c = configManager.getConfig();
-    c.windowBounds = { width: w, height: h };
-    configManager.saveConfig();
+    if (resizeSaveTimer) clearTimeout(resizeSaveTimer);
+    resizeSaveTimer = setTimeout(() => {
+      if (win.isDestroyed()) return;
+      const [w, h] = win.getSize();
+      const c = configManager.getConfig();
+      c.windowBounds = { width: w, height: h };
+      configManager.saveConfig();
+    }, 400);
   });
 
   mainWindow = win;
   win.on('closed', () => { if (mainWindow === win) mainWindow = null; });
+
+  // Minimize / gizle: renderer'ı agresif throttle et (idle CPU/GPU).
+  // Electron backgroundThrottling varsayılanı var; blur/minimize'da
+  // ek olarak webContents'e sinyal gönderip UI tarafını donduruyoruz.
+  const notifyVisibility = () => {
+    if (win.isDestroyed()) return;
+    const hidden = win.isMinimized() || !win.isVisible();
+    try {
+      win.webContents.setBackgroundThrottling(true);
+      win.webContents.send('app:visibility', { hidden });
+    } catch (_) { /* ignore */ }
+  };
+  win.on('minimize', notifyVisibility);
+  win.on('hide', notifyVisibility);
+  win.on('restore', notifyVisibility);
+  win.on('show', notifyVisibility);
+  win.on('blur', () => {
+    // Odak kaybında throttling açık kalsın
+    try { win.webContents.setBackgroundThrottling(true); } catch (_) {}
+  });
 
   return win;
 }
@@ -191,10 +225,11 @@ app.whenReady().then(() => {
     animCursor.initFromConfig().catch((err) => logError(err));
 
     // Uygulama doğrudan bir .rbxcursor dosyası çift tıklanarak açıldıysa
-    // (henüz başka bir örnek çalışmıyorken) seçim penceresini göster.
+    // (henüz başka bir örnek çalışmıyorken) o dosyayı sayfa yüklenir yüklenmez
+    // içe aktar ve "Kayıtlı Paketler"e ekle.
     const launchFilePath = findRbxCursorArg(process.argv);
     if (launchFilePath) {
-      win.webContents.once('did-finish-load', () => offerExternalPackFile(launchFilePath));
+      win.webContents.once('did-finish-load', () => importExternalPackFile(launchFilePath));
     }
 
     // Açılışta otomatik güncelleme kontrolü (CHECK_INTERVAL_MS'i geçmediyse

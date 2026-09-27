@@ -15,8 +15,7 @@ const detector = require('../roblox/detector');
 const cursorManager = require('../roblox/cursor-manager');
 const updater = require('../roblox/updater');
 const packManager = require('../packs/pack-manager');
-const { logError } = require('../logger');
-const autoDownload = require('../auto-download');
+const { logError, getErrorLogPath, getRecentErrors, readErrorLogTail } = require('../logger');
 
 // Bağış (Buy Me a Coffee) bağlantısı. URL sabit; arayüzden keyfi adres açtırılmaz.
 const DONATE_URL = 'https://buymeacoffee.com/rbxcursor';
@@ -263,36 +262,6 @@ function registerIpcHandlers({ animCursor, getMainWindow, checkForUpdatesIfDue }
     return Promise.resolve();
   });
 
-  // ---- otomatik indirme + kur ----
-  // Renderer "İndir ve Kur" butonuna basınca çağrılır.
-  // setupUrl / portableUrl bilgisini alır, portable mı diye bakıp doğru dosyayı
-  // indirir, bitince dosyayı açar ve uygulamayı kapatır.
-  let downloadInProgress = false;
-  ipcMain.handle('app:download-and-install', async (event, info) => {
-    if (downloadInProgress) {
-      return { ok: false, error: 'İndirme zaten devam ediyor' };
-    }
-    downloadInProgress = true;
-    const win = event.sender;
-    const send = (channel, data) => {
-      try {
-        if (!win.isDestroyed()) win.send(channel, data);
-      } catch (_) {}
-    };
-    try {
-      const result = await autoDownload.downloadAndInstall(info, send);
-      return result;
-    } catch (err) {
-      logError(err);
-      send('update:download-progress', { percent: -1, error: err && err.message ? err.message : String(err) });
-      return { ok: false, error: err && err.message ? err.message : String(err) };
-    } finally {
-      downloadInProgress = false;
-    }
-  });
-
-  ipcMain.handle('app:is-portable', () => autoDownload.isPortableBuild());
-
   // ---- paketler ----
   ipcMain.handle('pack:list', () => packManager.listPacks());
 
@@ -430,39 +399,23 @@ function registerIpcHandlers({ animCursor, getMainWindow, checkForUpdatesIfDue }
   // ---------- Paket dışa/içe aktarma ----------
   ipcMain.handle('pack:export', async (_e, name) => packManager.exportPack(name));
 
-  ipcMain.handle('pack:export-bulk', async (_e, names) => packManager.exportPacksBulk(names));
-
   ipcMain.handle('pack:import-from-path', (_e, filePath) => {
     const buf = fs.readFileSync(filePath);
     const suggested = path.basename(filePath, path.extname(filePath));
     return packManager.importPackFromBuffer(buf, suggested);
   });
 
-  ipcMain.handle('pack:import-from-paths', (_e, filePaths) => {
-    return packManager.importPacksFromPaths(filePaths);
-  });
-
-  // .rbxcursor çift tık → "Sadece Uygula": kalıcı kaydetmeden Roblox'a uygula
-  ipcMain.handle('pack:apply-from-path', async (_e, filePath) => {
-    const buf = fs.readFileSync(filePath);
-    const suggested = path.basename(filePath, path.extname(filePath));
-    return packManager.applyPackFromBuffer(buf, suggested);
-  });
-
   ipcMain.handle('pack:import-pick', async () => {
     const res = await dialog.showOpenDialog({
       title: 'Paket İçe Aktar',
       filters: [{ name: 'RBX Cursor Paketi / ZIP', extensions: ['rbxcursor', 'zip'] }],
-      properties: ['openFile', 'multiSelections']
+      properties: ['openFile']
     });
     if (res.canceled || !res.filePaths.length) return null;
-    if (res.filePaths.length === 1) {
-      const filePath = res.filePaths[0];
-      const buf = fs.readFileSync(filePath);
-      const suggested = path.basename(filePath, path.extname(filePath));
-      return packManager.importPackFromBuffer(buf, suggested);
-    }
-    return packManager.importPacksFromPaths(res.filePaths);
+    const filePath = res.filePaths[0];
+    const buf = fs.readFileSync(filePath);
+    const suggested = path.basename(filePath, path.extname(filePath));
+    return packManager.importPackFromBuffer(buf, suggested);
   });
 
   // ---------- Animasyonlu İmleç (Premium Animated Cursor) ----------
@@ -525,6 +478,20 @@ function registerIpcHandlers({ animCursor, getMainWindow, checkForUpdatesIfDue }
   });
 
   ipcMain.handle('animcursor:toggle', () => _animCursor.toggleEnabled());
+
+  // ---------- Hata günlüğü (Ayarlar > Son hata) ----------
+  ipcMain.handle('log:recent', (_e, limit) => getRecentErrors(limit));
+  ipcMain.handle('log:tail', (_e, maxChars) => readErrorLogTail(maxChars || 4000));
+  ipcMain.handle('log:path', () => getErrorLogPath());
+  ipcMain.handle('log:open', async () => {
+    const p = getErrorLogPath();
+    try {
+      if (!fs.existsSync(p)) fs.writeFileSync(p, '', 'utf-8');
+    } catch (err) {
+      logError(err);
+    }
+    return shell.openPath(p);
+  });
 }
 
 module.exports = {
