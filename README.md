@@ -41,42 +41,7 @@ A lightweight Windows app for customizing Roblox cursors — make them yours, sh
 - **Click sound** *(beta)* — short sound on every left click while Roblox is focused; needs the native helper rebuilt (`native/build.bat`)
 - **Discord Rich Presence** — shows “RBX Cursor Studio” on your Discord profile automatically while Discord is open (turn it off in Discord › Settings › Activity Privacy); needs `npm install` (adds `discord-rpc`)
 - **Release notes viewer** and **settings backup / restore** (one JSON file)
-
-### 🎯 Editor
-- **Outline & shadow** tool, plus a one-click **accessibility preset** (bold, auto-contrast outline)
-
----
-
-## 🆕 What's New in 4.6.0
-
-This release is more than a small patch — updates, packs, and animated cursors got a real polish pass.
-
-### 🔄 Smarter updates
-- Installers are clearly named **Setup**
-- After an update, old download files are **cleaned up automatically** — no leftover clutter
-- Hit **Check Now** → if an update exists, **Download & Install** shows up right away
-- The update section sits **above History** in Settings so you never miss it
-
-### 🎬 Animated cursors — no longer Beta
-- The **Beta** label is gone; the feature is ready for everyday use
-- Fixed the bug where turning animation **off** could make the cursor vanish
-- Toggle on/off is more reliable; your cursor stays visible in Roblox
-
-### 📦 Packs — sharing, upgraded
-- **Double-click a `.rbxcursor` file** and choose: **Save to Packs** or **Apply Only**
-- **Import multiple** packs at once · **Bulk export** selected packs to a folder
-- Drag & drop supports **multiple files**
-- Stronger safety checks: only real **PNG** cursors and valid **`.ani`** animations are accepted
-
-### 🎨 Look & feel
-- Update controls are easier to find in Settings
-- Packs screen is more practical (import, bulk export, multi drag-and-drop)
-- Animation page feels finished — less “experimental”, more polished product
-- Cursor cards still get that soft **glow** when you’ve assigned a custom image
-- In-Context Preview stays cozy: Play button, chat box, Shift Lock — test cursors at true size
-
----
-
+- 
 ## ✨ Features
 
 ### 🖱️ Cursor customization
