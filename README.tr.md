@@ -47,36 +47,6 @@ Roblox imleçlerini özelleştirmek için hafif bir Windows uygulaması — kend
 
 ---
 
-## 🆕 4.6.0 ile gelenler
-
-Bu sürüm “birkaç küçük düzeltme”den ibaret değil — güncelleme, paket paylaşımı ve animasyon tarafı ciddi şekilde toparlandı.
-
-### 🔄 Daha akıllı güncelleme
-- Kurulum dosyası artık net: **Setup** adıyla geliyor  
-- Güncelleme indikten sonra eski indirme dosyaları **otomatik silinir** — bilgisayarda çöp birikmez  
-- **Şimdi Kontrol Et** → güncelleme varsa **İndir ve Kur** hemen çıkar  
-- Ayarlarda güncelleme bölümü **geçmişin hemen üstünde**; kaçırılmaz
-
-### 🎬 Animasyonlu imleçler — artık Beta değil
-- **Beta** yazısı kalktı; özellik günlük kullanıma hazır  
-- Animasyonu **kapatınca imlecin kaybolması** sorunu giderildi  
-- Aç/kapa daha stabil; Roblox’ta imleç görünürlüğü korunur
-
-### 📦 Paketler — paylaşımın yeni hali
-- **`.rbxcursor` dosyasına çift tıkla** → **Pakete Kaydet** veya **Sadece Uygula**  
-- **Toplu içe aktar** · seçtiklerini **toplu dışa aktar** (klasöre ayrı dosyalar)  
-- Sürükle-bırak ile **birden fazla dosya** desteklenir  
-- Güvenlik sıkılaştı: yalnızca gerçek **PNG** imleçler ve geçerli **`.ani`** animasyonlar kabul edilir
-
-### 🎨 Görünüm ve his
-- Güncelleme ayarları daha kolay bulunur  
-- Paket ekranı daha pratik (içe aktar, toplu dışa aktar, çoklu sürükle-bırak)  
-- Animasyon sayfası “deneme” değil, **bitmiş ürün** gibi durur  
-- Özel görsel atadığın imleç kartlarında yumuşak **parıltı** hâlâ yerinde  
-- Bağlamda Önizleme sıcak duruyor: OYNA, sohbet kutusu, Shift Lock — gerçek boyutta dene
-
----
-
 ## ✨ Özellikler
 
 ### 🖱️ İmleç özelleştirme
