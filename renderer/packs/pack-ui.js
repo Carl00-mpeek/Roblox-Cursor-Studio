@@ -586,7 +586,7 @@ window.rbx.onPackImportedExternal?.((res) => {
     grid.classList.remove('drag-over');
     const files = e.dataTransfer && e.dataTransfer.files ? [...e.dataTransfer.files] : [];
     const paths = files
-      .map((f) => f.path)
+      .map((f) => (window.rbx.getPathForFile ? window.rbx.getPathForFile(f) : f.path))
       .filter((p) => p && /\.(rbxcursor|zip)$/i.test(p));
     if (!paths.length) return;
     if (!(await confirmPackTrust())) return;

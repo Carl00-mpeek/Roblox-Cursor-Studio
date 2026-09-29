@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 contextBridge.exposeInMainWorld('rbx', {
   // pencere
@@ -85,6 +85,8 @@ contextBridge.exposeInMainWorld('rbx', {
   exportPack: (name) => ipcRenderer.invoke('pack:export', name),
   exportPacksBulk: (names) => ipcRenderer.invoke('pack:export-bulk', names),
   importPackPick: () => ipcRenderer.invoke('pack:import-pick'),
+  // Electron 32+ : sürükle-bırak File nesnesinde .path yok; yolu webUtils verir
+  getPathForFile: (file) => { try { return webUtils.getPathForFile(file); } catch (_) { return ''; } },
   importPackFromPath: (filePath) => ipcRenderer.invoke('pack:import-from-path', filePath),
   importPackFromPaths: (filePaths) => ipcRenderer.invoke('pack:import-from-paths', filePaths),
   applyPackFromPath: (filePath) => ipcRenderer.invoke('pack:apply-from-path', filePath),
