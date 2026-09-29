@@ -38,9 +38,7 @@ To build the installer and portable exe:
 npm run dist
 ```
 
-Windows users can also use the ready-made scripts:
-- 🇹🇷 `kur.bat` / `baslat.bat` / `exe_yap.bat`
-- 🇬🇧 `install.bat` / `start.bat` / `exe_maker.bat`
+Windows users can also use the ready-made scripts: `install.bat` / `start.bat` / `exe_maker.bat`.
 
 ### 🎞️ Native helper (animated cursors)
 
@@ -50,7 +48,7 @@ The animated cursor feature is powered by a small C++ program, `native/cursor_he
 - If no compiler is found, `build.bat` tries to install MinGW-w64 via `winget`. If that also fails, `npm install` still succeeds — only the animated cursor feature is disabled, the rest of the app works normally.
 - To build it manually: `cd native && build.bat`
 - `npm run dist` refuses to package without `cursor_helper.exe`, so a release can't ship without animated cursor support by accident. In the packaged app the helper is copied to `resources/native/` (see `extraResources` in `package.json`).
-- If you change the marker values, keep `native/marker.h` and `MARKERS` in `main/anim-cursor.js` in sync.
+- If you change the marker values, keep `native/marker.h` and `MARKERS` in `main/animation/anim-controller.js` in sync.
 - `.bat` files must keep Windows (CRLF) line endings. `.gitattributes` takes care of this, just don't override it.
 
 ## 📝 Pull Requests
@@ -85,6 +83,14 @@ Releases are built by GitHub Actions (`.github/workflows/build.yml`) on a Window
 The tag must start with `v` + the `package.json` version. A suffix such as `_hotfix` or `-beta.1` is fine (`v3.3.5_hotfix`); a different version number (`v3.3.6` while `package.json` says `3.3.5`) makes the workflow fail on purpose.
 
 To test a build without creating a release, run the workflow manually from the **Actions** tab (**Run workflow**). The exe files are then available as downloadable artifacts only.
+
+## 🌍 Adding a new language
+
+1. Copy `renderer/locales/template.json` (e.g. to `de.json`) and translate every value under `"strings"` — keep the keys and `{placeholders}` as they are.
+2. Create `renderer/lang-de.js` containing `LANG.de = { ...paste the translated strings... };` and add a `<script src="lang-de.js"></script>` line right after `lang-extras.js` in `renderer/index.html`.
+3. Add `<option value="de">Deutsch</option>` to the `#language-select` dropdown in `renderer/index.html`.
+
+Missing keys automatically fall back to Turkish, so a partial translation still works.
 
 ## ❓ Questions
 

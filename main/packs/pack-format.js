@@ -5,7 +5,7 @@
 // packs/pack-manager.js'te; burası sadece bayt <-> yapı dönüşümü yapar.
 
 const path = require('path');
-const { buildZip, parseZip } = require('../zip-lite');
+const { buildZip, parseZip, crc32 } = require('../zip-lite');
 
 // ---- Güvenilmeyen zip içeriği için doğrulama ----
 // Bir .rbxcursor dosyasını herkes hazırlayabilir; içindeki yollar ve pack-meta.json
@@ -98,13 +98,82 @@ function isValidAniBuffer(buf) {
   // RIFF....ACON
   if (buf.toString('ascii', 0, 4) !== 'RIFF') return false;
   if (buf.toString('ascii', 8, 12) !== 'ACON') return false;
-  return true;
+  // RIFF boyutu dosyayla tutarlı olmalı
+  if (buf.readUInt32LE(4) + 8 > buf.length) return false;
+
+  // Yapısal doğrulama: parçaları (chunk) sırayla gez, taşan/tutarsız boyutları reddet
+  // ve her kare (icon) parçasının ICO/CUR başlığının kendi içinde tutarlı olduğunu
+  // doğrula. Amaç, Windows'un imleç yükleyicisine bozuk yapılı veri ulaşmasını önlemek.
+  let sawAnih = false, frames = 0, pos = 12;
+  while (pos + 8 <= buf.length) {
+    const id = buf.toString('ascii', pos, pos + 4);
+    const size = buf.readUInt32LE(pos + 4);
+    const start = pos + 8;
+    if (size > buf.length || start + size > buf.length) return false;
+    if (id === 'anih') {
+      if (size < 36) return false;
+      sawAnih = true;
+    } else if (id === 'LIST' && size >= 4 && buf.toString('ascii', start, start + 4) === 'fram') {
+      const end = start + size;
+      let sub = start + 4;
+      while (sub + 8 <= end) {
+        const sid = buf.toString('ascii', sub, sub + 4);
+        const ssize = buf.readUInt32LE(sub + 4);
+        const sstart = sub + 8;
+        if (ssize > buf.length || sstart + ssize > end) return false;
+        if (sid === 'icon') {
+          if (++frames > 512) return false;
+          if (ssize < 22) return false;
+          const reserved = buf.readUInt16LE(sstart);
+          const type = buf.readUInt16LE(sstart + 2);   // 1 = ICO, 2 = CUR
+          const count = buf.readUInt16LE(sstart + 4);
+          if (reserved !== 0 || (type !== 1 && type !== 2) || count < 1 || count > 16) return false;
+          if (6 + count * 16 > ssize) return false;
+          for (let i = 0; i < count; i++) {
+            const e = sstart + 6 + i * 16;
+            const bytes = buf.readUInt32LE(e + 8);
+            const offset = buf.readUInt32LE(e + 12);
+            if (bytes === 0 || offset < 6 + count * 16 || offset > ssize || bytes > ssize - offset) return false;
+          }
+        }
+        sub = sstart + ssize + (ssize % 2);
+      }
+    }
+    pos = start + size + (size % 2);
+  }
+  return sawAnih && frames >= 1;
 }
 
 function isPngSignature(buf) {
   if (!Buffer.isBuffer(buf) || buf.length < 8) return false;
   const sig = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
   return buf.subarray(0, 8).equals(sig);
+}
+
+// Sıkı PNG yapı doğrulaması: imza + IHDR(13 bayt) ile başlar, her parçanın (chunk)
+// boyutu ve CRC'si doğrudur, en az bir IDAT vardır, IEND ile biter ve IEND'den sonra
+// hiçbir veri yoktur (PNG'ye eklenmiş gizli içerik / polyglot dosyalar reddedilir).
+function isStrictPng(buf) {
+  if (!isPngSignature(buf) || buf.length < 45) return false;
+  let pos = 8, first = true, sawIdat = false, chunks = 0;
+  while (pos + 12 <= buf.length) {
+    if (++chunks > 1000) return false;
+    const len = buf.readUInt32BE(pos);
+    const type = buf.toString('latin1', pos + 4, pos + 8);
+    if (len > buf.length || pos + 12 + len > buf.length) return false;
+    if (!/^[A-Za-z]{4}$/.test(type)) return false;
+    const crcStored = buf.readUInt32BE(pos + 8 + len);
+    const crcCalc = crc32(buf.subarray(pos + 4, pos + 8 + len));
+    if (crcStored !== crcCalc) return false;
+    if (first) {
+      if (type !== 'IHDR' || len !== 13) return false;
+      first = false;
+    }
+    if (type === 'IDAT') sawIdat = true;
+    pos += 12 + len;
+    if (type === 'IEND') return sawIdat && len === 0 && pos === buf.length;
+  }
+  return false;
 }
 
 // targets: TARGETS map (kind -> roblox dosya adı)
@@ -161,7 +230,7 @@ function deserializePack(buf, targets) {
     for (const [kind, target] of Object.entries(targets)) {
       if (base.toLowerCase() === target.toLowerCase()) {
         // Sadece gerçek PNG imzası; exe/dll/script veya sahte uzantı reddedilir
-        if (isPngSignature(data) && data.length <= MAX_PNG_BYTES) {
+        if (isStrictPng(data) && data.length <= MAX_PNG_BYTES) {
           fileMap[kind] = data;
         }
       }
@@ -182,5 +251,6 @@ module.exports = {
   safeAnimEntryName,
   sanitizePackMeta,
   isValidAniBuffer,
-  isPngSignature
+  isPngSignature,
+  isStrictPng
 };

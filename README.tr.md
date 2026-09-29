@@ -13,9 +13,37 @@ RBX Cursor Studio bağımsız, topluluk yapımı bir araçtır — **Roblox Corp
 
 Roblox imleçlerini özelleştirmek için hafif bir Windows uygulaması — kendi stilin, arkadaşlarınla paylaşım, paketler arası anında geçiş.
 
-**Güncel sürüm: 4.6.0**
+**Güncel sürüm: 5.0.0**
 
-![RBX Cursor Studio Ekran Görüntüsü]
+## 🎬 Tanıtım videosu
+
+<!-- 👇 YOUR_VIDEO_ID yerine videonun ID'sini yaz (ya da tam bağlantıyı yapıştır) -->
+[▶️ Tanıtım videosunu izle](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
+
+---
+
+## 🆕 5.0.0 ile gelenler
+
+### 🖥️ Pencere
+- **Kapatınca tepsiye küçült** — **Ayarlar › Genel**’de yeni anahtar: ✕ düğmesi uygulamayı kapatmak yerine sistem tepsisine küçültür. Kısayollar, paket değiştirici ve diğer otomasyonlar çalışmaya devam eder; geri açmak için tepsi simgesine tıkla, tamamen çıkmak için menüdeki *Çıkış*’ı kullan.
+
+### 🎨 Temalar
+- **Renk temaları** — uygulamanın vurgu rengini **Ayarlar › Genel**’den seç: mavi, mor, kırmızı, pembe veya sarı. Seçimin hatırlanır.
+
+### 📦 Paketler
+- **Favori, etiket ve arama** — sevdiğin paketleri yıldızla (en üste çıkar), etiket ekle, ada/etikete göre filtrele
+- **Paylaş** düğmesi — paketi dışa aktarır ve önceden doldurulmuş bir GitHub Discussions gönderisi açar
+
+### 🤖 Otomasyon & Efektler (Ayarlar'da yeni sekme)
+- **Roblox açılınca son paketi uygula**
+- **Zamanlı / rastgele paket değiştirici** — her N dakikada bir, rastgele ya da sırayla; istersen seçili paketlerle sınırlı
+- **Cursor izi** *(beta)* — imlecinin arkasında efektler: klasik, yıldız, kıvılcım, duman, ateş, kalp, gökkuşağı (renk + uzunluk)
+- **Tıklama sesi** *(beta)* — Roblox ön plandayken her sol tıkta kısa ses; native yardımcının yeniden derlenmesi gerekir (`native/build.bat`)
+- **Discord Rich Presence** — Discord açıkken profilinde otomatik olarak “RBX Cursor Studio” görünür (kapatmak için Discord › Ayarlar › Etkinlik Gizliliği); `npm install` gerekir (`discord-rpc` eklenir)
+- **Sürüm notları görüntüleyici** ve **ayar yedekleme / geri yükleme** (tek JSON dosyası)
+
+### 🎯 Editör
+- **Kontur ve gölge** aracı + tek tıkla **erişilebilirlik ön ayarı** (kalın, otomatik kontrastlı kontur)
 
 ---
 
@@ -85,22 +113,22 @@ En yeni istemci klasörünü otomatik bulur. Otomatik Düzeltme açıkken Roblox
 Aktif tüm imleçleri tek bir tonla boya — boyut ve konum yerinde kalır.
 
 ### 🎬 Kişiselleştirme ve ⚙️ ayarlar
-Arkaplanı değiştir, Türkçe / İngilizce anında geç, Windows başlangıcında aç, algılanan Roblox sürümünü gör — hepsi Ayarlar’da.
+Arkaplanı değiştir, renk teması seç (mavi, mor, kırmızı, pembe, sarı), Türkçe / İngilizce anında geç, Windows başlangıcında aç, kapatınca tepsiye küçült, algılanan Roblox sürümünü gör — hepsi Ayarlar’da.
 
 ### 💻 Platform
-Taşınabilir exe veya NSIS **Setup** yükleyici. Electron tabanlı; animasyonlu imleçler yalnızca gerektiğinde açılan küçük `cursor_helper.exe` ile çalışır. Kaynak açık, ticari olmayan lisans; sürümler VirusTotal ile taranır.
+Taşınabilir exe veya NSIS **Setup** yükleyici. Electron tabanlı; animasyonlu imleçler yalnızca gerektiğinde açılan küçük `cursor_helper.exe` ile çalışır. Kaynak açık, ticari olmayan lisans.
 
 ---
 
 ## 📥 İndir
 
 - **Setup** — yükleyiciyi indir, kur, bitir  
-- **Taşınabilir** — ZIP’i aç, `RBX Cursor Studio.exe` çalıştır — kurulum yok  
+- **Taşınabilir** — taşınabilir exe’yi indir ve çalıştır — kurulum yok  
 
 > En güncel sürümü her zaman [Releases](../../releases) sayfasından al — yalnızca bu depodan indir.
 
 ### ❓ Windows “bilgisayarınızı korudu” diyor
-Uygulama henüz kod imzalı değil; yeterince kişi çalıştırana kadar SmartScreen uyarı verebilir — bu tek başına zararlı yazılım demek değildir. **Diğer bilgiler → Yine de çalıştır**. Kaynak ve VirusTotal aşağıda.
+Uygulama henüz kod imzalı değil; yeterince kişi çalıştırana kadar SmartScreen uyarı verebilir — bu tek başına zararlı yazılım demek değildir. **Diğer bilgiler → Yine de çalıştır**. Kaynak kodun tamamı bu depoda herkese açık.
 
 ### ❓ Animasyonlu imleç görünmüyor
 - Exclusive tam ekran overlay’leri engeller (Discord/Steam gibi) — pencereli veya borderless dene  
@@ -112,9 +140,9 @@ Uygulama henüz kod imzalı değil; yeterince kişi çalıştırana kadar SmartS
 
 ## 🔧 Kaynak koddan derleme
 
-**Windows:** hazır script’ler yeterli — terminale gerek yok (`kur.bat` / `baslat.bat` / `exe_yap.bat`). Aşağısı manuel kurulum veya Windows dışı sistemler için.
+**Windows:** hazır script’ler yeterli — terminale gerek yok (`install.bat` / `start.bat` / `exe_maker.bat`). Aşağısı manuel kurulum veya Windows dışı sistemler için.
 
-**Gereksinimler:** Node.js 18+ ve npm. Animasyon için C++ derleyicisi (MinGW `g++` veya MSVC `cl.exe`). Yoksa `kur.bat` bir kez MinGW-w64 indirebilir (~260 MB). Derleyici olmasa da uygulama çalışır; yalnızca animasyon kapalı kalır. Resmi Setup/Portable sürümlerde yardımcı zaten gömülü.
+**Gereksinimler:** Node.js 18+ ve npm. Animasyon için C++ derleyicisi (MinGW `g++` veya MSVC `cl.exe`). Yoksa `install.bat` bir kez MinGW-w64 indirebilir (~260 MB). Derleyici olmasa da uygulama çalışır; yalnızca animasyon kapalı kalır. Resmi Setup/Portable sürümlerde yardımcı zaten gömülü.
 
 ```bash
 git clone https://github.com/Carl00-mpeek/Roblox-Cursor-Studio.git
@@ -126,15 +154,15 @@ npm run dist     # yükleyici + taşınabilir exe
 
 ---
 
-## 🛡️ VirusTotal
+### ✍️ Kod imzalama (opsiyonel)
+Uygulama henüz imzalı değil. Bir kod imzalama sertifikan olunca electron-builder otomatik imzalar — ayar değişikliği gerekmez. `npm run dist` öncesinde şunları tanımla:
 
-En son sürüm VirusTotal ile taranmıştır:
+```bat
+set CSC_LINK=C:\sertifika\yolu\certificate.pfx
+set CSC_KEY_PASSWORD=parolan
+```
 
-- [🔍 Kaynak](https://www.virustotal.com/gui/file/d6164ae95c241574d51e8ae521035cb12dbc00a99e30169d805f5ea60930262f?nocache=1)
-- [🔍 Setup](https://www.virustotal.com/gui/file/931ff40b0d11505572b12e221d5063987da2312b91bbf7bde741a47b1fd42131?nocache=1)
-- [🔍 Portable](https://virustotal.com/gui/file/0f88aa46f2d5400cc87f80cb897c2c1133e76265f2dbbc20ed9f7e9909974057?nocache=1)
-
----
+GitHub Actions'ta bunları repository secret olarak sakla ve build adımında `CSC_LINK` / `CSC_KEY_PASSWORD` ortam değişkeni olarak geçir.
 
 ## ☕ Projeyi destekle
 
@@ -146,7 +174,7 @@ RBX Cursor Studio ücretsiz. Desteğin güncellemelerin ve yeni özelliklerin de
 
 ## 📄 Lisans
 
-[PolyForm Noncommercial License 1.0.0](LICENSE) ile lisanslanmıştır.  
+[PolyForm Noncommercial License 1.0.0](LICENSE.md) ile lisanslanmıştır.  
 Gerekli Bildirim: Telif Hakkı (c) 2026 Demhat Dayan
 
 Kişisel, eğitim ve ticari olmayan kullanım ücretsizdir. **Ticari kullanım, yeniden satış veya kâr amaçlı dağıtım** yazılı izin olmadan yapılamaz.

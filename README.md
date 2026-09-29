@@ -13,9 +13,37 @@ RBX Cursor Studio is an independent, community-made tool — **not affiliated wi
 
 A lightweight Windows app for customizing Roblox cursors — make them yours, share them with friends, and switch packs in a second.
 
-**Current version: 4.6.0**
+**Current version: 5.0.0**
 
-![RBX Cursor Studio Screenshot]
+## 🎬 Demo video
+
+<!-- 👇 Replace YOUR_VIDEO_ID with your video's ID (or paste the full link) -->
+[▶️ Watch the demo video](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
+
+---
+
+## 🆕 What's New in 5.0.0
+
+### 🖥️ Window
+- **Close to tray** — new toggle in **Settings › General**: the ✕ button minimizes the app to the system tray instead of quitting. Shortcuts, the pack switcher and other automation keep running; click the tray icon to reopen, or use *Quit* in its menu.
+
+### 🎨 Themes
+- **Color themes** — pick the app's accent color from **Settings › General**: blue, purple, red, pink or yellow. The choice is remembered.
+
+### 📦 Packs
+- **Favorites, tags and search** — star your best packs (they float to the top), add tags, filter by name or tag
+- **Share** button — exports the pack and opens a pre-filled GitHub Discussions post
+
+### 🤖 Automation & Effects (new Settings tab)
+- **Apply last pack when Roblox starts**
+- **Timed / random pack switcher** — every N minutes, random or in order, optionally limited to chosen packs
+- **Cursor trail** *(beta)* — effects behind your cursor: classic, stars, sparkles, smoke, fire, hearts, rainbow (color + length)
+- **Click sound** *(beta)* — short sound on every left click while Roblox is focused; needs the native helper rebuilt (`native/build.bat`)
+- **Discord Rich Presence** — shows “RBX Cursor Studio” on your Discord profile automatically while Discord is open (turn it off in Discord › Settings › Activity Privacy); needs `npm install` (adds `discord-rpc`)
+- **Release notes viewer** and **settings backup / restore** (one JSON file)
+
+### 🎯 Editor
+- **Outline & shadow** tool, plus a one-click **accessibility preset** (bold, auto-contrast outline)
 
 ---
 
@@ -85,22 +113,22 @@ Detects the newest Roblox client folder. With Auto-Reinstall on, your saved curs
 Recolor every active cursor with a single hue — size and position stay put.
 
 ### 🎬 Personalization & ⚙️ Settings
-Swap the app background, switch English / Turkish instantly, launch on Windows startup, and see the detected Roblox version — all from Settings.
+Swap the app background, pick a color theme (blue, purple, red, pink, yellow), switch English / Turkish instantly, launch on Windows startup, minimize to the tray on close, and see the detected Roblox version — all from Settings.
 
 ### 💻 Platform
-Portable exe or NSIS **Setup** installer. Built on Electron; animated cursors use a tiny native helper (`cursor_helper.exe`) that only starts when needed. Source is public under a noncommercial license; releases are scanned on VirusTotal.
+Portable exe or NSIS **Setup** installer. Built on Electron; animated cursors use a tiny native helper (`cursor_helper.exe`) that only starts when needed. Source is public under a noncommercial license.
 
 ---
 
 ## 📥 Download
 
 - **Setup** — download the installer and go  
-- **Portable** — extract the ZIP and run `RBX Cursor Studio.exe` — no install needed  
+- **Portable** — download the portable exe and run it — no install needed  
 
 > Always grab the latest build from the [Releases](../../releases) page — only download from this repository.
 
 ### ❓ Windows says it “protected your PC”
-The app isn’t code-signed yet, so SmartScreen may warn until enough people have run it — that alone doesn’t mean malware. Click **More info → Run anyway**. Full source and VirusTotal links are below.
+The app isn’t code-signed yet, so SmartScreen may warn until enough people have run it — that alone doesn’t mean malware. Click **More info → Run anyway**. The full source code is public in this repository.
 
 ### ❓ Animated cursor doesn’t show up
 - Exclusive fullscreen blocks overlays (same as Discord/Steam) — use windowed or borderless  
@@ -126,15 +154,15 @@ npm run dist     # installer + portable exe
 
 ---
 
-## 🛡️ VirusTotal
+### ✍️ Code signing (optional)
+The app isn't signed yet. Once you own a code-signing certificate, electron-builder signs automatically — no config change needed. Set these before `npm run dist`:
 
-Latest release scanned on VirusTotal:
+```bat
+set CSC_LINK=C:\path\to\certificate.pfx
+set CSC_KEY_PASSWORD=your-password
+```
 
-- [🔍 Source](https://www.virustotal.com/gui/file/d6164ae95c241574d51e8ae521035cb12dbc00a99e30169d805f5ea60930262f?nocache=1)
-- [🔍 Setup](https://www.virustotal.com/gui/file/931ff40b0d11505572b12e221d5063987da2312b91bbf7bde741a47b1fd42131?nocache=1)
-- [🔍 Portable](https://virustotal.com/gui/file/0f88aa46f2d5400cc87f80cb897c2c1133e76265f2dbbc20ed9f7e9909974057?nocache=1)
-
----
+In GitHub Actions store them as repository secrets and pass them as `CSC_LINK` / `CSC_KEY_PASSWORD` env vars in the build step.
 
 ## ☕ Support the project
 
@@ -146,7 +174,7 @@ RBX Cursor Studio is free. Your support helps keep updates and new features comi
 
 ## 📄 License
 
-Licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE).  
+Licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE.md).  
 Required Notice: Copyright (c) 2026 Demhat Dayan
 
 Free for personal, educational, and noncommercial use. **Commercial use, resale, or redistribution for profit is not permitted** without written permission.

@@ -32,8 +32,9 @@ function openEditorWith(kind, imgOrCanvas, opts = {}) {
     toast(t('image_invalid'));
     return;
   }
-  editorState = { kind, img: imgOrCanvas, scale: 1, offsetX: 0, offsetY: 0, colorize: false, hue: 0, autoConfidence: 0 };
+  editorState = { kind, img: imgOrCanvas, scale: 1, offsetX: 0, offsetY: 0, colorize: false, hue: 0, autoConfidence: 0, outline: null, shadow: null };
   resetColorControls();
+  syncEffectControls();
   showEditor();
   // Zaten hazırlanmış bir imleç (ör. Roblox'taki aktif dosya) düzenlenirken
   // yeniden boyutlandırma yapılmaz; görsel olduğu gibi (scale 1, offset 0) açılır.
@@ -70,7 +71,63 @@ function renderCursorLayer(state, outSize = EXPORT_SIZE) {
     colorizeImageData(data, state.hue || 0);
     lctx.putImageData(data, 0, 0);
   }
-  return layer;
+  return applyEffectsToLayer(layer, state, outSize / EXPORT_SIZE);
+}
+
+// ---- Kontur / Gölge (v5.0.0) ----
+// Kontur: görselin alfa maskesini 16 yöne kaydırıp seçilen renkle doldurur,
+// orijinal görsel üstüne çizilir (piksel netliği için yumuşatma kapalı).
+// Gölge: aynı maske sağ-alta kaydırılıp yarı saydam çizilir.
+// state.outline / state.shadow: { color, thickness } ya da null.
+function tintedMask(layer, color) {
+  const m = document.createElement('canvas');
+  m.width = layer.width; m.height = layer.height;
+  const c = m.getContext('2d');
+  c.drawImage(layer, 0, 0);
+  c.globalCompositeOperation = 'source-in';
+  c.fillStyle = color;
+  c.fillRect(0, 0, m.width, m.height);
+  return m;
+}
+
+function applyEffectsToLayer(layer, state, outScale = 1) {
+  const outline = state && state.outline;
+  const shadow = state && state.shadow;
+  if (!outline && !shadow) return layer;
+
+  const out = document.createElement('canvas');
+  out.width = layer.width; out.height = layer.height;
+  const ctx = out.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+
+  if (shadow) {
+    const th = Math.max(1, Math.round((shadow.thickness || 2) * outScale));
+    const mask = tintedMask(layer, shadow.color || '#000000');
+    ctx.globalAlpha = 0.5;
+    ctx.drawImage(mask, th, th);
+    ctx.globalAlpha = 1;
+  }
+  if (outline) {
+    const th = Math.max(1, Math.round((outline.thickness || 2) * outScale));
+    const mask = tintedMask(layer, outline.color || '#000000');
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2;
+      ctx.drawImage(mask, Math.round(Math.cos(a) * th), Math.round(Math.sin(a) * th));
+    }
+  }
+  ctx.drawImage(layer, 0, 0);
+  return out;
+}
+
+// Kontur rengi için kontrast: görselin ortalama parlaklığına göre siyah/beyaz seç.
+function contrastColorFor(layer) {
+  const c = layer.getContext('2d');
+  const d = c.getImageData(0, 0, layer.width, layer.height).data;
+  let sum = 0, n = 0;
+  for (let i = 0; i < d.length; i += 4) {
+    if (d[i + 3] > 32) { sum += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; n++; }
+  }
+  return n && (sum / n) > 128 ? '#000000' : '#ffffff';
 }
 
 async function loadImageIntoEditor(kind, src, opts = {}) {
@@ -303,3 +360,47 @@ document.getElementById('editor-save').onclick = async () => {
     toast(t('save_error') + ' ' + errMsg(e));
   }
 };
+
+
+// ---- Kontur / Gölge / Erişilebilirlik kontrolleri ----
+function syncEffectControls() {
+  const st = editorState || {};
+  const set = (id, fn) => { const el = document.getElementById(id); if (el) fn(el); };
+  set('editor-outline-toggle', el => { el.checked = !!st.outline; });
+  set('editor-shadow-toggle', el => { el.checked = !!st.shadow; });
+  if (st.outline) {
+    set('editor-effect-color', el => { el.value = st.outline.color; });
+    set('editor-effect-thickness', el => { el.value = st.outline.thickness; });
+  }
+}
+
+function updateEffectsFromControls() {
+  if (!editorState) return;
+  const color = document.getElementById('editor-effect-color')?.value || '#000000';
+  const thickness = parseInt(document.getElementById('editor-effect-thickness')?.value, 10) || 2;
+  editorState.outline = document.getElementById('editor-outline-toggle')?.checked ? { color, thickness } : null;
+  editorState.shadow = document.getElementById('editor-shadow-toggle')?.checked ? { color: '#000000', thickness } : null;
+  drawEditor();
+}
+
+['editor-outline-toggle', 'editor-shadow-toggle', 'editor-effect-color', 'editor-effect-thickness'].forEach((id) => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener(el.type === 'checkbox' ? 'change' : 'input', updateEffectsFromControls);
+});
+
+document.getElementById('editor-access-preset')?.addEventListener('click', () => {
+  if (!editorState) return;
+  // Efekt uygulanmamış temel katmana göre kontrast rengi seç, kalın kontur + hafif büyütme
+  const base = renderCursorLayer({ ...editorState, outline: null, shadow: null });
+  const color = contrastColorFor(base);
+  editorState.outline = { color, thickness: 3 };
+  editorState.scale = Math.min(3, editorState.scale * 1.1);
+  const slider = document.getElementById('editor-scale');
+  if (slider) slider.value = String(editorState.scale);
+  const oc = document.getElementById('editor-effect-color'); if (oc) oc.value = color;
+  const ot = document.getElementById('editor-effect-thickness'); if (ot) ot.value = '3';
+  syncEffectControls();
+  drawEditor();
+  toast(t('editor_access_done'), 'success');
+});

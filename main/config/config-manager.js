@@ -14,6 +14,7 @@ const BACKUP = path.join(BASE, 'backup');
 const CURRENT = path.join(BASE, 'current');
 const USER_BG = path.join(BASE, 'backgrounds');
 const HISTORY_DIR = path.join(BASE, 'history');
+const SOUNDS = path.join(BASE, 'sounds');
 const HISTORY_MANIFEST = path.join(BASE, 'history.json');
 const HISTORY_MAX = 24; // tüm türler dahil en fazla saklanacak geçmiş sayısı
 const CONFIG_PATH = path.join(BASE, 'config.json');
@@ -22,15 +23,15 @@ const BUNDLED_BG = path.join(__dirname, '..', '..', 'assets', 'backgrounds');
 const BUNDLED_ORIGINALS = path.join(__dirname, '..', '..', 'assets', 'originals');
 
 function ensureDirs() {
-  for (const p of [BASE, PACKS, BACKUP, CURRENT, USER_BG, HISTORY_DIR]) {
+  for (const p of [BASE, PACKS, BACKUP, CURRENT, USER_BG, HISTORY_DIR, SOUNDS]) {
     fs.mkdirSync(p, { recursive: true });
   }
 }
 ensureDirs();
 
 const DEFAULT_CFG = {
-  theme: 'dark',
-  accent: '#7c9cff',
+  theme: 'red',
+  accent: '#e11d48',
   background: 'background.png',
   lastPack: '',
   windowBounds: { width: 1200, height: 760 },
@@ -39,6 +40,8 @@ const DEFAULT_CFG = {
   autoReinstall: true,
   // Windows açılışında uygulamayı otomatik başlat.
   startOnBoot: false,
+  // Pencereyi kapatınca uygulamadan çıkmak yerine sistem tepsisine küçült.
+  closeToTray: false,
   // Düzenleyicide kaydedilen imleçlerin Geçmiş'e eklenmesi (Ayarlar > Geçmiş).
   historyEnabled: true,
   // Otomatik düzeltmenin sürüm değişikliğini fark edebilmesi için
@@ -51,7 +54,41 @@ const DEFAULT_CFG = {
   quickSwitch: { '1': '', '2': '', '3': '' },
   quickSwitchKeys: { '1': 'Control+Alt+1', '2': 'Control+Alt+2', '3': 'Control+Alt+3' },
   // Global kısayol: animasyonlu imleci aç/kapat (boş string = kısayol yok).
-  animToggleKey: 'Control+Alt+0'
+  animToggleKey: 'Control+Alt+0',
+
+  // ---- Roblox açılınca son paketi otomatik uygula ----
+  applyLastPackOnLaunch: false,
+
+  // ---- Zamanlı / rastgele paket değiştirici ----
+  schedulerEnabled: false,
+  schedulerMode: 'random', // 'random' | 'sequential'
+  schedulerIntervalMin: 30, // dakika
+  schedulerPacks: [], // boş = kayıtlı tüm paketler arasından seç
+
+  // ---- Arayüz durumu (hatırlanır) ----
+  uiSettingsTab: 'general',
+  packFavOnly: false,
+
+  // ---- Cursor izi (trail) efekti ----
+  trailEnabled: false,
+  trailColor: '#e11d48',
+  trailLength: 14,
+  // 'classic' | 'stars' | 'smoke' | 'sparkles' | 'fire' | 'hearts' | 'rainbow'
+  trailStyle: 'classic',
+  // false = iz yalnızca Roblox çalışırken görünür; true = her yerde (masaüstü dahil)
+  trailEverywhere: false,
+
+  // ---- Tıklama sesi efekti (beta, native helper gerektirir) ----
+  clickSoundEnabled: false,
+  clickSoundVolume: 0.6,
+  // Kullanıcının yüklediği özel ses dosyası (BASE/sounds altındaki dosya adı; boş = varsayılan tık)
+  clickSoundFile: '',
+
+  // ---- Discord Rich Presence (opsiyonel, kendi Discord Client ID'nizle) ----
+  // Otomatik: Discord açıksa kendiliğinden bulunur ve durum gösterilir.
+  // discordClientId boşsa uygulamanın gömülü varsayılan kimliği kullanılır.
+  discordRpcEnabled: true,
+  discordClientId: ''
 };
 
 function readCfgFromDisk() {
@@ -88,7 +125,7 @@ function setConfig(partial) {
 }
 
 module.exports = {
-  BASE, PACKS, BACKUP, CURRENT, USER_BG, HISTORY_DIR, HISTORY_MANIFEST,
+  BASE, PACKS, BACKUP, CURRENT, USER_BG, HISTORY_DIR, SOUNDS, HISTORY_MANIFEST,
   HISTORY_MAX, CONFIG_PATH, BUNDLED_BG, BUNDLED_ORIGINALS,
   DEFAULT_CFG,
   ensureDirs,

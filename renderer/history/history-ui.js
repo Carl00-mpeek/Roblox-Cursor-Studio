@@ -29,7 +29,7 @@ async function renderHistoryGrid() {
       const el = document.createElement('div');
       el.className = 'pack-card';
       el.innerHTML = `
-        <div class="thumb" style="background-image:url('file://${urlPath}')"></div>
+        <div class="thumb" style="background-image:url('${safeFileUrl(item.path)}')"></div>
         <div class="pname" title="${cursorName(item.kind)}">${cursorName(item.kind)}</div>
         <div class="muted small" style="text-align:center;">${formatHistoryDate(item.savedAt)}</div>
         <div class="pack-actions">

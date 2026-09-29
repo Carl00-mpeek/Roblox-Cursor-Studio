@@ -53,6 +53,33 @@ contextBridge.exposeInMainWorld('rbx', {
   getPackCursors: (name) => ipcRenderer.invoke('pack:get-cursors', name),
   saveNormalizedPackCursor: (name, kind, arrayBuffer) => ipcRenderer.invoke('pack:save-normalized-cursor', name, kind, arrayBuffer),
   deletePack: (name) => ipcRenderer.invoke('pack:delete', name),
+  setPackFavorite: (name, favorite) => ipcRenderer.invoke('pack:set-favorite', name, favorite),
+  setPackTags: (name, tags) => ipcRenderer.invoke('pack:set-tags', name, tags),
+  sharePack: (name) => ipcRenderer.invoke('pack:share', name),
+
+  // otomasyon: zamanlı/rastgele paket değiştirici
+  getScheduler: () => ipcRenderer.invoke('scheduler:get'),
+  setScheduler: (partial) => ipcRenderer.invoke('scheduler:set', partial),
+  onSchedulerApplied: (cb) => ipcRenderer.on('scheduler:applied', (_e, data) => cb(data)),
+
+  // efektler: cursor izi + tıklama sesi
+  setCloseToTray: (enabled, labels) => ipcRenderer.invoke('tray:set', enabled, labels),
+  setTrayLabels: (labels) => ipcRenderer.invoke('tray:set-labels', labels),
+  getTrail: () => ipcRenderer.invoke('trail:get'),
+  setTrail: (partial) => ipcRenderer.invoke('trail:set', partial),
+  getClickSound: () => ipcRenderer.invoke('clicksound:get'),
+  setClickSound: (partial) => ipcRenderer.invoke('clicksound:set', partial),
+  onClickSound: (cb) => ipcRenderer.on('animcursor:click-sound', () => cb()),
+  pickClickSoundFile: () => ipcRenderer.invoke('clicksound:pick-file'),
+  clearClickSoundFile: () => ipcRenderer.invoke('clicksound:clear-file'),
+  readClickSoundFile: () => ipcRenderer.invoke('clicksound:read-file'),
+
+  // Discord Rich Presence, sürüm notları, ayar yedekleme
+  getDiscord: () => ipcRenderer.invoke('discord:get'),
+  setDiscord: (partial) => ipcRenderer.invoke('discord:set', partial),
+  getChangelog: () => ipcRenderer.invoke('changelog:get'),
+  exportSettings: () => ipcRenderer.invoke('config:export'),
+  importSettings: () => ipcRenderer.invoke('config:import'),
 
   // paket dışa/içe aktarma (.rbxcursor / .zip)
   exportPack: (name) => ipcRenderer.invoke('pack:export', name),
@@ -79,8 +106,8 @@ contextBridge.exposeInMainWorld('rbx', {
   deleteBackground: (fileName) => ipcRenderer.invoke('bg:delete', fileName),
   importBackground: () => ipcRenderer.invoke('bg:import'),
 
-  openPath: (p) => ipcRenderer.invoke('shell:open-path', p),
   openDonate: () => ipcRenderer.invoke('app:open-donate'),
+  openDiscord: () => ipcRenderer.invoke('app:open-discord'),
 
   // Animasyonlu İmleç (Premium Animated Cursor)
   animCursorGetConfig: () => ipcRenderer.invoke('animcursor:get-config'),
@@ -94,5 +121,35 @@ contextBridge.exposeInMainWorld('rbx', {
   animCursorSetToggleKey: (accelerator) => ipcRenderer.invoke('animcursor:set-toggle-key', accelerator),
   animCursorToggle: () => ipcRenderer.invoke('animcursor:toggle'),
   onAnimCursorState: (cb) => ipcRenderer.on('animcursor:state', (_e, state) => cb(state)),
-  onAnimCursorEnabled: (cb) => ipcRenderer.on('animcursor:enabled', (_e, enabled) => cb(enabled))
+  onAnimCursorEnabled: (cb) => ipcRenderer.on('animcursor:enabled', (_e, enabled) => cb(enabled)),
+
+  // paket favori / etiket / paylaşım
+  setPackFavorite: (name, favorite) => ipcRenderer.invoke('pack:set-favorite', name, favorite),
+  setPackTags: (name, tags) => ipcRenderer.invoke('pack:set-tags', name, tags),
+  sharePack: (name) => ipcRenderer.invoke('pack:share', name),
+
+  // zamanlı / rastgele paket değiştirici
+  getScheduler: () => ipcRenderer.invoke('scheduler:get'),
+  setScheduler: (partial) => ipcRenderer.invoke('scheduler:set', partial),
+  onSchedulerApplied: (cb) => ipcRenderer.on('scheduler:applied', (_e, data) => cb(data)),
+
+  // cursor izi (trail) efekti
+  getTrail: () => ipcRenderer.invoke('trail:get'),
+  setTrail: (partial) => ipcRenderer.invoke('trail:set', partial),
+
+  // tıklama sesi efekti (beta)
+  getClickSound: () => ipcRenderer.invoke('clicksound:get'),
+  setClickSound: (partial) => ipcRenderer.invoke('clicksound:set', partial),
+  onAnimClickSound: (cb) => ipcRenderer.on('animcursor:click-sound', () => cb()),
+
+  // Discord Rich Presence
+  getDiscordRpc: () => ipcRenderer.invoke('discord:get'),
+  setDiscordRpc: (partial) => ipcRenderer.invoke('discord:set', partial),
+
+  // sürüm notları (değişiklik günlüğü)
+  getChangelog: () => ipcRenderer.invoke('changelog:get'),
+
+  // ayarları dışa / içe aktar
+  exportSettings: () => ipcRenderer.invoke('config:export'),
+  importSettings: () => ipcRenderer.invoke('config:import')
 });

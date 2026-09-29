@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="red">
 <head>
 <meta charset="UTF-8" />
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob: file:; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: file:; media-src 'self' data: blob: file:; object-src 'none'; base-uri 'none'; form-action 'none'" />
 <title>RBX Cursor Studio</title>
 <link rel="stylesheet" href="style.css" />
 </head>
@@ -12,7 +13,7 @@
   <!-- ÜST ALAN: logo + sürüm/durum solda, bağış + pencere kontrolleri sağda (frameless pencere) -->
   <header class="topbar">
     <div class="topbar-brand">
-      <img class="topbar-logo" src="../assets/backgrounds/logo.png" alt="" data-i18n-title="app_tagline_tooltip" title="RBX Cursor Studio — Yapımcı: Carl" />
+      <img class="topbar-logo" src="../assets/backgrounds/logo.png" alt="" data-i18n-title="app_tagline_tooltip" title="RBX Cursor Studio — Yapımcı: Demhat Dayan" />
       <div class="brand-text">
         <span class="topbar-title">RBX Cursor Studio</span>
         <span class="brand-sub"><span class="brand-dot" id="brand-dot"></span><span id="brand-status" data-i18n="ready">Hazır</span><span class="brand-version" id="brand-version"></span><button class="update-badge hidden" id="update-badge" data-i18n="update_available_badge">Güncelleme var</button></span>
@@ -20,6 +21,7 @@
     </div>
 
     <div class="topbar-right">
+      <button class="topbar-discord" id="btn-discord" data-i18n-title="discord_join_tooltip" title="Discord sunucumuza katıl" aria-label="Discord"><svg class="discord-logo" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"/></svg><span data-i18n="discord_join">Discord</span></button>
       <button class="topbar-donate" id="btn-donate" data-i18n-title="donate_tooltip" title="Projeyi Buy Me a Coffee ile destekle" aria-label="Destek"><span class="donate-cup" aria-hidden="true">☕</span><span data-i18n="donate">Destek</span></button>
       <div class="tb-controls">
         <button id="tb-min" data-i18n-title="minimize" title="Küçült" aria-label="Küçült">—</button>
@@ -34,7 +36,7 @@
     <main class="main">
       <header class="main-header">
         <div class="hero">
-          <h1 data-i18n="welcome">Hoş geldin, Carl</h1>
+          <h1 data-i18n="welcome">Hoş geldin, Demhat</h1>
           <p class="muted" data-i18n="welcome_sub">İmleçlerini kişiselleştirmeye devam et</p>
         </div>
         <div class="header-right">
@@ -115,6 +117,10 @@
       <button type="button" class="pack-tab active" data-pack-tab="normal" data-i18n="packs_tab_normal">Paketler</button>
       <button type="button" class="pack-tab" data-pack-tab="animated" data-i18n="packs_tab_animated">🎞 Animasyonlu Paketler</button>
     </div>
+    <div class="pack-search-bar">
+      <input type="search" id="pack-search" class="settings-select" data-i18n-placeholder="pack_search_placeholder" placeholder="Paket ara (ad veya etiket)…" />
+      <button type="button" class="btn-ghost small" id="pack-filter-fav" data-i18n="pack_filter_fav">⭐ Favoriler</button>
+    </div>
     <p class="muted small pack-dropzone-hint" data-i18n="pack_dropzone_hint">Bir veya birden fazla .rbxcursor / .zip dosyasını buraya sürükleyip bırakabilirsin.</p>
     <div class="pack-grid" id="pack-grid">
       <!-- JS ile dolduruluyor -->
@@ -155,11 +161,30 @@
       <div class="modal-body">
         <p class="muted small" id="external-pack-desc" data-i18n="external_pack_desc">Bu dosyayı ne yapmak istersin?</p>
         <p class="muted small" id="external-pack-name" style="margin-top:8px;font-weight:600;color:inherit"></p>
+        <p class="muted small" data-i18n="pack_trust_inline" style="margin-top:10px">Bu dosyayı tanımadığın biri gönderdiyse açma. Sadece Discord sunucumuzdaki onaylı paketleri kullan.</p>
       </div>
       <div class="modal-actions" style="flex-wrap:wrap;gap:8px">
         <button id="external-pack-cancel" class="btn-ghost" data-i18n="cancel">İptal</button>
         <button id="external-pack-apply" class="btn-ghost" data-i18n="external_pack_apply">Sadece Uygula</button>
         <button id="external-pack-save" class="btn-primary" data-i18n="external_pack_save">Pakete Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAKET GÜVENLİĞİ: paket içe aktarmadan önce (her açılışta bir kez) uyarı -->
+  <div id="pack-trust-modal" class="modal-overlay hidden">
+    <div class="modal new-pack-modal">
+      <div class="modal-head">
+        <h3 data-i18n="pack_trust_title">Paket güvenliği</h3>
+        <button id="pack-trust-close" class="modal-close" data-i18n-title="close" title="Kapat">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="muted small" data-i18n="pack_trust_body">Sadece güvendiğin kaynaklardan paket indir. En güvenlisi, Discord sunucumuzda yetkililer tarafından onaylanan paketlerdir. Tanımadığın kişilerden veya DM ile gelen dosyaları açma.</p>
+      </div>
+      <div class="modal-actions" style="flex-wrap:wrap;gap:8px">
+        <button id="pack-trust-cancel" class="btn-ghost" data-i18n="cancel">İptal</button>
+        <button id="pack-trust-discord" class="btn-ghost" data-i18n="pack_trust_discord">Discord’a git</button>
+        <button id="pack-trust-continue" class="btn-primary" data-i18n="pack_trust_continue">Anladım, devam et</button>
       </div>
     </div>
   </div>
@@ -251,6 +276,7 @@
     <div class="pack-tabs settings-tabs" id="settings-tabs">
       <button type="button" class="pack-tab active" data-settings-tab="general" data-i18n="settings_tab_general">Genel</button>
       <button type="button" class="pack-tab" data-settings-tab="backgrounds" data-i18n="backgrounds">Arkaplan</button>
+      <button type="button" class="pack-tab" data-settings-tab="extras" data-i18n="settings_tab_extras">Otomasyon &amp; Efektler</button>
     </div>
 
     <!-- Genel -->
@@ -265,6 +291,19 @@
             <option value="tr" data-i18n="turkish">Türkçe</option>
             <option value="en" data-i18n="english">English</option>
           </select>
+        </div>
+        <div class="settings-row">
+          <div>
+            <strong data-i18n="ui_theme">Tema</strong>
+            <p class="muted small" data-i18n="ui_theme_desc">Arayüz rengi — mavi, mor, kırmızı, pembe veya sarı</p>
+          </div>
+          <div class="theme-picker" id="theme-picker" role="group" aria-label="Theme">
+            <button type="button" class="theme-swatch" data-theme="blue" title="Blue" aria-label="Blue"></button>
+            <button type="button" class="theme-swatch" data-theme="purple" title="Purple" aria-label="Purple"></button>
+            <button type="button" class="theme-swatch" data-theme="red" title="Red" aria-label="Red"></button>
+            <button type="button" class="theme-swatch" data-theme="pink" title="Pink" aria-label="Pink"></button>
+            <button type="button" class="theme-swatch" data-theme="yellow" title="Yellow" aria-label="Yellow"></button>
+          </div>
         </div>
         <div class="settings-row">
           <div>
@@ -292,27 +331,37 @@
             <span class="switch-track"><span class="switch-thumb"></span></span>
           </label>
         </div>
+        <div class="settings-row">
+          <div>
+            <strong data-i18n="close_tray_title">Kapatınca Tepsiye Küçült</strong>
+            <p class="muted small" data-i18n="close_tray_desc">✕ düğmesi uygulamayı kapatmaz, sistem tepsisine küçültür; kısayollar ve otomasyon çalışmaya devam eder.</p>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle-close-to-tray" />
+            <span class="switch-track"><span class="switch-thumb"></span></span>
+          </label>
+        </div>
         <div class="settings-row settings-quickswitch">
           <div>
             <strong data-i18n="quickswitch_title">Hızlı Paket Geçişi</strong>
             <p class="muted small" data-i18n="quickswitch_desc">Her paket için kendi klavye kısayolunu belirle. Roblox içindeyken de çalışır.</p>
           </div>
           <div class="quickswitch-grid">
-            <label class="quickswitch-slot">
+            <div class="quickswitch-slot">
               <span id="quickswitch-key-label-1">Ctrl+Alt+1</span>
               <button type="button" class="btn-ghost small quickswitch-key" id="quickswitch-key-1">⌨️ Tuş Ata</button>
               <select id="quickswitch-1" class="settings-select"></select>
-            </label>
-            <label class="quickswitch-slot">
+            </div>
+            <div class="quickswitch-slot">
               <span id="quickswitch-key-label-2">Ctrl+Alt+2</span>
               <button type="button" class="btn-ghost small quickswitch-key" id="quickswitch-key-2">⌨️ Tuş Ata</button>
               <select id="quickswitch-2" class="settings-select"></select>
-            </label>
-            <label class="quickswitch-slot">
+            </div>
+            <div class="quickswitch-slot">
               <span id="quickswitch-key-label-3">Ctrl+Alt+3</span>
               <button type="button" class="btn-ghost small quickswitch-key" id="quickswitch-key-3">⌨️ Tuş Ata</button>
               <select id="quickswitch-3" class="settings-select"></select>
-            </label>
+            </div>
           </div>
         </div>
         <div class="settings-row settings-update">
@@ -351,11 +400,125 @@
           <div>
             <strong data-i18n="about">Hakkında</strong>
             <p class="muted small" data-i18n="about_text">
-              RBX Cursor Studio — Yapımcı: <b>Carl</b><br />
-              © 2026 Carl. Tüm hakları saklıdır. Bu yazılımın yapımcının
-              yazılı izni olmadan kopyalanması, değiştirilip dağıtılması
-              veya paylaşılması yasaktır.
+              RBX Cursor Studio — Yapımcı: <b>Demhat Dayan</b><br />
+              © 2026 Demhat Dayan. PolyForm Noncommercial License 1.0.0
+              ile lisanslanmıştır: kişisel, eğitim ve ticari olmayan
+              kullanım serbesttir; ticari kullanım için yazılı izin gerekir.
             </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Otomasyon & Efektler -->
+    <div class="settings-pane" id="settings-pane-extras">
+      <div class="settings-panel">
+        <div class="settings-row">
+          <div>
+            <strong data-i18n="autolaunch_title">Roblox Açılınca Son Paketi Uygula</strong>
+            <p class="muted small" data-i18n="autolaunch_desc">Roblox başladığında en son kullandığın paket otomatik uygulanır.</p>
+          </div>
+          <label class="switch"><input type="checkbox" id="toggle-apply-last-pack" /><span class="switch-track"><span class="switch-thumb"></span></span></label>
+        </div>
+
+        <div class="settings-row extras-block">
+          <div class="extras-head">
+            <div>
+              <strong data-i18n="scheduler_title">Zamanlı / Rastgele Paket Değiştirici</strong>
+              <p class="muted small" data-i18n="scheduler_desc">Belirlediğin aralıkta paketler otomatik değişir. Roblox kapalıysa o tur atlanır.</p>
+            </div>
+            <label class="switch"><input type="checkbox" id="toggle-scheduler" /><span class="switch-track"><span class="switch-thumb"></span></span></label>
+          </div>
+          <div class="extras-fields">
+            <label class="extras-field"><span data-i18n="scheduler_mode">Mod</span>
+              <select id="scheduler-mode" class="settings-select">
+                <option value="random" data-i18n="scheduler_mode_random">Rastgele</option>
+                <option value="sequential" data-i18n="scheduler_mode_seq">Sırayla</option>
+              </select>
+            </label>
+            <label class="extras-field"><span data-i18n="scheduler_interval">Aralık (dakika)</span>
+              <input type="number" id="scheduler-interval" class="settings-select" min="1" max="1440" step="1" />
+            </label>
+            <label class="extras-field extras-field-wide"><span data-i18n="scheduler_packs">Dahil edilecek paketler (boş = hepsi)</span>
+              <select id="scheduler-packs" class="settings-select" multiple size="4"></select>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-row extras-block">
+          <div class="extras-head">
+            <div>
+              <strong data-i18n="trail_title">Cursor İzi Efekti (Beta)</strong>
+              <p class="muted small" data-i18n="trail_desc">İmlecinin arkasında solan yumuşak bir iz çizer (tüm ekranda).</p>
+            </div>
+            <label class="switch"><input type="checkbox" id="toggle-trail" /><span class="switch-track"><span class="switch-thumb"></span></span></label>
+          </div>
+          <div class="extras-fields">
+            <label class="extras-field extras-field-wide extras-inline"><input type="checkbox" id="toggle-trail-everywhere" /> <span data-i18n="trail_everywhere">Oyun dışında da kullan (kapalıyken iz sadece Roblox çalışırken görünür)</span></label>
+            <label class="extras-field"><span data-i18n="trail_style">Stil</span>
+              <select id="trail-style" class="settings-select">
+                <option value="classic" data-i18n="trail_style_classic">Klasik</option>
+                <option value="stars" data-i18n="trail_style_stars">⭐ Yıldız</option>
+                <option value="sparkles" data-i18n="trail_style_sparkles">✨ Kıvılcım</option>
+                <option value="smoke" data-i18n="trail_style_smoke">💨 Duman</option>
+                <option value="fire" data-i18n="trail_style_fire">🔥 Ateş</option>
+                <option value="hearts" data-i18n="trail_style_hearts">❤ Kalp</option>
+                <option value="rainbow" data-i18n="trail_style_rainbow">🌈 Gökkuşağı</option>
+              </select>
+            </label>
+            <label class="extras-field"><span data-i18n="trail_color">Renk</span><input type="color" id="trail-color" /></label>
+            <label class="extras-field"><span data-i18n="trail_length">Uzunluk</span><input type="range" id="trail-length" min="4" max="40" step="1" /></label>
+          </div>
+        </div>
+
+        <div class="settings-row extras-block">
+          <div class="extras-head">
+            <div>
+              <strong data-i18n="clicksound_title">Tıklama Sesi (Beta)</strong>
+              <p class="muted small" data-i18n="clicksound_desc">Roblox ön plandayken her sol tıkta kısa bir ses çalar. Native yardımcının (cursor_helper.exe) bu sürümle yeniden derlenmiş olması gerekir.</p>
+            </div>
+            <label class="switch"><input type="checkbox" id="toggle-clicksound" /><span class="switch-track"><span class="switch-thumb"></span></span></label>
+          </div>
+          <div class="extras-fields">
+            <label class="extras-field"><span data-i18n="clicksound_volume">Ses seviyesi</span><input type="range" id="clicksound-volume" min="0" max="100" step="5" /></label>
+            <button type="button" class="btn-ghost small" id="btn-clicksound-test" data-i18n="clicksound_test">🔊 Dene</button>
+            <button type="button" class="btn-ghost small" id="btn-clicksound-pick" data-i18n="clicksound_pick">📁 Ses Dosyası Yükle</button>
+            <button type="button" class="btn-ghost small hidden" id="btn-clicksound-clear" data-i18n="clicksound_clear">Varsayılana Dön</button>
+            <span class="extras-file-name" id="clicksound-file-name"></span>
+          </div>
+        </div>
+
+        <div class="settings-row extras-block">
+          <div class="extras-head">
+            <div>
+              <strong data-i18n="discord_title">Discord Rich Presence</strong>
+              <p class="muted small" data-i18n="discord_desc">Discord açıksa otomatik algılanır ve profilinde hangi paketi kullandığını gösterir. Ayar yapman gerekmez.</p>
+              <p class="discord-status" id="discord-status"></p>
+              <p class="muted small hidden" id="discord-unavailable" data-i18n="discord_unavailable">discord-rpc paketi kurulu değil (npm install çalıştır).</p>
+            </div>
+            <label class="switch hidden"><input type="checkbox" id="toggle-discord" /><span class="switch-track"><span class="switch-thumb"></span></span></label>
+          </div>
+          <div class="extras-fields hidden">
+            <label class="extras-field extras-field-wide"><span data-i18n="discord_advanced">Gelişmiş: kendi Client ID'n (isteğe bağlı, boş bırakabilirsin)</span><input type="text" id="discord-client-id" class="settings-select" inputmode="numeric" placeholder="123456789012345678" /></label>
+          </div>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <strong data-i18n="changelog_title">Sürüm Notları</strong>
+            <p class="muted small" data-i18n="changelog_desc">GitHub'daki en son sürümün değişiklik notlarını göster.</p>
+          </div>
+          <button type="button" class="btn-ghost small" id="btn-changelog" data-i18n="changelog_btn">Notları Göster</button>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <strong data-i18n="backup_title">Ayarları Yedekle / Geri Yükle</strong>
+            <p class="muted small" data-i18n="backup_desc">Tüm uygulama ayarlarını tek bir JSON dosyasına kaydet ya da başka bir yedekten yükle (paketler dahil değildir).</p>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button type="button" class="btn-ghost small" id="btn-settings-export" data-i18n="backup_export">Dışa Aktar</button>
+            <button type="button" class="btn-ghost small" id="btn-settings-import" data-i18n="backup_import">İçe Aktar</button>
           </div>
         </div>
       </div>
@@ -438,6 +601,14 @@
               <input type="range" id="editor-hue" class="editor-range hue-range" min="0" max="359" step="1" value="0" />
             </label>
             <button id="editor-color-variations" type="button" class="editor-action with-ico"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.2c-5 0-9 3.7-9 8.3 0 3.1 2.3 5 4.7 5H9a1.7 1.7 0 0 1 1.3 2.8 1.6 1.6 0 0 0 1.2 2.6c5.1 0 9.5-3.4 9.5-8.5C21 6.9 17 3.2 12 3.2z"/></svg><span data-i18n="color_variations">Renk Varyasyonları Oluştur</span></button>
+            <div class="editor-effects">
+              <strong class="editor-label" data-i18n="editor_effects">Kontur &amp; Gölge</strong>
+              <label><input type="checkbox" id="editor-outline-toggle" /> <span data-i18n="editor_outline">Kontur Ekle</span></label>
+              <label><input type="checkbox" id="editor-shadow-toggle" /> <span data-i18n="editor_shadow">Gölge Ekle</span></label>
+              <label><span data-i18n="editor_effect_color">Renk</span> <input type="color" id="editor-effect-color" value="#000000" /></label>
+              <label><span data-i18n="editor_effect_thickness">Kalınlık</span> <input type="range" id="editor-effect-thickness" min="1" max="4" step="1" value="2" /></label>
+              <button type="button" id="editor-access-preset" class="editor-action" data-i18n="editor_access_preset">♿ Erişilebilirlik: Kalın Kontur</button>
+            </div>
             <div id="color-variation-strip" class="color-variation-strip hidden"></div>
           </section>
 
@@ -501,7 +672,23 @@
 
   <div id="toast"></div>
 
+  <div id="changelog-modal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-head">
+        <h3 id="changelog-title" data-i18n="changelog_title">Sürüm Notları</h3>
+        <button id="changelog-close" class="modal-close" data-i18n-title="close" title="Kapat">✕</button>
+      </div>
+      <div class="modal-body">
+        <pre id="changelog-body" class="changelog-body"></pre>
+      </div>
+      <div class="modal-actions">
+        <button id="changelog-ok" class="btn-primary" data-i18n="changelog_close">Tamam</button>
+      </div>
+    </div>
+  </div>
+
   <script src="lang.js"></script>
+  <script src="lang-extras.js"></script>
   <script src="cur-parser.js"></script>
   <script src="editor/image-normalizer.js"></script>
   <script src="editor/color-editor.js"></script>
@@ -510,6 +697,7 @@
   <script src="history/history-ui.js"></script>
   <script src="backgrounds/background-ui.js"></script>
   <script src="animation/animation-ui.js"></script>
+  <script src="extras/extras-ui.js"></script>
   <!-- renderer.js en sonda yüklenmeli: init() diğer modüllerin hepsi tanımlandıktan sonra çalışır -->
   <script src="renderer.js"></script>
 </body>

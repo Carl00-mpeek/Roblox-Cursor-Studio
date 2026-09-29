@@ -41,6 +41,17 @@ function resolveInside(base, ...segments) {
   return target;
 }
 
+// Renderer'dan gelen paket adını GÜVENLİ bir paket klasörü yoluna çevirir.
+// Ayraç ('/' ve '\'), NUL, '.' ve '..' reddedilir; sonuç her zaman PACKS içinde kalır.
+// (deletePack gibi yıkıcı işlemlerde '..\..' ile dışarı çıkılmasını engeller.)
+function packDir(name) {
+  const n = typeof name === 'string' ? name : '';
+  if (!n || n === '.' || n === '..' || /[\\/\0]/.test(n)) {
+    throw new Error('Geçersiz paket adı.');
+  }
+  return resolveInside(configManager.PACKS, n);
+}
+
 function packMetaPath(dir) { return path.join(dir, 'pack-meta.json'); }
 
 function readPackMeta(dir) {
@@ -51,18 +62,43 @@ function readPackMeta(dir) {
 
 // animCursor.snapshotForPack()'ten gelen anlık görüntüyü pakete gömer:
 // kullanılan .ani dosyalarını pakete kopyalar ve pack-meta.json'u yazar.
+function writePackMetaRaw(dir, meta) {
+  fs.writeFileSync(packMetaPath(dir), JSON.stringify(meta, null, 2), 'utf-8');
+}
+
+// Paketin favori / etiket gibi meta verisini günceller. pack-meta.json aynı
+// zamanda Animasyonlu Paket verisini de taşıdığından (animated/anim/global),
+// var olan alanları koruyup sadece verilenleri üzerine yazar.
+function updatePackMeta(name, partial) {
+  const dir = packDir(name);
+  if (!fs.existsSync(dir)) throw new Error('Paket bulunamadı.');
+  const current = readPackMeta(dir) || {};
+  const next = { ...current, ...partial };
+  writePackMetaRaw(dir, next);
+  return { favorite: !!next.favorite, tags: Array.isArray(next.tags) ? next.tags : [] };
+}
+
 function writePackAnimData(dir, snapshot) {
   if (!snapshot) return;
   const animDir = path.join(dir, 'anim');
   fs.mkdirSync(animDir, { recursive: true });
-  const out = { animated: true, anim: {}, global: snapshot.global };
+  const existing = readPackMeta(dir) || {};
+  const out = {
+    animated: true,
+    anim: {},
+    global: snapshot.global,
+    // Bu paket az önce yeniden oluşturulmuş olsa bile (Animasyonlu Paket
+    // kaydet), varsa daha önce atanmış favori/etiket bilgisi korunur.
+    favorite: !!existing.favorite,
+    tags: Array.isArray(existing.tags) ? existing.tags : []
+  };
   for (const [kind, entry] of Object.entries(snapshot.anim)) {
     const ext = path.extname(entry.ani) || '.ani';
     const relFile = `${kind}${ext}`;
     fs.copyFileSync(entry.ani, path.join(animDir, relFile));
     out.anim[kind] = { ...entry, ani: `anim/${relFile}` };
   }
-  fs.writeFileSync(packMetaPath(dir), JSON.stringify(out, null, 2), 'utf-8');
+  writePackMetaRaw(dir, out);
 }
 
 function listPacks() {
@@ -76,7 +112,12 @@ function listPacks() {
         if (fs.existsSync(p)) thumbs[kind] = p;
       }
       const meta = readPackMeta(dir);
-      return { name: d.name, dir, thumbs, count: Object.keys(thumbs).length, animated: !!(meta && meta.animated) };
+      return {
+        name: d.name, dir, thumbs, count: Object.keys(thumbs).length,
+        animated: !!(meta && meta.animated),
+        favorite: !!(meta && meta.favorite),
+        tags: Array.isArray(meta && meta.tags) ? meta.tags : []
+      };
     });
 }
 
@@ -169,7 +210,7 @@ function saveActiveCursorsAsPack(name) {
 
 // Animasyonlu Paket: normal paketlerden tamamen ayrı bir kayıt yeri.
 // Sadece şu an .ani atanmış (ve kullanıcının seçtiği) durumları alır; her
-// durum için hem animasyon ayarlarını (anim-cursor.js -> snapshotForPack)
+// durum için hem animasyon ayarlarını (animation/anim-controller.js -> snapshotForPack)
 // hem de o durumun o anki cursor görselini pakete gömer.
 function saveAnimPackAs(name, selectedAnimKinds) {
   if (!animController) throw new Error('Animasyon denetleyicisi henüz hazır değil.');
@@ -200,7 +241,7 @@ function sleep(ms) {
 
 async function applyPackInstant(name, options = {}) {
   const keepAsLastPack = options.keepAsLastPack !== false;
-  const dir = path.join(configManager.PACKS, name);
+  const dir = packDir(name);
   if (!fs.existsSync(dir)) throw new Error('Paket bulunamadı.');
   const active = detector.currentRobloxDirInfo();
   if (!active) throw new Error('Roblox imleç klasörü bulunamadı.');
@@ -277,7 +318,7 @@ async function applyPackFromBuffer(buf, suggestedName) {
 }
 
 function applyPackToCurrent(name) {
-  const dir = path.join(configManager.PACKS, name);
+  const dir = packDir(name);
   if (!fs.existsSync(dir)) throw new Error('Paket bulunamadı.');
   let count = 0;
   for (const file of Object.values(TARGETS)) {
@@ -291,7 +332,7 @@ function applyPackToCurrent(name) {
 }
 
 function deletePack(name) {
-  const dir = path.join(configManager.PACKS, name);
+  const dir = packDir(name);
   if (fs.existsSync(dir)) fs.rmSync(dir, { recursive: true, force: true });
 }
 
@@ -312,7 +353,7 @@ function uniquePackName(base) {
 }
 
 function buildPackZipBuffer(name) {
-  const dir = path.join(configManager.PACKS, name);
+  const dir = packDir(name);
   if (!fs.existsSync(dir)) throw new Error('Paket bulunamadı: ' + name);
 
   const cursorFiles = [];
@@ -416,7 +457,7 @@ function importPacksFromPaths(filePaths) {
         failed.push({ path: filePath || '', error: 'Dosya bulunamadı.' });
         continue;
       }
-      const buf = fs.readFileSync(filePath);
+      const buf = readPackFile(filePath);
       const suggested = path.basename(filePath, path.extname(filePath));
       imported.push(importPackFromBuffer(buf, suggested));
     } catch (err) {
@@ -427,6 +468,19 @@ function importPacksFromPaths(filePaths) {
     }
   }
   return { imported, failed };
+}
+
+// Paket dosyasını, belleğe okumadan ÖNCE uzantı ve boyut kontrolüyle okur.
+// (Dev bir dosya seçilirse/sürüklenirse uygulama belleği doldurup çökmesin.)
+const MAX_PACK_FILE_BYTES = 24 * 1024 * 1024;
+function readPackFile(filePath) {
+  if (typeof filePath !== 'string' || !filePath) throw new Error('Geçersiz dosya yolu.');
+  const ext = path.extname(filePath).toLowerCase();
+  if (ext !== '.rbxcursor' && ext !== '.zip') throw new Error('Yalnızca .rbxcursor veya .zip paket dosyaları içe aktarılabilir.');
+  const st = fs.statSync(filePath);
+  if (!st.isFile()) throw new Error('Geçersiz dosya.');
+  if (st.size > MAX_PACK_FILE_BYTES) throw new Error('Paket dosyası çok büyük (en fazla 24 MB).');
+  return fs.readFileSync(filePath);
 }
 
 function importPackFromBuffer(buf, suggestedName) {
@@ -467,9 +521,12 @@ function importPackFromBuffer(buf, suggestedName) {
 }
 
 module.exports = {
+  readPackFile,
+  packDir,
   setAnimController,
   readPackMeta,
   packMetaPath,
+  updatePackMeta,
   listPacks,
   savePackAs,
   saveActiveCursorsAsPack,

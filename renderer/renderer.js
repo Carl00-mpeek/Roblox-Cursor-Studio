@@ -24,6 +24,28 @@ function exportSizeFor(kind) {
 
 let cfg = {};
 
+const UI_THEMES = ['blue', 'purple', 'red', 'pink', 'yellow'];
+function applyUiTheme(name) {
+  const tname = UI_THEMES.includes(name) ? name : 'red';
+  document.documentElement.setAttribute('data-theme', tname);
+  document.querySelectorAll('#theme-picker .theme-swatch').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.theme === tname);
+  });
+  return tname;
+}
+async function setUiTheme(name) {
+  const tname = applyUiTheme(name);
+  try {
+    cfg = await window.rbx.getConfig();
+    cfg.theme = tname;
+    await window.rbx.setConfig({ theme: tname });
+  } catch (e) {
+    toast(errMsg(e), 'error');
+    return;
+  }
+  toast(t('theme_applied') || 'Theme applied', 'success');
+}
+
 
 
 const languageSelect = document.getElementById('language-select');
@@ -121,6 +143,14 @@ const donateBtn = document.getElementById('btn-donate');
 if (donateBtn) {
   donateBtn.onclick = () => {
     window.rbx.openDonate().catch((e) => toast(errMsg(e), 'error'));
+  };
+}
+
+// Discord davet butonu: doğrudan sunucu davet linkini açar.
+const discordBtn = document.getElementById('btn-discord');
+if (discordBtn) {
+  discordBtn.onclick = () => {
+    window.rbx.openDiscord().catch((e) => toast(errMsg(e), 'error'));
   };
 }
 
@@ -322,7 +352,7 @@ function setActiveSub(text, applied) {
   if (sub) sub.classList.toggle('applied', !!applied);
 }
 
-const fileUrl = (p, bust) => `file://${p.replace(/\\/g, '/')}?v=${bust}`;
+const fileUrl = (p, bust) => `${safeFileUrl(p)}?v=${bust}`;
 
 async function renderActiveCursor() {
   const row = document.getElementById('active-cursor-row');
@@ -408,7 +438,7 @@ async function pickAndEdit(kind) {
     return;
   }
   if (!filePath) return;
-  loadImageIntoEditor(kind, 'file://' + filePath.replace(/\\/g, '/'));
+  loadImageIntoEditor(kind, safeFileUrl(filePath));
 }
 
 // Roblox'ta şu an duran imleci düzenleyicide aç. Dosya zaten 64x64 (Shift Lock: 32x32)
@@ -477,6 +507,8 @@ async function renderSettings() {
   const historyToggle = document.getElementById('toggle-history');
   if (historyToggle) historyToggle.checked = cfg.historyEnabled !== false;
 
+  applyUiTheme(cfg.theme || 'red');
+
   await renderQuickSwitchSettings();
   await renderHistoryGrid(); // Geçmiş artık Genel ayarların içinde
   await renderSettingsTabContent();
@@ -489,8 +521,9 @@ async function renderSettingsTabContent() {
   if (currentSettingsTab === 'backgrounds') await renderBackgrounds();
 }
 
-function setSettingsTab(tab) {
+function setSettingsTab(tab, remember = true) {
   currentSettingsTab = tab;
+  if (remember) window.rbx.setConfig({ uiSettingsTab: tab }).catch(() => {});
   document.querySelectorAll('#settings-tabs .pack-tab').forEach(b => b.classList.toggle('active', b.dataset.settingsTab === tab));
   document.querySelectorAll('.settings-pane').forEach(p => p.classList.toggle('active', p.id === `settings-pane-${tab}`));
   return renderSettingsTabContent();
@@ -498,6 +531,12 @@ function setSettingsTab(tab) {
 
 document.querySelectorAll('#settings-tabs .pack-tab').forEach(btn => {
   btn.onclick = () => setSettingsTab(btn.dataset.settingsTab);
+});
+
+document.getElementById('theme-picker')?.addEventListener('click', (e) => {
+  const btn = e.target.closest('.theme-swatch');
+  if (!btn || !btn.dataset.theme) return;
+  setUiTheme(btn.dataset.theme);
 });
 
 // ---- hızlı geçiş kısayolları (Ctrl+Alt+1/2/3) ----
@@ -562,19 +601,28 @@ async function renderQuickSwitchSettings() {
       keyBtn.classList.remove('recording');
 
       keyBtn.onclick = () => {
+        // Zaten kayıt modundaysa ikinci kez tıklamak kaydı iptal eder (dinleyici üst üste binmesin).
+        if (keyBtn._stopRecording) { keyBtn._stopRecording(); return; }
         keyBtn.classList.add('recording');
         keyBtn.textContent = t('quickswitch_press');
 
+        const stop = () => {
+          document.removeEventListener('keydown', handler, true);
+          document.removeEventListener('mousedown', onOutside, true);
+          window.removeEventListener('blur', stop);
+          keyBtn.classList.remove('recording');
+          keyBtn.textContent = t('quickswitch_assign');
+          keyBtn._stopRecording = null;
+        };
+        const onOutside = (e) => { if (e.target !== keyBtn) stop(); };
         const handler = async (e) => {
           e.preventDefault();
           e.stopPropagation();
+          // Esc (tek başına) kaydı iptal eder; böylece klavye kullanıcısı takılı kalmaz.
+          if (e.key === 'Escape' && !e.ctrlKey && !e.altKey && !e.shiftKey && !e.metaKey) { stop(); return; }
           const acc = keyEventToAccelerator(e);
           if (!acc) return;
-
-          document.removeEventListener('keydown', handler, true);
-          keyBtn.classList.remove('recording');
-          keyBtn.textContent = t('quickswitch_assign');
-
+          stop();
           try {
             await window.rbx.setQuickSwitchKey(slot, acc);
             if (keyLabel) keyLabel.textContent = acceleratorLabel(acc);
@@ -583,12 +631,15 @@ async function renderQuickSwitchSettings() {
             toast(t('error') + ' ' + errMsg(err), 'error');
           }
         };
+        keyBtn._stopRecording = stop;
         document.addEventListener('keydown', handler, true);
+        document.addEventListener('mousedown', onOutside, true);
+        window.addEventListener('blur', stop);
       };
     }
 
     sel.innerHTML = `<option value="">${t('quickswitch_none')}</option>` +
-      packs.map(p => `<option value="${String(p.name).replace(/"/g, '&quot;')}">${p.name}</option>`).join('');
+      packs.map(p => `<option value="${escHtml(p.name)}">${escHtml(p.name)}</option>`).join('');
     sel.value = current;
     sel.onchange = async () => {
       try {
@@ -818,6 +869,17 @@ async function init() {
     toast(t('settings_load_error'));
   }
 
+  applyUiTheme(cfg.theme || 'red');
+
+  // Son açık ayar sekmesi ve paket favori filtresi hatırlanır
+  if (cfg.uiSettingsTab && document.getElementById(`settings-pane-${cfg.uiSettingsTab}`)) {
+    setSettingsTab(cfg.uiSettingsTab, false);
+  }
+  if (cfg.packFavOnly) {
+    packFavOnly = true;
+    document.getElementById('pack-filter-fav')?.classList.add('active');
+  }
+
   await loadCursorReferenceProfiles();
   try {
     const v = window.rbx.appVersion ? await window.rbx.appVersion() : '';
@@ -847,8 +909,8 @@ async function init() {
 
   try {
     const bgs = await window.rbx.listBackgrounds();
-    // Varsayılan açılış arka planı her zaman bundled background.png'dir.
-    const chosen = bgs.find(b => b.file === 'background.png') || bgs.find(b => b.file === cfg.background) || bgs[0];
+    // Kayıtlı arkaplan hatırlanır; silinmiş/bulunamıyorsa varsayılan background.png'ye dönülür.
+    const chosen = bgs.find(b => b.file === cfg.background) || bgs.find(b => b.file === 'background.png') || bgs[0];
     if (chosen) {
       if (cfg.background !== chosen.file) {
         cfg = await window.rbx.setConfig({ background: chosen.file });

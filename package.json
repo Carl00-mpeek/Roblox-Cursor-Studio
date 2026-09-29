@@ -1,15 +1,18 @@
 {
   "name": "rbx-cursor-studio",
-  "version": "4.6.0",
+  "version": "5.0.0",
   "description": "RBX Cursor Studio - Roblox imleç düzenleyici (Electron sürümü)",
   "main": "main/main.js",
-  "author": "Carl",
+  "author": "Demhat Dayan",
   "license": "PolyForm-Noncommercial-1.0.0",
   "scripts": {
     "start": "electron .",
     "postinstall": "node scripts/build-native.js",
     "predist": "node scripts/build-native.js --require",
     "dist": "electron-builder"
+  },
+  "dependencies": {
+    "discord-rpc": "^4.0.1"
   },
   "devDependencies": {
     "electron": "^31.0.0",

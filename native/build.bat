@@ -11,7 +11,7 @@ where cl >nul 2>nul
 if %ERRORLEVEL%==0 goto :have_cl
 
 REM Ne g++ ne de cl bulunamadi. RBX_ALLOW_AUTO_INSTALL_COMPILER=1 ile
-REM cagrildiysak (kur.bat/install.bat'in npm install sonrasi yaptigi gibi)
+REM cagrildiysak (install.bat'in npm install sonrasi yaptigi gibi)
 REM winget uzerinden MinGW-w64 (WinLibs) kurmayi dene. Bu bayrak olmadan
 REM (or. uygulama ".ANI Sec" tiklandiginda arka planda kendi kendine
 REM  tekrar denedigi zaman) internete cikip dakikalarca beklemeyiz.
@@ -47,7 +47,7 @@ echo.
 echo   HATA: Ne MinGW g++ ne de MSVC cl.exe bulunamadi ^(otomatik kurulum da basarisiz oldu ya da atlandi^).
 echo   Cozum secenekleri:
 echo     1) "winget install -e --id BrechtSanders.WinLibs.POSIX.UCRT" komutunu elle calistirip
-echo        derleyiciyi kurun, sonra "kur.bat" ya da bu betigi tekrar calistirin, ya da
+echo        derleyiciyi kurun, sonra "install.bat" ya da bu betigi tekrar calistirin, ya da
 echo     2) Visual Studio "Developer Command Prompt" icinden bu betigi calistirin.
 goto :fail
 

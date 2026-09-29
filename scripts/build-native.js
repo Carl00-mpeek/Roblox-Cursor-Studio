@@ -1,7 +1,6 @@
 // scripts/build-native.js
 // Runs automatically as npm's "postinstall" step (see package.json), right
-// after `npm install` finishes — i.e. as part of the normal kur.bat /
-// install.bat flow. Its job is to compile native/cursor_helper.exe so the
+// after `npm install` finishes — i.e. as part of the normal install.bat flow. Its job is to compile native/cursor_helper.exe so the
 // user never has to manually `cd native && build.bat` themselves.
 //
 // Modes:

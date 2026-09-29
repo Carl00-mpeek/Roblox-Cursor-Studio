@@ -4,7 +4,7 @@
 // config/, roblox/, packs/, animation/, ipc/ modüllerinin birbirine
 // bağlanması (composition root) vardır.
 
-const { app, BrowserWindow, dialog, globalShortcut } = require('electron');
+const { app, BrowserWindow, dialog, globalShortcut, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 
@@ -16,6 +16,21 @@ const packManager = require('./packs/pack-manager');
 const { AnimCursorController } = require('./animation/anim-controller');
 const { fetchLatestRelease, CHECK_INTERVAL_MS } = require('./core/github-update');
 const ipcHandlers = require('./ipc/handlers');
+const packScheduler = require('./packs/pack-scheduler');
+const trailOverlay = require('./effects/trail-overlay');
+const discordRpc = require('./integrations/discord-rpc');
+const trayManager = require('./tray/tray-manager');
+
+// ---------- Resource optimisations (GPU stays ON) ----------
+// Must be set before app.ready. Hardware acceleration is left enabled —
+// the UI (backdrop filters, compositing) needs the GPU; do not disable it.
+try {
+  app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion,SpareRendererForSitePerProcess');
+  app.commandLine.appendSwitch('js-flags', '--max-old-space-size=256 --expose-gc');
+  app.commandLine.appendSwitch('disable-renderer-backgrounding');
+  app.commandLine.appendSwitch('disable-background-timer-throttling');
+} catch (_) { /* older Electron */ }
+
 
 // ---------- Hata günlüğü / çökme koruması ----------
 // Paketlenmiş .exe bir hatayla karşılaşırsa sessizce kapanmak yerine
@@ -35,6 +50,10 @@ process.on('unhandledRejection', (reason) => {
 });
 
 let mainWindow = null;
+// "Kapatınca tepsiye küçült" açıkken ✕ pencereyi sadece gizler; gerçekten
+// çıkış (tepsi menüsü, Windows kapanışı, güncelleme kurulumu) bu bayrakla ayrılır.
+let isQuitting = false;
+app.on('before-quit', () => { isQuitting = true; });
 
 // ---------- Dosya ilişkilendirmesi (.rbxcursor çift tıklama ile açma) ----------
 // Windows'ta bir .rbxcursor dosyasına çift tıklandığında (ya da "Birlikte Aç"
@@ -115,6 +134,11 @@ animCursor.onStateChange = (state) => {
 animCursor.onEnabledChange = (enabled) => {
   if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('animcursor:enabled', enabled);
 };
+// Tıklama sesi efekti (Ayarlar > Efektler): native helper her sol tık kenarını
+// "EVCLICK" olarak bildirir, gerçek sesi renderer çalar (bkz. renderer.js).
+animCursor.onClickSound = () => {
+  if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('animcursor:click-sound');
+};
 // applyPackInstant, animasyonlu paket uygulanırken bu denetleyiciye ihtiyaç
 // duyar; döngüsel require yerine burada (composition root'ta) bağlanır.
 packManager.setAnimController(animCursor);
@@ -152,24 +176,62 @@ function createWindow() {
     height,
     minWidth: 1040,
     minHeight: 660,
-    backgroundColor: '#0b0e14',
+    backgroundColor: '#050203',
     frame: false,
     titleBarStyle: 'hidden',
     icon: path.join(configManager.BUNDLED_BG, 'logo.ico'),
+    show: false, // avoid white flash + paint until ready
+    backgroundThrottling: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      backgroundThrottling: true,
+      spellcheck: false,
+      enableWebSQL: false,
+      v8CacheOptions: 'code',
+      // Offscreen / extra features we do not need
+      offscreen: false
     }
   });
+  win.once('ready-to-show', () => { if (!win.isDestroyed()) win.show(); });
+
+  // Güvenlik: uygulama penceresi başka bir sayfaya gitmesin, yeni pencere açmasın.
+  // Web linkleri sistem tarayıcısında açılır; izin istekleri (kamera, konum vb.) reddedilir.
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https:\/\//i.test(url)) shell.openExternal(url).catch(() => {});
+    return { action: 'deny' };
+  });
+  win.webContents.on('will-navigate', (e, url) => {
+    if (!url.startsWith('file://')) {
+      e.preventDefault();
+      if (/^https:\/\//i.test(url)) shell.openExternal(url).catch(() => {});
+    }
+  });
+  win.webContents.session.setPermissionRequestHandler((_wc, _perm, cb) => cb(false));
 
   win.loadFile(path.join(__dirname, '..', 'renderer', 'index.html'));
 
+  let resizeSaveTimer = null;
   win.on('resize', () => {
-    const [w, h] = win.getSize();
-    const c = configManager.getConfig();
-    c.windowBounds = { width: w, height: h };
-    configManager.saveConfig();
+    clearTimeout(resizeSaveTimer);
+    resizeSaveTimer = setTimeout(() => {
+      if (win.isDestroyed()) return;
+      const [w, h] = win.getSize();
+      const c = configManager.getConfig();
+      c.windowBounds = { width: w, height: h };
+      configManager.saveConfig();
+    }, 400);
+  });
+
+  // Windows oturumu kapanırken (kapat/yeniden başlat) pencereyi tepsiye gizleyip
+  // kapanışı engellemeyelim.
+  win.on('session-end', () => { isQuitting = true; });
+  win.on('close', (e) => {
+    if (!isQuitting && configManager.getConfig().closeToTray) {
+      e.preventDefault();
+      win.hide();
+    }
   });
 
   mainWindow = win;
@@ -189,6 +251,23 @@ app.whenReady().then(() => {
     ipcHandlers.registerWindowControls(win);
     ipcHandlers.registerQuickSwitchShortcuts();
     animCursor.initFromConfig().catch((err) => logError(err));
+
+    // ---- Yeni özelliklerin açılıştaki durumu (config.json'a göre) ----
+    const startupCfg = configManager.getConfig();
+    trayManager.init({
+      showWindow: focusMainWindow,
+      quitApp: () => { isQuitting = true; app.quit(); }
+    });
+    trayManager.configure({ enabled: !!startupCfg.closeToTray });
+    if (startupCfg.clickSoundEnabled) animCursor.setClickSoundEnabled(true);
+    if (startupCfg.trailEnabled) trailOverlay.setEnabled(true, trailOverlay.optionsFromConfig(startupCfg));
+    // Discord: otomatik algıla + göster (kapalıysa tick() bağlanmaz)
+    discordRpc.start();
+    packScheduler.setOnApplied((name) => {
+      if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('scheduler:applied', { name });
+      discordRpc.refresh();
+    });
+    packScheduler.start();
 
     // Uygulama doğrudan bir .rbxcursor dosyası çift tıklanarak açıldıysa
     // (henüz başka bir örnek çalışmıyorken) seçim penceresini göster.
@@ -223,4 +302,8 @@ app.on('window-all-closed', () => {
 app.on('will-quit', () => {
   try { globalShortcut.unregisterAll(); } catch (_) { /* sorun değil */ }
   try { animCursor.shutdown(); } catch (_) { /* sorun değil */ }
+  try { packScheduler.stop(); } catch (_) { /* sorun değil */ }
+  try { trailOverlay.stop(); } catch (_) { /* sorun değil */ }
+  try { discordRpc.stop(); } catch (_) { /* sorun değil */ }
+  try { trayManager.destroy(); } catch (_) { /* sorun değil */ }
 });

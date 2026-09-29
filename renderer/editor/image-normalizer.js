@@ -137,7 +137,7 @@ function normalizeImageToDefault(kind, img) {
 
 async function imageFromPath(pathValue) {
   const img = new Image();
-  img.src = 'file://' + String(pathValue).replace(/\\/g, '/') + '?normalize=' + Date.now();
+  img.src = safeFileUrl(pathValue) + '?normalize=' + Date.now();
   await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; });
   return img;
 }

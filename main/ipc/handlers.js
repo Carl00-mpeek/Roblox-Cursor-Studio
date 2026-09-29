@@ -15,17 +15,28 @@ const detector = require('../roblox/detector');
 const cursorManager = require('../roblox/cursor-manager');
 const updater = require('../roblox/updater');
 const packManager = require('../packs/pack-manager');
+const packScheduler = require('../packs/pack-scheduler');
+const trailOverlay = require('../effects/trail-overlay');
+const discordRpc = require('../integrations/discord-rpc');
+const trayManager = require('../tray/tray-manager');
+const { fetchLatestRelease } = require('../core/github-update');
 const { logError } = require('../logger');
 const autoDownload = require('../auto-download');
 
 // Bağış (Buy Me a Coffee) bağlantısı. URL sabit; arayüzden keyfi adres açtırılmaz.
 const DONATE_URL = 'https://buymeacoffee.com/rbxcursor';
+const DISCORD_INVITE_URL = 'https://discord.gg/T2fqjr57Ep';
 
 // registerIpcHandlers() çağrıldığında doldurulur; registerQuickSwitchShortcuts()
 // ve animcursor:* uçları bunlara ihtiyaç duyar.
 let _animCursor = null;
 let _getMainWindow = () => null;
 let _checkForUpdatesIfDue = null;
+
+// roblox:status her 5 saniyede bir renderer tarafından polled edilir (bkz.
+// renderer.js). "Roblox açılınca son paketi otomatik uygula" özelliği bu
+// polling'teki kapalı->açık geçişini yakalar; ayrı bir izleyici gerekmez.
+let _wasRobloxRunning = false;
 
 // ---------- Arkaplanlar ----------
 function listBackgrounds() {
@@ -107,21 +118,52 @@ function registerIpcHandlers({ animCursor, getMainWindow, checkForUpdatesIfDue }
 
   // ---- config ----
   ipcMain.handle('cfg:get', () => configManager.getConfig());
-  ipcMain.handle('cfg:set', (_e, partial) => configManager.setConfig(partial));
+  // Renderer yalnızca arayüz tercihlerini yazabilir; diğer anahtarlar (dosya yolu,
+  // sunucu, kısayol vb.) ilgili özel IPC kanallarından ve doğrulamayla ayarlanır.
+  const RENDERER_CFG_KEYS = ['applyLastPackOnLaunch', 'theme', 'uiSettingsTab', 'autoReinstall', 'historyEnabled', 'background', 'packFavOnly'];
+  ipcMain.handle('cfg:set', (_e, partial) => {
+    const clean = {};
+    if (partial && typeof partial === 'object') {
+      for (const k of RENDERER_CFG_KEYS) if (k in partial) clean[k] = partial[k];
+    }
+    return configManager.setConfig(clean);
+  });
 
   // ---- roblox durumu ----
   ipcMain.handle('roblox:status', async () => {
     try {
       const dirs = detector.robloxDirs();
       const auto = await updater.maybeAutoReinstall(dirs);
+      const running = dirs.length > 0 && !!dirs[0].isRunning;
+
+      // ---- Roblox açılınca son paketi otomatik uygula ----
+      // Kapalı->açık geçişini yakala (her tikte tekrar tekrar uygulamamak için).
+      let autoAppliedLastPack = null;
+      if (running && !_wasRobloxRunning) {
+        const cfg = configManager.getConfig();
+        if (cfg.applyLastPackOnLaunch && cfg.lastPack) {
+          try {
+            await packManager.applyPackInstant(cfg.lastPack);
+            autoAppliedLastPack = cfg.lastPack;
+            discordRpc.refresh();
+          } catch (err) {
+            logError(err);
+          }
+        }
+      }
+      _wasRobloxRunning = running;
+      discordRpc.setRobloxRunning(running);
+
       return {
         found: dirs.length > 0,
+        running,
         version: dirs.length ? dirs[0].version : null,
         completion: cursorManager.currentCompletion(),
         total: Object.keys(detector.TARGETS).length,
         autoReinstalled: !!auto.performed,
         autoReinstallCount: auto.count || 0,
-        autoReinstallError: auto.error || null
+        autoReinstallError: auto.error || null,
+        autoAppliedLastPack
       };
     } catch (err) {
       logError(err);
@@ -316,7 +358,7 @@ function registerIpcHandlers({ animCursor, getMainWindow, checkForUpdatesIfDue }
   // eski paket görsellerini hem pakete hem CURRENT'a yazar. Böylece eski paketler
   // de yeni otomatik boyutlandırma/ortalama standardına tek seferde geçirilir.
   ipcMain.handle('pack:get-cursors', (_e, name) => {
-    const dir = path.join(configManager.PACKS, name);
+    const dir = packManager.packDir(name);
     if (!fs.existsSync(dir)) throw new Error('Paket bulunamadı.');
     const out = {};
     for (const [kind, file] of Object.entries(detector.TARGETS)) {
@@ -328,7 +370,7 @@ function registerIpcHandlers({ animCursor, getMainWindow, checkForUpdatesIfDue }
 
   ipcMain.handle('pack:save-normalized-cursor', (_e, name, kind, arrayBuffer) => {
     if (!detector.TARGETS[kind]) throw new Error('Geçersiz imleç türü: ' + kind);
-    const dir = path.join(configManager.PACKS, name);
+    const dir = packManager.packDir(name);
     if (!fs.existsSync(dir)) throw new Error('Paket bulunamadı.');
     const buf = Buffer.from(arrayBuffer);
     const validation = cursorManager.validateCursorPngBuffer(kind, buf);
@@ -343,6 +385,243 @@ function registerIpcHandlers({ animCursor, getMainWindow, checkForUpdatesIfDue }
   ipcMain.handle('pack:delete', (_e, name) => {
     packManager.deletePack(name);
     return true;
+  });
+
+  // ---- paket favori / etiket / arama ----
+  ipcMain.handle('pack:set-favorite', (_e, name, favorite) => packManager.updatePackMeta(name, { favorite: !!favorite }));
+
+  ipcMain.handle('pack:set-tags', (_e, name, tags) => {
+    const clean = Array.isArray(tags)
+      ? [...new Set(tags.map((t) => String(t).trim()).filter(Boolean))].slice(0, 12)
+      : [];
+    return packManager.updatePackMeta(name, { tags: clean });
+  });
+
+  // Hafif "topluluğa paylaş" akışı: gerçek bir yükleme sunucusu yok — paket
+  // önce normal şekilde dışa aktarılır (.rbxcursor), sonra GitHub Discussions'ta
+  // önceden doldurulmuş bir başlık/açıklama ile "yeni gönderi" sayfası açılır;
+  // kullanıcı sadece az önce kaydettiği dosyayı sürükleyip bırakır.
+  ipcMain.handle('pack:share', async (_e, name) => {
+    const safeName = String(name || '').slice(0, 100);
+    const title = encodeURIComponent(`Paylaşım: ${safeName}`);
+    const body = encodeURIComponent(
+      `"${safeName}" adlı cursor paketimi paylaşıyorum!\n\n` +
+      `(Az önce dışa aktardığın .rbxcursor dosyasını buraya sürükleyip bırak.)`
+    );
+    const url = `https://github.com/Carl00-mpeek/Roblox-Cursor-Studio/discussions/new?category=paylasimlar&title=${title}&body=${body}`;
+    await shell.openExternal(url);
+    return true;
+  });
+
+  // ---- zamanlı / rastgele paket değiştirici ----
+  ipcMain.handle('scheduler:get', () => ({
+    enabled: !!configManager.getConfig().schedulerEnabled,
+    mode: configManager.getConfig().schedulerMode || 'random',
+    intervalMin: configManager.getConfig().schedulerIntervalMin || 30,
+    packs: configManager.getConfig().schedulerPacks || []
+  }));
+
+  ipcMain.handle('scheduler:set', (_e, partial) => {
+    const allowed = ['schedulerEnabled', 'schedulerMode', 'schedulerIntervalMin', 'schedulerPacks'];
+    const clean = {};
+    for (const k of allowed) if (partial && k in partial) clean[k] = partial[k];
+    configManager.setConfig(clean);
+    packScheduler.start();
+    return {
+      enabled: !!configManager.getConfig().schedulerEnabled,
+      mode: configManager.getConfig().schedulerMode || 'random',
+      intervalMin: configManager.getConfig().schedulerIntervalMin || 30,
+      packs: configManager.getConfig().schedulerPacks || []
+    };
+  });
+
+  // ---- kapatınca tepsiye küçült ----
+  // labels: renderer'ın seçili dilindeki tepsi menüsü metinleri { open, quit, tooltip }.
+  ipcMain.handle('tray:set', (_e, enabled, labels) => {
+    const on = !!enabled;
+    configManager.setConfig({ closeToTray: on });
+    trayManager.configure({ enabled: on, labels });
+    return on;
+  });
+  ipcMain.handle('tray:set-labels', (_e, labels) => {
+    trayManager.configure({ labels });
+    return true;
+  });
+
+  // ---- cursor izi (trail) efekti ----
+  ipcMain.handle('trail:get', () => {
+    const c = configManager.getConfig();
+    return {
+      enabled: !!c.trailEnabled,
+      color: c.trailColor || '#e11d48',
+      length: c.trailLength || 14,
+      style: trailOverlay.STYLES.includes(c.trailStyle) ? c.trailStyle : 'classic',
+      everywhere: !!c.trailEverywhere
+    };
+  });
+
+  ipcMain.handle('trail:set', (_e, partial) => {
+    const allowed = ['trailEnabled', 'trailColor', 'trailLength', 'trailStyle', 'trailEverywhere'];
+    const clean = {};
+    for (const k of allowed) if (partial && k in partial) clean[k] = partial[k];
+    if ('trailStyle' in clean && !trailOverlay.STYLES.includes(clean.trailStyle)) clean.trailStyle = 'classic';
+    const cfg = configManager.setConfig(clean);
+    trailOverlay.setEnabled(!!cfg.trailEnabled, trailOverlay.optionsFromConfig(cfg));
+    return { enabled: !!cfg.trailEnabled, color: cfg.trailColor, length: cfg.trailLength, style: cfg.trailStyle, everywhere: !!cfg.trailEverywhere };
+  });
+
+  // ---- tıklama sesi efekti (beta — native yardımcının yeniden
+  // derlenmesini gerektirir, bkz. native/cursor_helper.cpp) ----
+  const SOUND_EXTS = ['.wav', '.mp3', '.ogg', '.m4a', '.flac'];
+  const SOUND_MAX_BYTES = 3 * 1024 * 1024; // tık sesi kısa olmalı; 3 MB üstü reddedilir
+
+  // Kayıtlı ses dosyasının tam yolunu döndürür; yalnızca SOUNDS klasörü içindeki
+  // dosyaya izin verir (import edilen ayar dosyasından gelen keyfi yol okunamasın).
+  function customSoundPath() {
+    const name = path.basename(String(configManager.getConfig().clickSoundFile || ''));
+    if (!name) return null;
+    const full = path.join(configManager.SOUNDS, name);
+    return fs.existsSync(full) ? full : null;
+  }
+
+  ipcMain.handle('clicksound:get', () => {
+    const c = configManager.getConfig();
+    const custom = customSoundPath();
+    return {
+      enabled: !!c.clickSoundEnabled,
+      volume: typeof c.clickSoundVolume === 'number' ? c.clickSoundVolume : 0.6,
+      fileName: custom ? path.basename(custom) : ''
+    };
+  });
+
+  ipcMain.handle('clicksound:set', (_e, partial) => {
+    const allowed = ['clickSoundEnabled', 'clickSoundVolume'];
+    const clean = {};
+    for (const k of allowed) if (partial && k in partial) clean[k] = partial[k];
+    const cfg = configManager.setConfig(clean);
+    if (_animCursor) _animCursor.setClickSoundEnabled(!!cfg.clickSoundEnabled);
+    return { enabled: !!cfg.clickSoundEnabled, volume: cfg.clickSoundVolume };
+  });
+
+  // Kullanıcı kendi ses dosyasını seçer; uygulama veri klasörüne kopyalanır.
+  ipcMain.handle('clicksound:pick-file', async () => {
+    const res = await dialog.showOpenDialog({
+      title: 'Tıklama sesi seç',
+      filters: [{ name: 'Ses dosyaları', extensions: SOUND_EXTS.map((e) => e.slice(1)) }],
+      properties: ['openFile']
+    });
+    if (res.canceled || !res.filePaths.length) return null;
+    const src = res.filePaths[0];
+    const ext = path.extname(src).toLowerCase();
+    if (!SOUND_EXTS.includes(ext)) throw new Error('Desteklenmeyen ses biçimi.');
+    const size = fs.statSync(src).size;
+    if (size > SOUND_MAX_BYTES) throw new Error('Ses dosyası çok büyük (en fazla 3 MB).');
+
+    // eski özel sesi temizle, yenisini sabit adla kaydet
+    for (const f of fs.readdirSync(configManager.SOUNDS)) {
+      if (f.startsWith('click-custom.')) { try { fs.unlinkSync(path.join(configManager.SOUNDS, f)); } catch (_) {} }
+    }
+    const fileName = 'click-custom' + ext;
+    fs.copyFileSync(src, path.join(configManager.SOUNDS, fileName));
+    configManager.setConfig({ clickSoundFile: fileName });
+    return { fileName, displayName: path.basename(src) };
+  });
+
+  ipcMain.handle('clicksound:clear-file', () => {
+    for (const f of fs.readdirSync(configManager.SOUNDS)) {
+      if (f.startsWith('click-custom.')) { try { fs.unlinkSync(path.join(configManager.SOUNDS, f)); } catch (_) {} }
+    }
+    configManager.setConfig({ clickSoundFile: '' });
+    return true;
+  });
+
+  // Renderer decodeAudioData ile çalar; ham baytları döndürüyoruz.
+  ipcMain.handle('clicksound:read-file', () => {
+    const full = customSoundPath();
+    if (!full) return null;
+    const buf = fs.readFileSync(full);
+    return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+  });
+
+  // ---- Discord Rich Presence (otomatik) ----
+  // Discord açıksa kendiliğinden bulunur ve durum gösterilir; kullanıcının bir
+  // şey girmesi gerekmez. Client ID alanı sadece gelişmiş kullanım içindir.
+  const discordInfo = () => {
+    const c = configManager.getConfig();
+    const st = discordRpc.getStatus();
+    return {
+      enabled: true,
+      clientId: c.discordClientId || '',
+      available: discordRpc.isAvailable(),
+      connected: st.connected,
+      usingDefaultId: !c.discordClientId
+    };
+  };
+  ipcMain.handle('discord:get', () => discordInfo());
+
+  ipcMain.handle('discord:set', async (_e, partial) => {
+    const allowed = ['discordRpcEnabled', 'discordClientId'];
+    const clean = {};
+    for (const k of allowed) if (partial && k in partial) clean[k] = partial[k];
+    if ('discordClientId' in clean) {
+      const id = String(clean.discordClientId || '').trim();
+      clean.discordClientId = /^\d{5,25}$/.test(id) ? id : '';
+    }
+    configManager.setConfig(clean);
+    await discordRpc.sync(configManager.getConfig());
+    return discordInfo();
+  });
+
+  // ---- sürüm notları (değişiklik günlüğü) görüntüleyici ----
+  ipcMain.handle('changelog:get', async () => {
+    try {
+      const release = await fetchLatestRelease(app.getVersion());
+      return { version: release.version || app.getVersion(), notes: release.notes || '', url: release.url || null };
+    } catch (err) {
+      logError(err);
+      return { version: app.getVersion(), notes: '', url: null, error: err.message };
+    }
+  });
+
+  // ---- tüm ayarları yedekle / geri yükle ----
+  ipcMain.handle('config:export', async () => {
+    const res = await dialog.showSaveDialog({
+      title: 'Ayarları Dışa Aktar',
+      defaultPath: 'rbx-cursor-studio-ayarlar.json',
+      filters: [{ name: 'JSON', extensions: ['json'] }]
+    });
+    if (res.canceled || !res.filePath) return null;
+    fs.writeFileSync(res.filePath, JSON.stringify(configManager.getConfig(), null, 2), 'utf-8');
+    return { path: res.filePath };
+  });
+
+  ipcMain.handle('config:import', async () => {
+    const res = await dialog.showOpenDialog({
+      title: 'Ayarları İçe Aktar',
+      filters: [{ name: 'JSON', extensions: ['json'] }],
+      properties: ['openFile']
+    });
+    if (res.canceled || !res.filePaths.length) return null;
+    let parsed;
+    try {
+      parsed = JSON.parse(fs.readFileSync(res.filePaths[0], 'utf-8'));
+    } catch (err) {
+      throw new Error('Geçersiz ayar dosyası: ' + err.message);
+    }
+    if (!parsed || typeof parsed !== 'object') throw new Error('Geçersiz ayar dosyası.');
+    // Sadece bilinen varsayılan anahtarlarla sınırla — rastgele bir JSON'un
+    // config.json'a keyfi alanlar enjekte etmesini engeller.
+    const clean = {};
+    for (const k of Object.keys(configManager.DEFAULT_CFG)) {
+      if (k in parsed) clean[k] = parsed[k];
+    }
+    const cfg = configManager.setConfig(clean);
+    registerQuickSwitchShortcuts();
+    packScheduler.start();
+    trayManager.configure({ enabled: !!cfg.closeToTray });
+    trailOverlay.setEnabled(!!cfg.trailEnabled, trailOverlay.optionsFromConfig(cfg));
+    if (_animCursor) _animCursor.setClickSoundEnabled(!!cfg.clickSoundEnabled);
+    return cfg;
   });
 
   // ---- arkaplanlar ----
@@ -402,8 +681,8 @@ function registerIpcHandlers({ animCursor, getMainWindow, checkForUpdatesIfDue }
     return { file: fileName, path: dst, source: 'user' };
   });
 
-  ipcMain.handle('shell:open-path', (_e, p) => shell.openPath(p));
   ipcMain.handle('app:open-donate', () => shell.openExternal(DONATE_URL));
+  ipcMain.handle('app:open-discord', () => shell.openExternal(DISCORD_INVITE_URL));
 
   // ---------- Hızlı geçiş kısayolları (Ctrl+Alt+1/2/3) ----------
   ipcMain.handle('quickswitch:get', () => configManager.getConfig().quickSwitch || { '1': '', '2': '', '3': '' });
@@ -433,7 +712,7 @@ function registerIpcHandlers({ animCursor, getMainWindow, checkForUpdatesIfDue }
   ipcMain.handle('pack:export-bulk', async (_e, names) => packManager.exportPacksBulk(names));
 
   ipcMain.handle('pack:import-from-path', (_e, filePath) => {
-    const buf = fs.readFileSync(filePath);
+    const buf = packManager.readPackFile(filePath);
     const suggested = path.basename(filePath, path.extname(filePath));
     return packManager.importPackFromBuffer(buf, suggested);
   });
@@ -444,7 +723,7 @@ function registerIpcHandlers({ animCursor, getMainWindow, checkForUpdatesIfDue }
 
   // .rbxcursor çift tık → "Sadece Uygula": kalıcı kaydetmeden Roblox'a uygula
   ipcMain.handle('pack:apply-from-path', async (_e, filePath) => {
-    const buf = fs.readFileSync(filePath);
+    const buf = packManager.readPackFile(filePath);
     const suggested = path.basename(filePath, path.extname(filePath));
     return packManager.applyPackFromBuffer(buf, suggested);
   });
@@ -458,7 +737,7 @@ function registerIpcHandlers({ animCursor, getMainWindow, checkForUpdatesIfDue }
     if (res.canceled || !res.filePaths.length) return null;
     if (res.filePaths.length === 1) {
       const filePath = res.filePaths[0];
-      const buf = fs.readFileSync(filePath);
+      const buf = packManager.readPackFile(filePath);
       const suggested = path.basename(filePath, path.extname(filePath));
       return packManager.importPackFromBuffer(buf, suggested);
     }
@@ -479,6 +758,24 @@ function registerIpcHandlers({ animCursor, getMainWindow, checkForUpdatesIfDue }
   });
 
   ipcMain.handle('animcursor:set-ani', async (_e, kind, aniPath, options) => {
+    // Yerel yardımcıya (cursor_helper.exe) gitmeden önce Node tarafında doğrula:
+    // mutlak yol, .ani uzantısı, makul boyut ve RIFF/ACON imzası.
+    if (aniPath) {
+      if (typeof aniPath !== 'string' || !path.isAbsolute(aniPath) || path.extname(aniPath).toLowerCase() !== '.ani') {
+        throw new Error('Geçersiz ANI dosyası yolu.');
+      }
+      let st;
+      try { st = fs.statSync(aniPath); } catch (_) { throw new Error('ANI dosyası bulunamadı.'); }
+      if (!st.isFile() || st.size < 12 || st.size > 16 * 1024 * 1024) {
+        throw new Error('ANI dosyası geçersiz veya çok büyük (en fazla 16 MB).');
+      }
+      const fd = fs.openSync(aniPath, 'r');
+      const head = Buffer.alloc(12);
+      try { fs.readSync(fd, head, 0, 12, 0); } finally { fs.closeSync(fd); }
+      if (head.toString('latin1', 0, 4) !== 'RIFF' || head.toString('latin1', 8, 12) !== 'ACON') {
+        throw new Error('Geçersiz ANI dosyası (RIFF/ACON değil).');
+      }
+    }
     return _animCursor.setStateAni(kind, aniPath, options || {});
   });
 

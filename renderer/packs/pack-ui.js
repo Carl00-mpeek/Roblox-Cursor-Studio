@@ -109,6 +109,23 @@ document.getElementById('btn-save-pack-home')?.addEventListener('click', () => c
 // ================= KAYITLI PAKETLER (tam ekran panel) =================
 
 let currentPackTab = 'normal'; // 'normal' | 'animated'
+let packSearchText = '';
+let packFavOnly = false;
+
+function escHtml(v) {
+  return String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+document.getElementById('pack-search')?.addEventListener('input', (e) => {
+  packSearchText = String(e.target.value || '').trim().toLowerCase();
+  renderPackGrid();
+});
+document.getElementById('pack-filter-fav')?.addEventListener('click', (e) => {
+  packFavOnly = !packFavOnly;
+  e.currentTarget.classList.toggle('active', packFavOnly);
+  window.rbx.setConfig({ packFavOnly }).catch(() => {});
+  renderPackGrid();
+});
 
 function setPackTab(tab) {
   currentPackTab = tab;
@@ -130,7 +147,14 @@ async function renderPackGrid() {
   try {
     const [allPacks, activeInfo] = await Promise.all([window.rbx.listPacks(), window.rbx.activeCursors()]);
     const activeName = activeInfo && activeInfo.activePackName;
-    const packs = allPacks.filter(p => currentPackTab === 'animated' ? !!p.animated : !p.animated);
+    const packs = allPacks
+      .filter(p => currentPackTab === 'animated' ? !!p.animated : !p.animated)
+      .filter(p => !packFavOnly || p.favorite)
+      .filter(p => !packSearchText
+        || p.name.toLowerCase().includes(packSearchText)
+        || (p.tags || []).some(tag => String(tag).toLowerCase().includes(packSearchText)))
+      // Favoriler üstte, sonra ada göre
+      .sort((a, b) => (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0) || a.name.localeCompare(b.name));
     grid.innerHTML = '';
     if (!packs.length) {
       grid.innerHTML = `<p class="muted small side-empty">${currentPackTab === 'animated' ? t('no_anim_packs') : t('no_packs')}</p>`;
@@ -143,7 +167,7 @@ async function renderPackGrid() {
       item.className = 'pack-card' + (isActive ? ' active-pack' : '') + (p.animated ? ' anim-pack' : '');
       item.tabIndex = 0; // klavye ile de üzerine gelinebilsin (focus-within ile aynı önizleme açılır)
       const bust = Date.now();
-      const fileUrl = (fp) => 'file://' + fp.replace(/\\/g, '/') + '?v=' + bust;
+      const fileUrl = (fp) => safeFileUrl(fp) + '?v=' + bust;
       // Üzerine gelince açılan 2x2 önizleme: Normal / Tıklama / Yazı / Shift Lock
       const previewCells = ['arrow', 'click', 'text', 'shiftlock'].map(kind => {
         const fp = p.thumbs[kind];
@@ -158,7 +182,13 @@ async function renderPackGrid() {
           ${p.animated ? `<span class="pack-anim-badge" title="${t('pack_anim_badge')}">🎞</span>` : ''}
           <div class="thumb-previews" aria-hidden="true">${previewCells}</div>
         </div>
-        <div class="pname" title="${p.name}">${p.name}</div>
+        <div class="pname" title="${escHtml(p.name)}">${escHtml(p.name)}</div>
+        <div class="pack-tags-row">
+          <button type="button" class="pack-fav-btn${p.favorite ? ' on' : ''}" title="${t('pack_fav')}" aria-pressed="${p.favorite ? 'true' : 'false'}">${p.favorite ? '★' : '☆'}</button>
+          ${(p.tags || []).map(tag => `<span class="pack-tag">${escHtml(tag)}</span>`).join('')}
+          <button type="button" class="pack-tag-edit" title="${t('pack_tags_edit')}">🏷️</button>
+          <button type="button" class="pack-share-btn" title="${t('pack_share')}">🔗</button>
+        </div>
         <div class="pack-actions pack-actions-3">
           <button type="button" class="btn-ghost small pack-apply${isActive ? ' applied' : ''}">${isActive ? t('applied') : t('pack_apply')}</button>
           <button type="button" class="btn-ghost small pack-export">${t('pack_export')}</button>
@@ -176,6 +206,47 @@ async function renderPackGrid() {
           await renderPackGrid();
         } catch (e) {
           toast(t('error') + ' ' + errMsg(e), 'error');
+        }
+      };
+      item.querySelector('.pack-fav-btn').onclick = async () => {
+        try {
+          await window.rbx.setPackFavorite(p.name, !p.favorite);
+          await renderPackGrid();
+        } catch (e) {
+          toast(t('error') + ' ' + errMsg(e), 'error');
+        }
+      };
+      item.querySelector('.pack-tag-edit').onclick = async () => {
+        // prompt() Electron'da desteklenmediği için küçük satır içi düzenleyici
+        const row = item.querySelector('.pack-tags-row');
+        if (row.querySelector('.pack-tag-input')) return;
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'pack-tag-input';
+        input.value = (p.tags || []).join(', ');
+        input.placeholder = t('pack_tags_placeholder');
+        row.appendChild(input);
+        input.focus();
+        const commit = async () => {
+          const tags = input.value.split(',').map(x => x.trim()).filter(Boolean);
+          try { await window.rbx.setPackTags(p.name, tags); } catch (e) { toast(t('error') + ' ' + errMsg(e), 'error'); }
+          await renderPackGrid();
+        };
+        input.addEventListener('keydown', (ev) => {
+          if (ev.key === 'Enter') { ev.preventDefault(); commit(); }
+          else if (ev.key === 'Escape') { ev.preventDefault(); renderPackGrid(); }
+        });
+        input.addEventListener('blur', commit, { once: true });
+      };
+      item.querySelector('.pack-share-btn').onclick = async () => {
+        try {
+          // Önce dosyayı dışa aktar, ardından GitHub'da paylaşım sayfasını aç.
+          const res = await window.rbx.exportPack(p.name);
+          if (!res) return;
+          await window.rbx.sharePack(p.name);
+          toast(t('pack_share_hint'), 'success');
+        } catch (e) {
+          toast(t('pack_export_error') + ' ' + errMsg(e), 'error');
         }
       };
       item.querySelector('.pack-export').onclick = async () => {
@@ -233,7 +304,7 @@ async function openNewAnimPackDialog() {
   list.innerHTML = assignedKinds.map(kind => `
     <label class="pack-picker-item">
       <input type="checkbox" class="new-anim-pack-state" value="${kind}" checked />
-      <span><span>${t(stateLabelKey(kind))}</span> <small>${(animCfg[kind].ani || '').split(/[\\\\/]/).pop()}</small></span>
+      <span><span>${t(stateLabelKey(kind))}</span> <small>${escHtml((animCfg[kind].ani || '').split(/[\\\\/]/).pop())}</small></span>
     </label>
   `).join('');
 
@@ -331,8 +402,34 @@ function toastImportResult(res) {
   }
 }
 
+// Paket güvenliği uyarısı: her uygulama açılışında bir kez gösterilir (dosya seçme ve
+// sürükle-bırak yollarında). Çift tıkla açılan dosyada uyarı, seçim penceresinde kalıcıdır.
+let packTrustAcked = false;
+function confirmPackTrust() {
+  const modal = document.getElementById('pack-trust-modal');
+  if (packTrustAcked || !modal) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    const cont = document.getElementById('pack-trust-continue');
+    const cancel = document.getElementById('pack-trust-cancel');
+    const close = document.getElementById('pack-trust-close');
+    const discord = document.getElementById('pack-trust-discord');
+    const finish = (ok) => {
+      modal.classList.add('hidden');
+      cont.onclick = cancel.onclick = close.onclick = discord.onclick = null;
+      if (ok) packTrustAcked = true;
+      resolve(ok);
+    };
+    cont.onclick = () => finish(true);
+    cancel.onclick = () => finish(false);
+    close.onclick = () => finish(false);
+    discord.onclick = () => { window.rbx.openDiscord().catch(() => {}); };
+    modal.classList.remove('hidden');
+  });
+}
+
 document.getElementById('btn-import-pack').onclick = async () => {
   try {
+    if (!(await confirmPackTrust())) return;
     const res = await window.rbx.importPackPick();
     if (res) {
       toastImportResult(res);
@@ -492,6 +589,7 @@ window.rbx.onPackImportedExternal?.((res) => {
       .map((f) => f.path)
       .filter((p) => p && /\.(rbxcursor|zip)$/i.test(p));
     if (!paths.length) return;
+    if (!(await confirmPackTrust())) return;
     try {
       if (paths.length === 1) {
         const res = await window.rbx.importPackFromPath(paths[0]);

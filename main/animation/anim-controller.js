@@ -76,6 +76,12 @@ class AnimCursorController {
     this.restartAttempts = 0;
     this.lastState = 'arrow';
     this.onStateChange = null; // optional (state) => void, wired by main.js for UI updates
+    // Optional global click-sound feature (Settings > Erişilebilirlik/Efektler).
+    // Not persisted in this.cfg (anim's own config.json) — it's driven from the
+    // main app config (config.json) via main.js, independent of the animated
+    // overlay's own enabled/disabled state.
+    this.clickSoundEnabled = false;
+    this.onClickSound = null; // optional () => void, wired by main.js
     // Master on/off for the animated overlay (global hotkey). Persisted in
     // config.json (__global.enabled) so the app remembers whatever the user
     // last left it at. A fresh install that has never touched the toggle has
@@ -206,6 +212,7 @@ class AnimCursorController {
     this._pushLine(`TARGET|proc=RobloxPlayerBeta.exe`);
     this._pushLine(`SETTINGS|trackms=${this.cfg.__global.followMs}`);
     this._pushLine(`ENABLE|on=${this.enabled ? 1 : 0}`);
+    if (this.clickSoundEnabled) this._pushLine('CLICKSND|on=1');
     for (const s of STATES) {
       if (this.cfg[s].ani) this._pushLine(this._buildSetAniLine(s, this.cfg[s]));
     }
@@ -246,6 +253,8 @@ class AnimCursorController {
     } else if (line.startsWith('PREVIEWFAILED|')) {
       const m = /state=([a-z]+)/.exec(line);
       if (m) this._settlePending(`PREVIEW:${m[1]}`, new Error('Bu durum için yüklü bir animasyon yok.'));
+    } else if (line === 'EVCLICK') {
+      if (typeof this.onClickSound === 'function') this.onClickSound();
     }
     // READY / CONFIGURED / CLEARED / PONG / TARGETSET / PREVIEWEND are
     // informational only; nothing else currently needs to react to them.
@@ -359,6 +368,23 @@ class AnimCursorController {
     if (typeof this.onEnabledChange === 'function') this.onEnabledChange(this.enabled);
     this._syncPngsForEnabledState().catch((err) => this.deps.logError(err));
     return this.enabled;
+  }
+
+  /**
+   * Global tıklama sesi efekti (Ayarlar). Animasyonlu overlay'den bağımsızdır:
+   * helper'ı gerekirse başlatır (animasyon açık olmasa da) ve sadece Roblox ön
+   * plandayken fiziksel sol tık basışını "EVCLICK" olarak bildirmesini ister.
+   * Sesin kendisi renderer tarafında çalınır (bkz. onClickSound / main.js).
+   */
+  setClickSoundEnabled(on) {
+    this.clickSoundEnabled = !!on;
+    if (this.clickSoundEnabled) {
+      this._ensureProcess();
+      this._pushLine('CLICKSND|on=1');
+    } else if (this.proc && !this.proc.killed) {
+      this._pushLine('CLICKSND|on=0');
+    }
+    return this.clickSoundEnabled;
   }
 
   toggleEnabled() {

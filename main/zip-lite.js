@@ -10,6 +10,7 @@ const zlib = require('zlib');
 // ofset). Gerçek paketler bunların çok altındadır (birkaç KB PNG + küçük .ani).
 const MAX_ZIP_ENTRIES = 256;
 const MAX_ENTRY_BYTES = 32 * 1024 * 1024; // tek girdinin açılmış boyutu
+const MAX_TOTAL_BYTES = 32 * 1024 * 1024; // TÜM girdilerin açılmış toplam boyutu (zip bombası)
 
 const CRC_TABLE = (() => {
   const table = new Uint32Array(256);
@@ -123,6 +124,7 @@ function parseZip(buf) {
   const centralOffset = buf.readUInt32LE(eocdOffset + 16);
 
   const entries = [];
+  let budget = MAX_TOTAL_BYTES; // kalan açılmış bayt bütçesi
   let ptr = centralOffset;
   for (let i = 0; i < totalEntries; i++) {
     const sig = buf.readUInt32LE(ptr);
@@ -142,16 +144,19 @@ function parseZip(buf) {
     if (compSize > MAX_ENTRY_BYTES || dataStart + compSize > buf.length) {
       throw new Error('Zip girdisi geçersiz veya çok büyük.');
     }
+    if (compSize > budget) throw new Error('Zip içeriği çok büyük (zip bombası şüphesi).');
     let data = buf.slice(dataStart, dataStart + compSize);
     if (method === 8) {
       try {
-        data = zlib.inflateRawSync(data, { maxOutputLength: MAX_ENTRY_BYTES });
+        data = zlib.inflateRawSync(data, { maxOutputLength: Math.min(MAX_ENTRY_BYTES, budget) });
       } catch (err) {
         throw new Error('Zip girdisi açılamadı (bozuk veya çok büyük): ' + err.message);
       }
     } else if (method !== 0) {
       throw new Error('Desteklenmeyen sıkıştırma yöntemi: ' + method);
     }
+    budget -= data.length;
+    if (budget < 0) throw new Error('Zip içeriği çok büyük (zip bombası şüphesi).');
     entries.push({ name, data });
   }
   return entries;

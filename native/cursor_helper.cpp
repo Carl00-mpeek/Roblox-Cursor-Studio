@@ -276,6 +276,11 @@ static bool ParseAniFile(const std::wstring& path, StateAnim& out) {
         fseek(fp, 0, SEEK_END);
         long len = ftell(fp);
         fseek(fp, 0, SEEK_SET);
+        if (len > 16 * 1024 * 1024) { // guvenlik: dev ANI dosyalarini reddet
+            fclose(fp);
+            SendLine("ERR|msg=ani dosyasi cok buyuk (en fazla 16 MB)");
+            return false;
+        }
         if (len > 0) {
             buf.resize((size_t)len);
             size_t rd = fread(buf.data(), 1, (size_t)len, fp);
@@ -299,7 +304,7 @@ static bool ParseAniFile(const std::wstring& path, StateAnim& out) {
         DWORD chunkSize;
         memcpy(&chunkSize, &buf[pos + 4], 4);
         size_t dataStart = pos + 8;
-        if (dataStart + chunkSize > buf.size()) break;
+        if (chunkSize > buf.size() || dataStart + chunkSize > buf.size()) break;
 
         if (memcmp(fourcc, "anih", 4) == 0 && chunkSize >= sizeof(AniHeader)) {
             memcpy(&hdr, &buf[dataStart], sizeof(AniHeader));
@@ -321,8 +326,8 @@ static bool ParseAniFile(const std::wstring& path, StateAnim& out) {
                     DWORD subSize;
                     memcpy(&subSize, &buf[sub + 4], 4);
                     size_t subDataStart = sub + 8;
-                    if (subDataStart + subSize > listEnd) break;
-                    if (memcmp(subFour, "icon", 4) == 0) {
+                    if (subSize > buf.size() || subDataStart + subSize > listEnd) break;
+                    if (memcmp(subFour, "icon", 4) == 0 && iconChunks.size() < 512) {
                         iconChunks.emplace_back(buf.begin() + subDataStart, buf.begin() + subDataStart + subSize);
                     }
                     sub = subDataStart + subSize + (subSize % 2); // chunks are word-aligned
@@ -694,6 +699,15 @@ static StateId DetectState() {
 
 static std::atomic<bool> g_running{ true };
 
+// CLICKSND|on=0/1 -- optional global click-sound feature. Independent of the
+// animated overlay (g_overlayEnabled): when on, a left-click while the
+// target process (Roblox) is foreground is reported to the controller as a
+// single "EVCLICK" line, edge-triggered (once per press, not held). The
+// controller plays the actual sound (renderer-side Audio()); this side only
+// detects the physical button transition, same GetAsyncKeyState mechanism
+// already used as a click-state fallback in DetectState() above.
+static std::atomic<bool> g_clickSoundEnabled{ false };
+
 // Mouse-follow / redraw pacing, controller-adjustable via SETTINGS|trackms=N.
 // Lower = more frequent redraws (smoother follow, slightly more CPU),
 // higher = fewer redraws. Clamped to [1, 50] in HandleSettings.
@@ -755,6 +769,13 @@ static void AnimationLoop() {
             }
             wasTargetForeground = true;
             newState = DetectState();
+
+            if (g_clickSoundEnabled.load()) {
+                static bool wasLButtonDown = false;
+                bool isLButtonDown = (GetAsyncKeyState(VK_LBUTTON) & 0x8000) != 0;
+                if (isLButtonDown && !wasLButtonDown) SendLine("EVCLICK");
+                wasLButtonDown = isLButtonDown;
+            }
         }
 
         if (newState != currentState) {
@@ -915,6 +936,13 @@ static void HandleEnable(const Msg& m) {
     SendLine(std::string("ENABLED|on=") + (on ? "1" : "0"));
 }
 
+// CLICKSND|on=0/1 -- see g_clickSoundEnabled above.
+static void HandleClickSound(const Msg& m) {
+    bool on = m.get("on", "1") != "0";
+    g_clickSoundEnabled.store(on);
+    SendLine(std::string("CLICKSNDSET|on=") + (on ? "1" : "0"));
+}
+
 static void HandleClear(const Msg& m) {
     StateId state;
     if (!StateFromName(m.get("state"), state)) { SendLine("ERR|msg=bilinmeyen state"); return; }
@@ -959,6 +987,7 @@ static void StdinLoop() {
         else if (m.cmd == "PREVIEW") HandlePreview(m);
         else if (m.cmd == "SETTINGS") HandleSettings(m);
         else if (m.cmd == "ENABLE") HandleEnable(m);
+        else if (m.cmd == "CLICKSND") HandleClickSound(m);
         else if (m.cmd == "PING") SendLine("PONG");
         else if (m.cmd == "EXIT") { g_running = false; break; }
         else SendLine("ERR|msg=bilinmeyen komut: " + m.cmd);

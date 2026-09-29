@@ -17,7 +17,7 @@ async function renderBackgrounds() {
     const item = document.createElement('div');
     item.className = 'bg-card' + (isSelected ? ' selected' : '');
     const urlPath = bg.path.replace(/\\/g, '/');
-    item.style.backgroundImage = `url('file://${urlPath}?v=${Date.now()}')`;
+    item.style.backgroundImage = `url('${safeFileUrl(urlPath)}?v=${Date.now()}')`;
     item.title = bg.file;
 
     if (isSelected) {
@@ -78,7 +78,7 @@ async function renderBackgrounds() {
 
 function applyBackground(fullPath) {
   const url = fullPath.replace(/\\/g, '/');
-  document.getElementById('bg-layer').style.backgroundImage = `url('file://${url}')`;
+  document.getElementById('bg-layer').style.backgroundImage = `url('${safeFileUrl(url)}')`;
 }
 
 document.getElementById('btn-import-bg').onclick = async () => {
