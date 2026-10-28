@@ -1,0 +1,55 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <LangVersion>10.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <RootNamespace>RBXCursorStudio</RootNamespace>
+    <AssemblyName>RBXCursorStudio</AssemblyName>
+    <ApplicationIcon>..\..\assets\backgrounds\logo.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Version>5.0.0</Version>
+    <Product>RBX Cursor Studio</Product>
+    <Company>Demhat Dayan</Company>
+    <Copyright>Copyright (c) 2026 Demhat Dayan. Licensed under PolyForm Noncommercial 1.0.0.</Copyright>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- Linux/macOS üzerinde de derlenebilsin (CI ve geliştirme için) -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <!-- Bellek: masaüstü uygulaması için iş istasyonu GC'si, arka plan GC iş parçacığı yok -->
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <DebugType>embedded</DebugType>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
+
+  <!-- Uygulama tek bir .exe olarak dağıtılabilsin diye tüm varlıklar gömülüdür;
+       ilk açılışta %APPDATA%\RBXCursorStudio\bundled altına çıkarılır. -->
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\lang.json" LogicalName="lang.json" />
+    <EmbeddedResource Include="..\..\assets\originals\ArrowCursor.png" LogicalName="originals/ArrowCursor.png" />
+    <EmbeddedResource Include="..\..\assets\originals\ArrowFarCursor.png" LogicalName="originals/ArrowFarCursor.png" />
+    <EmbeddedResource Include="..\..\assets\originals\IBeamCursor.png" LogicalName="originals/IBeamCursor.png" />
+    <EmbeddedResource Include="..\..\assets\originals\MouseLockedCursor.png" LogicalName="originals/MouseLockedCursor.png" />
+    <EmbeddedResource Include="..\..\assets\backgrounds\background.png" LogicalName="backgrounds/background.png" />
+    <EmbeddedResource Include="..\..\assets\backgrounds\background.jpg" LogicalName="backgrounds/background.jpg" />
+    <EmbeddedResource Include="..\..\assets\backgrounds\logo.png" LogicalName="logo.png" />
+    <EmbeddedResource Include="..\..\assets\backgrounds\logo.ico" LogicalName="logo.ico" />
+  </ItemGroup>
+
+</Project>
