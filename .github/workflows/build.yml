@@ -1,23 +1,16 @@
-name: Windows Setup.exe Oluştur
-# Bu iş akışı GitHub'ın kendi Windows sunucusunda (senin bilgisayarında değil)
-# çalışır; electron-builder ile Setup (kurulum) + Portable exe üretir.
-# Animasyonlu İmleç için native/cursor_helper.exe de burada derlenir.
-#
-# Çalıştırma şekilleri:
-#  1) "v" ile başlayan bir tag push'ladığında (örn. v4.6.0) otomatik çalışır
-#     ve çıktıları doğrudan bir GitHub Release'e ekler.
-#     ÖNEMLİ: tag, package.json'daki "version" ile başlamalı
-#     (v4.6.0  <->  "version": "4.6.0"). Sürümün arkasına _hotfix, -beta gibi
-#     ek gelebilir (v4.6.0_hotfix, v4.6.0-beta.1 kabul edilir);
-#     ama v4.6.1 ile package.json 4.6.0 ise iş akışı bilerek hata verir.
-#     Örnek:  git tag v4.6.0 && git push origin v4.6.0
-#  2) Actions sekmesinden elle "Run workflow" ile de tetiklenebilir
-#     (workflow_dispatch) — bu durumda çıktı sadece "Artifacts" olarak,
-#     Release oluşturmadan indirilebilir.
+name: Derle ve yayınla
+# Windows sunucusunda uygulamayı derler, testleri çalıştırır ve tek dosyalık exe üretir.
+#  1) "v" ile başlayan bir tag push'layınca (örn. v5.1.0) exe bir GitHub Release'e eklenir.
+#     Tag, RBXCursorStudio.csproj içindeki <Version> ile başlamalı (v5.1.0 <-> 5.1.0);
+#     sonuna _hotfix, -beta gibi ek gelebilir.
+#     Örnek:  git tag v5.1.0 && git push origin v5.1.0
+#  2) Actions sekmesinden "Run workflow" ile elle de çalışır; çıktı Artifacts olarak indirilir.
+#  3) Dallara push'larda ve PR'larda yalnızca derleme + test yapılır (exe yine Artifacts'ta).
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [ '**' ]
+    tags: [ 'v*' ]
+  pull_request: {}
   workflow_dispatch: {}
 permissions:
   contents: write
@@ -27,138 +20,56 @@ concurrency:
 jobs:
   build:
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
       - name: Kodu indir
         uses: actions/checkout@v6
-      - name: Node.js kur
+      - name: .NET SDK kur
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Node.js kur (paket biçimi uyumluluk testleri için)
         uses: actions/setup-node@v6
         with:
           node-version: 22
-          cache: npm
-      - name: package.json geçerliliğini ve sürüm/tag uyumunu kontrol et
+      - name: Sürümü oku ve tag ile karşılaştır
+        id: ver
         shell: pwsh
         run: |
-          $pkg = Get-Content package.json -Raw | ConvertFrom-Json
-          Write-Host "package.json geçerli. Sürüm: $($pkg.version)"
+          [xml]$p = Get-Content RBXCursorStudio/RBXCursorStudio.csproj
+          $v = ($p.Project.PropertyGroup | Where-Object { $_.Version } | Select-Object -First 1).Version
+          Write-Host "Sürüm: $v"
           if ($env:GITHUB_REF -like 'refs/tags/v*') {
-            $tag = $env:GITHUB_REF_NAME
-            # Kabul: v4.6.0 | v4.6.0_hotfix | v4.6.0-beta.1   Red: v4.6.00 | v4.6.1
-            $pattern = '^v' + [regex]::Escape($pkg.version) + '($|[_+-])'
-            if ($tag -notmatch $pattern) {
-              throw "Tag ($tag) package.json sürümüyle ($($pkg.version)) uyuşmuyor. Tag 'v$($pkg.version)' ile başlamalı (sonuna _hotfix gibi ek olabilir)."
-            }
+            $pattern = '^v' + [regex]::Escape($v) + '($|[_+-])'
+            if ($env:GITHUB_REF_NAME -notmatch $pattern) { throw "Tag ($env:GITHUB_REF_NAME) csproj sürümüyle ($v) uyuşmuyor." }
           }
-      # Animasyonlu İmleç yardımcısı MinGW g++ ile derlenir (-static ile,
-      # yani son kullanıcıda ekstra DLL/VC++ runtime gerekmez).
-      # cursor_helper.cpp std::thread/std::mutex kullanır; bu yüzden g++'ın
-      # "posix" thread modelli olması gerekir. Runner'daki g++ önce küçük bir
-      # deneme programıyla (aynı bayraklar, static) denenir; çalışmazsa
-      # Chocolatey ile MinGW-w64 kurulup PATH'in başına eklenir.
-      - name: C++ derleyicisini (MinGW g++) hazırla ve dene
+          "version=$v" >> $env:GITHUB_OUTPUT
+      - name: Testler
         shell: pwsh
         run: |
-          # Depoya yanlışlıkla elle derlenmiş bir exe girdiyse CI onu kullanmasın;
-          # her zaman kaynak koddan sıfırdan derlesin.
-          Remove-Item native/cursor_helper.exe -Force -ErrorAction SilentlyContinue
-          function Test-Gxx {
-            if (-not (Get-Command g++ -ErrorAction SilentlyContinue)) { return $false }
-            $src = Join-Path $env:RUNNER_TEMP 'gxx_probe.cpp'
-            $exe = Join-Path $env:RUNNER_TEMP 'gxx_probe.exe'
-            Remove-Item $exe -Force -ErrorAction SilentlyContinue
-            $code = @(
-              '#include <thread>',
-              '#include <mutex>',
-              '#include <atomic>',
-              'int main() { std::mutex m; std::atomic<int> a{0}; std::thread t([&] { std::lock_guard<std::mutex> g(m); a = 1; }); t.join(); return a == 1 ? 0 : 1; }'
-            ) -join "`n"
-            Set-Content -Path $src -Value $code -Encoding ascii
-            $prev = $ErrorActionPreference
-            $ErrorActionPreference = 'Continue'
-            try {
-              g++ -std=c++17 -static -static-libgcc -static-libstdc++ $src -o $exe 2>&1 | Out-Host
-              if ($LASTEXITCODE -ne 0 -or -not (Test-Path $exe)) { return $false }
-              & $exe | Out-Null
-              return ($LASTEXITCODE -eq 0)
-            } finally {
-              $ErrorActionPreference = $prev
-            }
-          }
-          if (Test-Gxx) {
-            Write-Host 'Runner üzerindeki g++ uygun (std::thread + static çalışıyor).'
-          } else {
-            Write-Host 'Uygun g++ bulunamadı, Chocolatey ile MinGW-w64 kuruluyor...'
-            choco install mingw -y --no-progress
-            $found = Get-ChildItem -Path 'C:\ProgramData\mingw64','C:\ProgramData\chocolatey\lib\mingw','C:\tools','C:\mingw64' -Recurse -Filter g++.exe -ErrorAction SilentlyContinue |
-              Where-Object { $_.DirectoryName -notmatch 'w64-mingw32' } |
-              Sort-Object { $_.FullName.Length } |
-              Select-Object -First 1
-            if (-not $found) { throw 'MinGW kuruldu ama g++.exe bulunamadı.' }
-            $found.DirectoryName | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
-            $env:PATH = "$($found.DirectoryName);$env:PATH"
-            if (-not (Test-Gxx)) { throw 'Kurulan MinGW ile de std::thread + static deneme programı derlenip çalışmadı.' }
-          }
-          g++ --version
-      # "npm ci": package-lock.json'a birebir uyar (tekrarlanabilir derleme).
-      # postinstall adımı native/cursor_helper.exe'yi burada derler.
-      - name: Bağımlılıkları kur (ve cursor_helper.exe'yi derle)
-        run: npm ci
-      - name: cursor_helper.exe derlendi mi ve bağımsız çalışır mı kontrol et
+          $fx = Join-Path $env:RUNNER_TEMP 'fixtures'
+          node CoreTests/fixtures-tools/make-fixtures.js . $fx
+          if ($LASTEXITCODE -ne 0) { throw 'Test girdileri üretilemedi' }
+          dotnet run --project CoreTests -c Release -- $fx
+          if ($LASTEXITCODE -ne 0) { throw 'C# testleri başarısız' }
+          node CoreTests/fixtures-tools/verify-cs-output.js . $fx
+          if ($LASTEXITCODE -ne 0) { throw 'Uyumluluk testleri başarısız' }
+      - name: Derle
+        run: dotnet build RBXCursorStudio/RBXCursorStudio.csproj -c Release
+      - name: Exe'yi hazırla
         shell: pwsh
         run: |
-          if (-not (Test-Path native/cursor_helper.exe)) {
-            throw 'native/cursor_helper.exe üretilemedi. Derleme hatası için bir önceki "Bağımlılıkları kur" adımının logunu oku (native/cursor_helper.cpp derleme hatası verir). Bu haliyle Animasyonlu İmleç OLMADAN paket çıkmaz.'
-          }
-          Write-Host ("cursor_helper.exe: {0} KB" -f [math]::Round((Get-Item native/cursor_helper.exe).Length / 1KB))
-          if (Get-Command objdump -ErrorAction SilentlyContinue) {
-            $dlls = @(objdump -p native/cursor_helper.exe | Select-String 'DLL Name' | ForEach-Object { $_.Line.Trim() })
-            $dlls | ForEach-Object { Write-Host $_ }
-            if ($dlls | Where-Object { $_ -match 'libstdc\+\+|libgcc|libwinpthread' }) {
-              throw 'cursor_helper.exe statik derlenmemiş (MinGW runtime DLL bağımlılığı var).'
-            }
-          } else {
-            Write-Host 'objdump bulunamadı, DLL bağımlılık kontrolü atlandı.'
-          }
-      - name: setup.exe / portable.exe oluştur
-        run: npm run dist -- --publish=never
-      # package.json nsis artifactName: "${productName} Setup ${version}.${ext}"
-      # Eski sürümler "Kurulum" kullanıyordu; hem Setup hem Kurulum kabul edilir.
-      - name: Çıktıları doğrula (Setup, Portable ve cursor_helper.exe paketin içinde olmalı)
-        shell: pwsh
-        run: |
-          Get-ChildItem dist -Filter *.exe | ForEach-Object { Write-Host "$($_.Name)  ($([math]::Round($_.Length/1MB,1)) MB)" }
-          $setup    = @(Get-ChildItem dist -Filter '*Setup*.exe' -ErrorAction SilentlyContinue)
-          if (-not $setup.Count) {
-            $setup = @(Get-ChildItem dist -Filter '*Kurulum*.exe' -ErrorAction SilentlyContinue)
-          }
-          $portable = @(Get-ChildItem dist -Filter '*Portable*.exe' -ErrorAction SilentlyContinue)
-          if (-not $setup.Count)    { throw 'Setup exe üretilemedi (dist/*Setup*.exe veya *Kurulum*.exe yok).' }
-          if (-not $portable.Count) { throw 'Portable exe üretilemedi (dist/*Portable*.exe yok).' }
-          # Uygulama, helper'ı paketlenmiş halde resources/native/ altında arar
-          # (main/animation/anim-controller.js -> _helperPath). package.json "extraResources" bunu sağlar.
-          $helper = 'dist/win-unpacked/resources/native/cursor_helper.exe'
-          if (-not (Test-Path $helper)) {
-            throw "$helper pakete girmemiş. Animasyonlu İmleç paketlenmiş uygulamada çalışmaz. package.json 'extraResources' ayarını kontrol et."
-          }
-          Write-Host "Helper pakette: $helper"
-          Write-Host "Setup: $($setup[0].Name)"
-          Write-Host "Portable: $($portable[0].Name)"
-      - name: Çıktıları Artifact olarak yükle
-        uses: actions/upload-artifact@v7
+          New-Item -ItemType Directory -Force out | Out-Null
+          # Ad, uygulamanın güncelleme denetleyicisinin aradığı biçimle aynı ("... Portable <sürüm>.exe")
+          Copy-Item RBXCursorStudio/bin/Release/net48/RBXCursorStudio.exe "out/RBX Cursor Studio Portable ${{ steps.ver.outputs.version }}.exe"
+      - name: Artifact olarak yükle
+        uses: actions/upload-artifact@v4
         with:
-          name: RBX-Cursor-Studio-Windows
-          path: |
-            dist/*Setup*.exe
-            dist/*Kurulum*.exe
-            dist/*Portable*.exe
-          if-no-files-found: error
-      - name: Tag push edildiyse GitHub Release oluştur
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v3
+          name: RBX-Cursor-Studio-${{ steps.ver.outputs.version }}
+          path: out/*.exe
+      - name: GitHub Release'e ekle
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
         with:
-          files: |
-            dist/*Setup*.exe
-            dist/*Kurulum*.exe
-            dist/*Portable*.exe
-          fail_on_unmatched_files: false
+          files: out/*.exe
           generate_release_notes: true
