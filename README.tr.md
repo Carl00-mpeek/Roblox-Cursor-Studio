@@ -1,3 +1,7 @@
+# 🎨 RBX Cursor Studio — Roblox Cursor Changer & Customizer
+
+Roblox imleçlerini özelleştirmek için hafif bir Windows uygulaması — kendi stilin, arkadaşlarınla paylaşım, paketler arası anında geçiş.
+
 <p align="center">
   <a href="README.md">🇬🇧 English</a> •
   <a href="README.tr.md">🇹🇷 Türkçe</a>
@@ -8,10 +12,6 @@
 RBX Cursor Studio bağımsız, topluluk yapımı bir araçtır — **Roblox Corporation ile bağlantısı yoktur**. Roblox’un belleğini okumaz, koduna enjekte olmaz. Yerel Roblox klasöründeki imleç görsellerini değiştirir; animasyonlu imleçlerde ise standart Windows API’leriyle ayrı bir overlay çizer. Roblox oyun dosyalarının değiştirilmesini resmi olarak desteklemez, bu yüzden **kullanım riski sana aittir**.
 
 ---
-
-# 🎨 RBX Cursor Studio
-
-Roblox imleçlerini özelleştirmek için hafif bir Windows uygulaması — kendi stilin, arkadaşlarınla paylaşım, paketler arası anında geçiş.
 
 **Güncel sürüm: 5.0.0**
 

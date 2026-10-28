@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RBX Cursor Studio — Free Roblox Cursor Changer &amp; Custom Cursor Tool (Windows)</title>
+<meta name="description" content="RBX Cursor Studio is a free, lightweight Windows app to change and customize your Roblox cursor: custom cursor packs, animated .ANI cursors, cursor editor, quick-switch hotkeys and automatic restore after Roblox updates.">
+<meta name="keywords" content="RBX Cursor Studio, Roblox cursor, Roblox cursor changer, custom Roblox cursor, Roblox mouse cursor, Roblox cursor pack, animated cursor Roblox, Roblox imleç değiştirme, Roblox imleç">
+<meta name="author" content="Demhat Dayan">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://carl00-mpeek.github.io/Roblox-Cursor-Studio/">
+<link rel="icon" type="image/png" href="favicon.png">
+<!-- Google Search Console doğrulama kodu buraya (Search Console > HTML etiketi yöntemi):
+<meta name="google-site-verification" content="BURAYA_KOD">
+-->
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="RBX Cursor Studio — Free Roblox Cursor Changer">
+<meta property="og:description" content="Customize your Roblox cursor in seconds: cursor packs, animated cursors, built-in editor and hotkeys. Free for Windows.">
+<meta property="og:url" content="https://carl00-mpeek.github.io/Roblox-Cursor-Studio/">
+<meta property="og:image" content="https://carl00-mpeek.github.io/Roblox-Cursor-Studio/og-image.jpg">
+<meta name="twitter:card" content="summary_large_image">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "RBX Cursor Studio",
+  "alternateName": ["Roblox Cursor Studio", "Roblox Cursor Changer"],
+  "operatingSystem": "Windows 10, Windows 11",
+  "applicationCategory": "UtilitiesApplication",
+  "description": "Free Windows app to change and customize Roblox cursors with packs, animated .ANI cursors, an editor and quick-switch hotkeys.",
+  "softwareVersion": "5.0.0",
+  "author": { "@type": "Person", "name": "Demhat Dayan" },
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "downloadUrl": "https://github.com/Carl00-mpeek/Roblox-Cursor-Studio/releases/latest",
+  "url": "https://carl00-mpeek.github.io/Roblox-Cursor-Studio/",
+  "sameAs": ["https://github.com/Carl00-mpeek/Roblox-Cursor-Studio"]
+}
+</script>
+
+<style>
+  :root { --bg:#08060a; --card:#141018; --line:#2a2230; --text:#fafafa; --muted:#a1a1aa; --accent:#e11d48; --accent-hi:#fb7185; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.6 "Segoe UI",system-ui,-apple-system,sans-serif; }
+  a { color:var(--accent-hi); }
+  .hero { position:relative; min-height:72vh; display:flex; align-items:center; justify-content:center; text-align:center; padding:64px 16px;
+          background:linear-gradient(180deg,rgba(8,6,10,.55),rgba(8,6,10,.95)),url("og-image.jpg") center/cover; }
+  .hero img { width:96px; height:96px; border-radius:22px; }
+  h1 { font-size:clamp(32px,6vw,56px); margin:16px 0 8px; line-height:1.1; }
+  .tag { color:#d4d4d8; font-size:clamp(16px,2.4vw,20px); max-width:720px; margin:0 auto 28px; }
+  .btns { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .btn { display:inline-flex; align-items:center; gap:8px; padding:12px 22px; border-radius:14px; font-weight:700; text-decoration:none; color:#fff;
+         border:1px solid rgba(251,113,133,.8); background:linear-gradient(180deg,rgba(225,29,72,.75),rgba(225,29,72,.42)); box-shadow:inset 0 1px 0 rgba(255,255,255,.2); }
+  .btn.alt { border-color:rgba(255,255,255,.22); background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.05)); }
+  .btn.discord { border-color:rgba(114,137,255,.55); background:linear-gradient(180deg,rgba(88,101,242,.42),rgba(88,101,242,.22)); }
+  main { max-width:1040px; margin:0 auto; padding:48px 16px 72px; }
+  h2 { font-size:28px; margin:48px 0 16px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:20px; }
+  .card h3 { margin:0 0 6px; font-size:18px; }
+  .card p, .muted { color:var(--muted); margin:0; }
+  ol li { margin-bottom:6px; }
+  .note { border-left:3px solid var(--accent); padding:10px 14px; background:var(--card); border-radius:8px; color:#d4d4d8; }
+  footer { text-align:center; color:var(--muted); font-size:14px; padding:24px 16px 40px; border-top:1px solid var(--line); }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div>
+    <img src="logo.png" alt="RBX Cursor Studio logo" width="96" height="96">
+    <h1>RBX Cursor Studio</h1>
+    <p class="tag">The free Roblox cursor changer for Windows. Make your Roblox cursor yours — custom packs, animated cursors, a built-in editor and instant pack switching.</p>
+    <div class="btns">
+      <a class="btn" href="https://github.com/Carl00-mpeek/Roblox-Cursor-Studio/releases/latest">⬇ Download for Windows</a>
+      <a class="btn alt" href="https://github.com/Carl00-mpeek/Roblox-Cursor-Studio">View on GitHub</a>
+      <a class="btn discord" href="https://discord.gg/T2fqjr57Ep">Join Discord</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <h2>Features</h2>
+  <div class="grid">
+    <div class="card"><h3>Custom Roblox cursors</h3><p>Replace the arrow, click (hand), text (I-beam) and Shift Lock cursors with any PNG, JPG, CUR or ICO image. Auto-fit and centered on Roblox's own canvas.</p></div>
+    <div class="card"><h3>Animated cursors (.ANI)</h3><p>Assign an animated .ani cursor per state with size, speed and FPS controls. Toggle it on or off with a hotkey.</p></div>
+    <div class="card"><h3>Cursor packs</h3><p>Save, share and import cursor packs as .rbxcursor files. Switch packs instantly with Ctrl+Alt+1/2/3, even in game.</p></div>
+    <div class="card"><h3>Survives Roblox updates</h3><p>Automatic repair reinstalls your custom cursor after every Roblox update. Restore the originals in one click.</p></div>
+    <div class="card"><h3>Built-in editor</h3><p>Resize, reposition, colorize, add outline or shadow, and generate color variations without leaving the app.</p></div>
+    <div class="card"><h3>Effects</h3><p>Optional cursor trails (stars, fire, smoke, hearts, rainbow), click sounds and Discord Rich Presence.</p></div>
+  </div>
+
+  <h2>How to change your Roblox cursor</h2>
+  <ol>
+    <li>Download RBX Cursor Studio from the <a href="https://github.com/Carl00-mpeek/Roblox-Cursor-Studio/releases/latest">Releases page</a> (Setup or Portable).</li>
+    <li>Open Roblox once so its cursor folder exists, then start RBX Cursor Studio.</li>
+    <li>Click <b>Choose</b> on a cursor, pick an image and press <b>Save</b> — it is applied to Roblox instantly.</li>
+    <li>Save your cursors as a pack to switch between styles any time.</li>
+  </ol>
+
+  <h2 lang="tr">Türkçe — Roblox imleç değiştirme</h2>
+  <p lang="tr" class="muted">RBX Cursor Studio, Roblox imlecini (fare imleci) değiştirmek ve özelleştirmek için ücretsiz bir Windows uygulamasıdır. Kendi imleç paketlerini oluştur, animasyonlu .ANI imleçler kullan, imleçleri renklendir ve Ctrl+Alt+1/2/3 kısayollarıyla oyun içinde bile anında paket değiştir. Roblox güncellendiğinde imleçlerin otomatik olarak geri yüklenir. <a href="https://github.com/Carl00-mpeek/Roblox-Cursor-Studio/releases/latest">Hemen indir</a>.</p>
+
+  <h2>Is it safe?</h2>
+  <p class="note">RBX Cursor Studio does not read Roblox's memory or inject code. It only replaces cursor image files in your local Roblox folder and, for animated cursors, draws a separate overlay with standard Windows APIs. It is an independent community project and is not affiliated with or endorsed by Roblox Corporation. The full source code is public on GitHub.</p>
+</main>
+
+<footer>
+  © 2026 Demhat Dayan · <a href="https://github.com/Carl00-mpeek/Roblox-Cursor-Studio/blob/main/LICENSE.md">PolyForm Noncommercial License 1.0.0</a> · Roblox is a trademark of Roblox Corporation.
+</footer>
+</body>
+</html>
