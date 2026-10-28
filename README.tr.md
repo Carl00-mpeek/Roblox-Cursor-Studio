@@ -13,7 +13,7 @@ RBX Cursor Studio bağımsız, topluluk yapımı bir araçtır — **Roblox Corp
 
 ---
 
-**Güncel sürüm: 5.0.0**
+**Güncel sürüm: 6.0.0**
 
 ## 🎬 Tanıtım videosu
 
@@ -21,6 +21,14 @@ RBX Cursor Studio bağımsız, topluluk yapımı bir araçtır — **Roblox Corp
 [▶️ Tanıtım videosunu izle](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
 
 ---
+
+## 🆕 6.0.0 ile gelenler
+
+- **Yerel Windows uygulaması olarak baştan yazıldı** (.NET Framework 4.8 / WPF), Electron yerine — tek süreç, tek ~3 MB'lık exe, çok daha düşük RAM ve işlemci kullanımı
+- **Artık Node.js, npm veya C++ derleyicisi gerekmiyor** — animasyonlu imleç, tıklama sesi ve Discord durumu uygulamanın içinde
+- Roblox algılama artık 5 saniyede bir PowerShell başlatmıyor; imleç izi yalnızca kapladığı küçük alanı yeniden çiziyor
+- Klasik (alfa kanalsız) `.ani` imleçler artık doğru görünüyor; animasyon açıkken animasyonlu paket uygulanınca oluşan donma düzeltildi
+- Tüm paketlerin, geçmişin ve ayarların otomatik taşınır — aynı veri klasörü ve `.rbxcursor` biçimi
 
 ## 🆕 5.0.0 ile gelenler
 
@@ -38,8 +46,8 @@ RBX Cursor Studio bağımsız, topluluk yapımı bir araçtır — **Roblox Corp
 - **Roblox açılınca son paketi uygula**
 - **Zamanlı / rastgele paket değiştirici** — her N dakikada bir, rastgele ya da sırayla; istersen seçili paketlerle sınırlı
 - **Cursor izi** *(beta)* — imlecinin arkasında efektler: klasik, yıldız, kıvılcım, duman, ateş, kalp, gökkuşağı (renk + uzunluk)
-- **Tıklama sesi** *(beta)* — Roblox ön plandayken her sol tıkta kısa ses; native yardımcının yeniden derlenmesi gerekir (`native/build.bat`)
-- **Discord Rich Presence** — Discord açıkken profilinde otomatik olarak “RBX Cursor Studio” görünür (kapatmak için Discord › Ayarlar › Etkinlik Gizliliği); `npm install` gerekir (`discord-rpc` eklenir)
+- **Tıklama sesi** *(beta)* — Roblox ön plandayken her sol tıkta kısa ses
+- **Discord Rich Presence** — Discord açıkken profilinde otomatik olarak “RBX Cursor Studio” görünür (kapatmak için Discord › Ayarlar › Etkinlik Gizliliği)
 - **Sürüm notları görüntüleyici** ve **ayar yedekleme / geri yükleme** (tek JSON dosyası)
 
 ### 🎯 Editör
@@ -86,14 +94,15 @@ Aktif tüm imleçleri tek bir tonla boya — boyut ve konum yerinde kalır.
 Arkaplanı değiştir, renk teması seç (mavi, mor, kırmızı, pembe, sarı), Türkçe / İngilizce anında geç, Windows başlangıcında aç, kapatınca tepsiye küçült, algılanan Roblox sürümünü gör — hepsi Ayarlar’da.
 
 ### 💻 Platform
-Taşınabilir exe veya NSIS **Setup** yükleyici. Electron tabanlı; animasyonlu imleçler yalnızca gerektiğinde açılan küçük `cursor_helper.exe` ile çalışır. Kaynak açık, ticari olmayan lisans.
+Tek, ~3 MB'lık taşınabilir exe — kurulum gerekmez. Windows 10/11 ile birlikte gelen .NET Framework 4.8 (WPF) ile yazılmış yerel bir Windows uygulaması: tek süreç, düşük RAM ve işlemci kullanımı. Animasyonlu imleç motoru uygulamanın içinde ve yalnızca gerektiğinde çalışır. Kaynak açık, ticari olmayan lisans.
 
 ---
 
 ## 📥 İndir
 
-- **Setup** — yükleyiciyi indir, kur, bitir  
-- **Taşınabilir** — taşınabilir exe’yi indir ve çalıştır — kurulum yok  
+- **Taşınabilir exe** — `RBX Cursor Studio Portable <sürüm>.exe` dosyasını indir ve çalıştır — kurulum yok  
+- Windows 10/11 gerekir (Windows 7 SP1+/8.1'de [.NET Framework 4.8](https://dotnet.microsoft.com/download/dotnet-framework/net48) kurulu olmalı)  
+- Eski sürümdeki paketlerin, geçmişin ve ayarların otomatik olarak kullanılır  
 
 > En güncel sürümü her zaman [Releases](../../releases) sayfasından al — yalnızca bu depodan indir.
 
@@ -110,29 +119,21 @@ Uygulama henüz kod imzalı değil; yeterince kişi çalıştırana kadar SmartS
 
 ## 🔧 Kaynak koddan derleme
 
-**Windows:** hazır script’ler yeterli — terminale gerek yok (`install.bat` / `start.bat` / `exe_maker.bat`). Aşağısı manuel kurulum veya Windows dışı sistemler için.
-
-**Gereksinimler:** Node.js 18+ ve npm. Animasyon için C++ derleyicisi (MinGW `g++` veya MSVC `cl.exe`). Yoksa `install.bat` bir kez MinGW-w64 indirebilir (~260 MB). Derleyici olmasa da uygulama çalışır; yalnızca animasyon kapalı kalır. Resmi Setup/Portable sürümlerde yardımcı zaten gömülü.
+**Gereksinim:** [.NET SDK](https://dotnet.microsoft.com/download) 6 veya üstü. Windows'ta `build.bat` dosyasına çift tıklaman yeterli.
 
 ```bash
 git clone https://github.com/Carl00-mpeek/Roblox-Cursor-Studio.git
 cd Roblox-Cursor-Studio
-npm install
-npm start        # geliştirme
-npm run dist     # yükleyici + taşınabilir exe
+dotnet build RBXCursorStudio/RBXCursorStudio.csproj -c Release
+# → RBXCursorStudio/bin/Release/net48/RBXCursorStudio.exe
 ```
+
+Visual Studio ile `RBXCursorStudio.sln` dosyasını da açabilirsin. `v*` ile başlayan bir tag push'larsan (örn. `v5.1.0`, `.csproj` içindeki `<Version>` ile aynı olmalı) GitHub Actions exe'yi derleyip bir Release'e ekler. Kodun düzeni için [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ---
 
 ### ✍️ Kod imzalama (opsiyonel)
-Uygulama henüz imzalı değil. Bir kod imzalama sertifikan olunca electron-builder otomatik imzalar — ayar değişikliği gerekmez. `npm run dist` öncesinde şunları tanımla:
-
-```bat
-set CSC_LINK=C:\sertifika\yolu\certificate.pfx
-set CSC_KEY_PASSWORD=parolan
-```
-
-GitHub Actions'ta bunları repository secret olarak sakla ve build adımında `CSC_LINK` / `CSC_KEY_PASSWORD` ortam değişkeni olarak geçir.
+Uygulama henüz imzalı değil. Bir kod imzalama sertifikan olunca derlenen exe'yi `signtool sign /f certificate.pfx /p <parola> /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 RBXCursorStudio.exe` ile imzalayabilirsin (GitHub Actions'ta sertifikayı ve parolayı repository secret olarak sakla).
 
 ## ☕ Projeyi destekle
 

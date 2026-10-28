@@ -22,41 +22,36 @@ Feature requests are welcome! Open an issue and describe:
 
 ## 🔧 Development Setup
 
-Requirements: Node.js 18+ and npm.
-Animated cursors additionally need a C++ compiler (MinGW `g++` or MSVC `cl.exe`) to build the native helper (see below).
+Requirements: [.NET SDK](https://dotnet.microsoft.com/download) 6+ (the app targets .NET Framework 4.8; it builds on Windows, Linux or macOS but runs on Windows). Visual Studio 2022 works too — open `RBXCursorStudio.sln`.
 
 ```bash
 git clone https://github.com/Carl00-mpeek/Roblox-Cursor-Studio.git
 cd Roblox-Cursor-Studio
-npm install
-npm start        # run in development
+dotnet build RBXCursorStudio/RBXCursorStudio.csproj -c Release
 ```
 
-To build the installer and portable exe:
+Windows users can also double-click `build.bat`. See [ARCHITECTURE.md](ARCHITECTURE.md) for the folder layout.
+
+### 🧪 Tests
+
+`CoreTests` checks the core logic (JSON, PNG/ZIP, `.rbxcursor` validation) and cross-checks pack compatibility against the previous version's JavaScript implementation (`CoreTests/reference-js`). Node.js 18+ is needed for that part only:
 
 ```bash
-npm run dist
+node CoreTests/fixtures-tools/make-fixtures.js . ./fx
+dotnet run --project CoreTests -c Release -- ./fx
+node CoreTests/fixtures-tools/verify-cs-output.js . ./fx
 ```
 
-Windows users can also use the ready-made scripts: `install.bat` / `start.bat` / `exe_maker.bat`.
+### 🎞️ Animated cursors
 
-### 🎞️ Native helper (animated cursors)
-
-The animated cursor feature is powered by a small C++ program, `native/cursor_helper.exe` (source: `native/cursor_helper.cpp`).
-
-- `npm install` builds it automatically (`postinstall` → `scripts/build-native.js` → `native/build.bat`).
-- If no compiler is found, `build.bat` tries to install MinGW-w64 via `winget`. If that also fails, `npm install` still succeeds — only the animated cursor feature is disabled, the rest of the app works normally.
-- To build it manually: `cd native && build.bat`
-- `npm run dist` refuses to package without `cursor_helper.exe`, so a release can't ship without animated cursor support by accident. In the packaged app the helper is copied to `resources/native/` (see `extraResources` in `package.json`).
-- If you change the marker values, keep `native/marker.h` and `MARKERS` in `main/animation/anim-controller.js` in sync.
-- `.bat` files must keep Windows (CRLF) line endings. `.gitattributes` takes care of this, just don't override it.
+The animated cursor engine lives in `RBXCursorStudio/Animation/AnimEngine.cs` (no separate helper exe any more). If you change the invisible marker values, keep `Markers` in `AnimController.cs` and the `Marker*` constants in `AnimEngine.cs` in sync.
 
 ## 📝 Pull Requests
 
 1. Fork the repository
 2. Create a new branch (`git checkout -b feature/my-feature`)
 3. Make your changes
-4. Test that the app still builds and runs correctly (`npm start`). If you touched anything in `native/`, also run `native\build.bat` and try an animated cursor
+4. Test that the app still builds and runs correctly, and that `CoreTests` passes. If you touched `Animation/`, try an animated cursor
 5. Commit with a clear message describing your change
 6. Push to your fork and open a Pull Request
 
@@ -66,7 +61,7 @@ Please keep PRs focused — one feature or fix per PR makes review much easier.
 
 - Keep code readable and consistent with the existing style in the file you're editing
 - Comment non-obvious logic, especially anything related to detecting the Roblox client directory
-- If you add a new UI string, please provide both English and Turkish translations (both live in `renderer/lang.js`)
+- If you add a new UI string, please provide both English and Turkish translations (both live in `RBXCursorStudio/Resources/lang.json`)
 
 ## 🌍 Translations
 
