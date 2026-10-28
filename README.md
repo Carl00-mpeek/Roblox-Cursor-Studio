@@ -89,13 +89,14 @@ Recolor every active cursor with a single hue — size and position stay put.
 Swap the app background, pick a color theme (blue, purple, red, pink, yellow), switch English / Turkish instantly, launch on Windows startup, minimize to the tray on close, and see the detected Roblox version — all from Settings.
 
 ### 💻 Platform
-A single, ~3 MB portable exe — no installer needed. Native Windows app built with .NET Framework 4.8 (WPF), which ships with Windows 10/11: one process, low RAM and CPU use. The animated cursor engine runs inside the app and only while it's needed. Source is public under a noncommercial license.
+A ~3 MB Setup installer or a single portable exe. Native Windows app built with .NET Framework 4.8 (WPF), which ships with Windows 10/11: one process, low RAM and CPU use. The animated cursor engine runs inside the app and only while it's needed. Source is public under a noncommercial license.
 
 ---
 
 ## 📥 Download
 
-- **Portable exe** — download `RBX Cursor Studio Portable <version>.exe` and run it — no install needed  
+- **Setup** — `RBX Cursor Studio Setup <version>.exe`: installs for your user (no admin needed), adds Start menu / desktop shortcuts, `.rbxcursor` file association and an uninstaller  
+- **Portable** — `RBX Cursor Studio Portable <version>.exe`: just download and run, no install needed  
 - Requires Windows 10/11 (or Windows 7 SP1+/8.1 with [.NET Framework 4.8](https://dotnet.microsoft.com/download/dotnet-framework/net48))  
 - Your packs, history and settings from older versions are picked up automatically  
 

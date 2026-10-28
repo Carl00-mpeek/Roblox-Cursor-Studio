@@ -47,8 +47,9 @@ Orijinal imleçler, arkaplanlar ve dil dosyası exe'nin içine gömülüdür; il
 `%APPDATA%\RBXCursorStudio\bundled` altına çıkarılır.
 
 GitHub Actions (`.github/workflows/build.yml`) her push'ta testleri çalıştırır ve exe'yi artifact
-olarak üretir; `v*` tag'lerinde exe'yi `RBX Cursor Studio Portable <sürüm>.exe` adıyla bir Release'e
-ekler (uygulamanın güncelleme denetleyicisi bu adı arar).
+olarak üretir; `v*` tag'lerinde `RBX Cursor Studio Portable <sürüm>.exe` ve `installer/setup.iss`'ten
+Inno Setup ile derlenen `RBX Cursor Studio Setup <sürüm>.exe` dosyalarını bir Release'e ekler
+(uygulamanın güncelleme denetleyicisi kurulum türüne göre bu adları arar).
 
 ## Testler
 
