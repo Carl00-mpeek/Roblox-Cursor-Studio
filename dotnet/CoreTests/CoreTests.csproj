@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Arayüzden bağımsız çekirdek mantığın testleri. Linux/macOS'ta da çalışır (net8.0);
+       aynı kaynak dosyalar uygulamada net48 ile derlenir. Ayrıca Electron sürümünün
+       JS kodu (zip-lite.js, pack-format.js) ile çapraz uyumluluk denetlenir. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>10.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <NoWarn>CA1416</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\RBXCursorStudio\Core\Json.cs" Link="Linked\Json.cs" />
+    <Compile Include="..\RBXCursorStudio\Core\PngZip.cs" Link="Linked\PngZip.cs" />
+    <Compile Include="..\RBXCursorStudio\Core\Config.cs" Link="Linked\Config.cs" />
+    <Compile Include="..\RBXCursorStudio\Packs\PackFormat.cs" Link="Linked\PackFormat.cs" />
+    <Compile Include="..\RBXCursorStudio\Roblox\Detector.cs" Link="Linked\Detector.cs" />
+    <Compile Include="..\RBXCursorStudio\Native\Win32.cs" Link="Linked\Win32.cs" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,46 @@
+name: .NET 4.8 sürümünü derle
+# dotnet/ klasöründeki .NET Framework 4.8 (WPF) sürümünü derler, çekirdek testlerini
+# (Electron sürümünün JS koduyla çapraz uyumluluk dahil) çalıştırır ve tek dosyalık
+# exe'yi "Artifacts" olarak yükler. Elle (Actions > Run workflow) veya dotnet/ altında
+# değişiklik içeren push'larda çalışır.
+on:
+  workflow_dispatch: {}
+  push:
+    paths:
+      - 'dotnet/**'
+      - '.github/workflows/build-dotnet.yml'
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Kodu indir
+        uses: actions/checkout@v6
+      - name: .NET SDK kur
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Node.js kur (çapraz uyumluluk testleri için)
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+      - name: Çekirdek testleri
+        shell: pwsh
+        run: |
+          $fx = Join-Path $env:RUNNER_TEMP 'fixtures'
+          node dotnet/CoreTests/fixtures-tools/make-fixtures.js . $fx
+          dotnet run --project dotnet/CoreTests -c Release -- $fx
+          if ($LASTEXITCODE -ne 0) { throw 'C# testleri başarısız' }
+          node dotnet/CoreTests/fixtures-tools/verify-cs-output.js . $fx
+          if ($LASTEXITCODE -ne 0) { throw 'JS çapraz doğrulama başarısız' }
+      - name: Uygulamayı derle
+        run: dotnet build dotnet/RBXCursorStudio/RBXCursorStudio.csproj -c Release
+      - name: Çıktıyı yükle
+        uses: actions/upload-artifact@v4
+        with:
+          name: RBXCursorStudio-net48
+          path: |
+            dotnet/RBXCursorStudio/bin/Release/net48/RBXCursorStudio.exe
+            dotnet/RBXCursorStudio/bin/Release/net48/RBXCursorStudio.exe.config

@@ -1,3 +1,7 @@
+# 🎨 RBX Cursor Studio — Roblox Cursor Changer & Customizer
+
+A lightweight Windows app for customizing Roblox cursors — make them yours, share them with friends, and switch packs in a second.
+
 <p align="center">
   <a href="README.md">🇬🇧 English</a> •
   <a href="README.tr.md">🇹🇷 Türkçe</a>
@@ -8,10 +12,6 @@
 RBX Cursor Studio is an independent, community-made tool — **not affiliated with or endorsed by Roblox Corporation**. It doesn't read Roblox's memory or inject into its code. It simply replaces cursor image files in your local Roblox folder, and (for animated cursors) draws a separate overlay with standard Windows APIs. Roblox doesn't officially support modifying game files, so **use it at your own risk**.
 
 ---
-
-# 🎨 RBX Cursor Studio
-
-A lightweight Windows app for customizing Roblox cursors — make them yours, share them with friends, and switch packs in a second.
 
 **Current version: 5.0.0**
 
