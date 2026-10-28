@@ -94,13 +94,14 @@ Aktif tüm imleçleri tek bir tonla boya — boyut ve konum yerinde kalır.
 Arkaplanı değiştir, renk teması seç (mavi, mor, kırmızı, pembe, sarı), Türkçe / İngilizce anında geç, Windows başlangıcında aç, kapatınca tepsiye küçült, algılanan Roblox sürümünü gör — hepsi Ayarlar’da.
 
 ### 💻 Platform
-Tek, ~3 MB'lık taşınabilir exe — kurulum gerekmez. Windows 10/11 ile birlikte gelen .NET Framework 4.8 (WPF) ile yazılmış yerel bir Windows uygulaması: tek süreç, düşük RAM ve işlemci kullanımı. Animasyonlu imleç motoru uygulamanın içinde ve yalnızca gerektiğinde çalışır. Kaynak açık, ticari olmayan lisans.
+~3 MB'lık Setup kurulumu ya da tek bir taşınabilir exe. Windows 10/11 ile birlikte gelen .NET Framework 4.8 (WPF) ile yazılmış yerel bir Windows uygulaması: tek süreç, düşük RAM ve işlemci kullanımı. Animasyonlu imleç motoru uygulamanın içinde ve yalnızca gerektiğinde çalışır. Kaynak açık, ticari olmayan lisans.
 
 ---
 
 ## 📥 İndir
 
-- **Taşınabilir exe** — `RBX Cursor Studio Portable <sürüm>.exe` dosyasını indir ve çalıştır — kurulum yok  
+- **Setup** — `RBX Cursor Studio Setup <sürüm>.exe`: kullanıcın için kurar (yönetici izni gerekmez), Başlat menüsü / masaüstü kısayolu, `.rbxcursor` ilişkilendirmesi ve kaldırıcı ekler  
+- **Taşınabilir** — `RBX Cursor Studio Portable <sürüm>.exe`: indir ve çalıştır, kurulum yok  
 - Windows 10/11 gerekir (Windows 7 SP1+/8.1'de [.NET Framework 4.8](https://dotnet.microsoft.com/download/dotnet-framework/net48) kurulu olmalı)  
 - Eski sürümdeki paketlerin, geçmişin ve ayarların otomatik olarak kullanılır  
 
